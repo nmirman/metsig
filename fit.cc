@@ -1,5 +1,6 @@
 #include "TRandom3.h"
-#include "TH1D.h"
+#include "TH1.h"
+#include "TH2.h"
 #include "TF1.h"
 #include "TMath.h"
 #include "TTree.h"
@@ -7,6 +8,7 @@
 #include "TCanvas.h"
 #include "TProfile.h"
 #include "TROOT.h"
+#include "TVector2.h"
 
 #include "Math/Minimizer.h"
 #include "Math/Factory.h"
@@ -42,24 +44,57 @@ float jetcorrL1[1000];
 float genppt[1000];
 float genphi[1000];
 float geneta[1000];
+int genbkg_size;
+float genbkg_ppt[1000];
+float genbkg_phi[1000];
+float genbkg_eta[1000];
 
 float lpt;
 float lph;
 float lst;
 
 
-TH1D *hpc2 = new TH1D("hpc2", "", 100, 0, 1);
-TProfile *psig = new TProfile("psig", "psig", 15, 0, 15);
+TH1D *hpc2 = new TH1D("hpc2", "P(#chi^{2}) Distribution", 100, 0, 1);
+TProfile *pvert = new TProfile("pvert", "Significance vs N Vert", 15, 0, 15);
 TH1D *hqt = new TH1D("hqt", ";q_{T} Z (GeV);Events/5 GeV", 30, 0, 150);
-TProfile *pqt = new TProfile("pqt", "pqt", 15, 0, 100);
+TProfile *pqt = new TProfile("pqt", "Significance vs q_{T}", 15, 0, 100);
 TH1D *hut_par = new TH1D("hut_par", ";u_{#parallel} (GeV);Events/10 GeV", 17, -150, 20);
 TH1D *hut_perp = new TH1D("hut_perp", ";u_{#perp} (GeV);Events/4 GeV", 25, -50, 50);
 TProfile *put = new TProfile("put", ";q_{T} (GeV);|<u_{#parallel}>|/q_{T}", 25, 0, 100);
+TH1D *hmatch_dR = new TH1D("hmatch_dR","#DeltaR reco-genjet matching",1000,0,5.0);
+TH1D *hmatch_dR2 = new TH1D("hmatch_dR2","#DeltaR reco-genjet matching",1000,0,5.0);
+TH1D *hmatch_dR3 = new TH1D("hmatch_dR3","#DeltaR reco-genjet matching",1000,0,5.0);
+TH1D *hmatch_dR_bkg = new TH1D("hmatch_dR_bkg","#DeltaR reco-genjet matching",1000,0,5.0);
+TH1D *hmatch_dR_rand = new TH1D("hmatch_dR_rand","#DeltaR reco-genjet matching",1000,0,5.0);
+TH1D *hmatch_deta = new TH1D("hmatch_deta","#Delta#eta reco-genjet matching",1000,0,5.0);
+TH1D *hmatch_deta2 = new TH1D("hmatch_deta2","#Delta#eta reco-genjet matching",1000,0,5.0);
+TH1D *hmatch_deta3 = new TH1D("hmatch_deta3","#Delta#eta reco-genjet matching",1000,0,5.0);
+TH1D *hmatch_dphi = new TH1D("hmatch_dphi","#Delta#phi reco-genjet matching",1000,0,5.0);
+TH1D *hmatch_dphi2 = new TH1D("hmatch_dphi2","#Delta#phi reco-genjet matching",1000,0,5.0);
+TH1D *hmatch_dphi3 = new TH1D("hmatch_dphi3","#Delta#phi reco-genjet matching",1000,0,5.0);
+TH2D *hmatch_deta_dphi = new TH2D("hmatch_deta_dphi","#Delta#eta vs #Delta#phi",1000,0,1.0,1000,0,1.0);
+TH2D *hmatch_deta_dphi2 = new TH2D("hmatch_deta_dphi2","#Delta#eta vs #Delta#phi",1000,0,1.0,1000,0,1.0);
+TH2D *hmatch_deta_dphi3 = new TH2D("hmatch_deta_dphi3","#Delta#eta vs #Delta#phi",1000,0,1.0,1000,0,1.0);
+TH1D *hmatch_dpt = new TH1D("hmatch_dpt","p_{T}/p_{T}^{ref} reco-genjet matching",100,0,5.0);
+TH1D *hmatch_dpt2 = new TH1D("hmatch_dpt2","p_{T}/p_{T}^{ref} reco-genjet matching",100,0,5.0);
+TH1D *hmatch_dpt3 = new TH1D("hmatch_dpt3","p_{T}/p_{T}^{ref} reco-genjet matching",100,0,5.0);
+
+TH1D *hpull_alljets = new TH1D("hpull_alljets","Pull Distribution for All Jets",100,-10,10);
+TH1D *hpull_pt10 = new TH1D("hpull_pt10","Pull Distribution, Jet p_{T} > 10 GeV",100,-10,10);
+TH1D *hpull_pt3 = new TH1D("hpull_pt3","Pull Distribution, Jet 3 < p_{T} < 10 GeV",100,-10,10);
+TH1D *hpull_pt10_barrel = new TH1D("hpull_pt10_barrel","Pull Distribution, Jet p_{T} > 10 GeV, |#eta| < 3",100,-10,10);
+TH1D *hpull_pt10_endcap = new TH1D("hpull_pt10_endcap","Pull Distribution, Jet p_{T} > 10 GeV, |#eta| > 3",100,-10,10);
+TH1D *hpull_pt3_barrel = new TH1D("hpull_pt3_barrel","Pull Distribution, Jet 3 < p_{T} < 10 GeV, |#eta| < 3",100,-10,10);
+TH1D *hpull_pt3_endcap = new TH1D("hpull_pt3_endcap","Pull Distribution, Jet 3 < p_{T} < 10 GeV, |#eta| > 3",100,-10,10/*-30000,30000*/);
+TH1D *jetres_pt3eta3 = new TH1D("jetres_pt3eta3","Jet Resolution, Jet 3 < p_{T} < 10 GeV, |#eta| > 3", 100, 0, 15);
+TH1D *jetDpt_pt3eta3 = new TH1D("jetDpt_pt3eta3","Jet p_{T}^{reco} - p_{T}^{gen}, Jet 3 < p_{T} < 10 GeV, |#eta| > 3", 100, 0, 15);
+
 bool FillTree=false;
 bool FillHist=false;
 bool FirstFit=true;
 
 double Min2LL(const double *x);
+void MatchMCjets();
 
 //jet resolutions from 2010
 double sigmaPt[10][4]={{-0.349206, 0.297831, 0, 0.471121},
@@ -111,7 +146,7 @@ void fit(){
 
    gROOT->Reset();
 
-   TFile *f = new TFile("Zmumu_ntuple_20120919.root");
+   TFile *f = new TFile("Zmumu_ntuple_20121005.root");
    TTree *tt = (TTree*)f->Get("events");
    tt->SetBranchAddress("v_size", &nv);
    tt->SetBranchAddress("met_et",&met);
@@ -151,6 +186,10 @@ void fit(){
    t->Branch("genppt", genppt, "genppt[n]/F");
    t->Branch("genphi", genphi, "genphi[n]/F");
    t->Branch("geneta", geneta, "geneta[n]/F");
+   t->Branch("genbkg_size", genbkg_size, "genbkg_size/I");
+   t->Branch("genbkg_ppt", genbkg_ppt, "genbkg_ppt[genbkg_size]/F");
+   t->Branch("genbkg_phi", genbkg_phi, "genbkg_phi[genbkg_size]/F");
+   t->Branch("genbkg_eta", genbkg_eta, "genbkg_eta[genbkg_size]/F");
 
    ttt=t->CloneTree(0);
    ttt->SetDirectory(0);
@@ -183,6 +222,16 @@ void fit(){
       }
       lpt = sqrt(lpx*lpx+lpy*lpy);
       lph = atan2(lpy, lpx);
+      
+      genbkg_size = gennj;
+      for(int i=0; i < genbkg_size; i++){
+         genbkg_ppt[i] = genpt[i];
+         genbkg_phi[i] = genph[i];
+         genbkg_eta[i] = genta[i];
+      }
+      
+      MatchMCjets();
+
       t->Fill();
    }
 
@@ -218,55 +267,122 @@ void fit(){
    FillHist=true;
    Min2LL(min->X());
 
-   TCanvas *canvas = new TCanvas("canvas","canvas",900,900);
-   canvas->Divide(2,2);
-
+   TCanvas *canvas = new TCanvas("canvas","canvas",1440,500);
+   canvas->Divide(3,1);
    canvas->cd(1);
-   hqt->Draw();
-
-   canvas->cd(2);
-   hut_par->Draw();
-
-   canvas->cd(3);
-   hut_perp->Draw();
-
-   canvas->cd(4);
-   put->Draw();
-
-   TCanvas *canvas2 = new TCanvas();
    hpc2->SetMinimum(0);
    hpc2->Draw("E");
-   hpc2->GetXaxis()->SetTitle("p(#chi^{2})");
+   hpc2->GetXaxis()->SetTitle("P(#chi^{2})");
 
    TF1 *f1 = new TF1("f1","pol0",0,1);
    hpc2->Fit("f1");
    hpc2->Draw("E");
 
-   std::cout<< "CHI2 = " << f1->GetChisquare() << "/" << f1->GetNDF() << 
-      ", " << f1->GetProb() << std::endl;
-
-   TCanvas *canvas3 = new TCanvas();
-   psig->SetMinimum(0);
-   psig->SetMaximum(4);
-   psig->Draw();
-   psig->GetXaxis()->SetTitle("n vertices");
-   psig->GetYaxis()->SetTitle("average S_{E}");
+   canvas->cd(2);
+   pvert->SetMinimum(0);
+   pvert->SetMaximum(4);
+   pvert->Draw();
+   pvert->GetXaxis()->SetTitle("N Vertices");
+   pvert->GetYaxis()->SetTitle("Average S_{E}");
 
    TF1 *f2 = new TF1("f2","pol0",0,15);
-   psig->Fit("f2");
-   psig->Draw("E");
+   pvert->Fit("f2");
+   pvert->Draw("E");
 
-   TCanvas *canvas4 = new TCanvas();
-   put->SetLineWidth(2);
-   put->Draw();
+   canvas->cd(3);
+   pqt->Draw();
+   pqt->GetXaxis()->SetTitle("q_{T} (GeV)");
+   pqt->GetYaxis()->SetTitle("Average S_{E}");
 
-   TF1 *f3 = new TF1("f3","pol0",0,150);
-   f3->SetParameter(0,1.0);
-   f3->SetLineColor(2);
-   f3->Draw("same");
+   TF1 *f3 = new TF1("f3","pol0",0,100);
+   pqt->Fit("f3");
+   pqt->Draw("E");
 
-   std::cout<< "CHI2 = " << f2->GetChisquare() << "/" << f2->GetNDF() << 
+
+   for(int n=0; n < 388712; n++){
+      double deta = hmatch_deta->GetRandom();
+      double dphi = hmatch_dphi->GetRandom();
+      hmatch_dR_rand->Fill( TMath::Sqrt( deta*deta + dphi*dphi ) );
+   } 
+
+   TCanvas *canvas2 = new TCanvas("canvas2","canvas2",1440,800);
+   canvas2->Divide(3,2);
+   canvas2->cd(1);
+   hmatch_dR->SetMinimum(0.1);
+   hmatch_dR->Draw();
+   hmatch_dR2->SetLineColor(2);
+   hmatch_dR2->Draw("same");
+   hmatch_dR3->SetLineColor(4);
+   hmatch_dR3->Draw("same");
+   hmatch_dR_bkg->SetLineColor(3);
+   hmatch_dR_bkg->Scale(2.0);
+   hmatch_dR_bkg->Draw("same");
+   hmatch_dR_rand->SetLineColor(6);
+   hmatch_dR_rand->Draw("same");
+   canvas2->cd(2);
+   hmatch_deta->SetMinimum(0.1);
+   hmatch_deta->Draw();
+   hmatch_deta2->SetLineColor(2);
+   hmatch_deta2->Draw("same");
+   hmatch_deta3->SetLineColor(4);
+   hmatch_deta3->Draw("same");
+   canvas2->cd(3);
+   hmatch_dphi->SetMinimum(0.1);
+   hmatch_dphi->Draw();
+   hmatch_dphi2->SetLineColor(2);
+   hmatch_dphi2->Draw("same");
+   hmatch_dphi3->SetLineColor(4);
+   hmatch_dphi3->Draw("same");
+   canvas2->cd(4);
+   hmatch_deta_dphi->Draw("colz");
+   canvas2->cd(5);
+   hmatch_deta_dphi2->Draw("colz");
+   canvas2->cd(6);
+   hmatch_deta_dphi3->Draw("colz");
+
+   TCanvas *canvas3 = new TCanvas("canvas3","canvas3",700,700);
+   canvas3->cd();
+   hpull_alljets->Draw();
+   /*
+   hmatch_dpt->Draw();
+   hmatch_dpt2->SetLineColor(2);
+   hmatch_dpt2->Draw("same");
+   hmatch_dpt3->SetLineColor(4);
+   hmatch_dpt3->Draw("same");
+*/
+   TCanvas *canvas4 = new TCanvas("canvas4","canvas4",700,700);
+   canvas4->cd();
+   hmatch_dR->Draw();
+   hmatch_dR2->Draw("same");
+   hmatch_dR3->Draw("same");
+   hmatch_dR_bkg->Draw("same");
+   hmatch_dR_rand->Draw("same");
+
+   TCanvas *canvas5 = new TCanvas("canvas5","canvas5",1440,800);
+   canvas5->Divide(3,2);
+   canvas5->cd(1);
+   hpull_pt10->Draw();
+   canvas5->cd(2);
+   hpull_pt10_barrel->Draw();
+   canvas5->cd(3);
+   hpull_pt10_endcap->Draw();
+   canvas5->cd(4);
+   hpull_pt3->Draw();
+   canvas5->cd(5);
+   hpull_pt3_barrel->Draw();
+   canvas5->cd(6);
+   hpull_pt3_endcap->Draw();
+
+   std::cout << std::endl;
+
+   std::cout << "P(chi2): CHI2 = " << f1->GetChisquare() << "/" << f1->GetNDF() << 
+      ", " << f1->GetProb() << std::endl;
+
+   std::cout << "N Vert: CHI2 = " << f2->GetChisquare() << "/" << f2->GetNDF() << 
       ", " << f2->GetProb() << std::endl;
+
+   std::cout << "q_T: CHI2 = " << f3->GetChisquare() << "/" << f3->GetNDF() <<
+      ", " << f3->GetProb() << std::endl;
 
 }
 
@@ -287,8 +403,17 @@ double Min2LL(const double *x){
 
       //implement jet energy correction for Type-I MET
       std::vector<float> pptcorr;
+      std::vector<float> pptcorr2;
       for(int i=0; i<n; i++){
-         pptcorr.push_back( ppt[i]*(jetcorrL123[i] + 1 - jetcorrL1[i]) );
+         if( ppt[i] > 10 ){
+            pptcorr.push_back( ppt[i]*(jetcorrL123[i] + 1 - jetcorrL1[i]) );
+            pptcorr2.push_back( ppt[i]*(jetcorrL123[i]) );
+         }else{
+            //pptcorr.push_back( ppt[i]*jetcorrL123[i] );
+            //pptcorr.push_back( ppt[i]*(jetcorrL123[i] + 1 - jetcorrL1[i]) );
+            pptcorr.push_back( ppt[i] );
+            pptcorr2.push_back( ppt[i]*(jetcorrL123[i]) );
+         }
       }
 
       //jets 6 GeV and above, scale 2010 resolutions
@@ -303,7 +428,7 @@ double Min2LL(const double *x){
          double dpt=0;
          double dph=0;
 
-         if(ppt[i]>10){
+         if(ppt[i]*jetcorrL123[i]>10){
             int index=-1;
             if(feta<0.5) index=0;
             else if(feta<1.1) index=1;
@@ -311,8 +436,8 @@ double Min2LL(const double *x){
             else if(feta<2.3) index=3;
             else index=4;
 
-            dpt = x[index]*ppt[i]*dpt_(ppt[i], eta[i]);
-            dph = ppt[i]*dph_(ppt[i], eta[i]);
+            dpt = x[index]*ppt[i]*jetcorrL123[i]*dpt_(ppt[i]*jetcorrL123[i], eta[i]);
+            dph = ppt[i]*jetcorrL123[i]*dph_(ppt[i]*jetcorrL123[i], eta[i]);
          }
          else{
             int index=-1;
@@ -368,7 +493,7 @@ double Min2LL(const double *x){
       if(FillTree && sig<9.0) ttt->Fill();
       if(FillHist){
          hpc2->Fill(TMath::Prob(sig, 2));
-         psig->Fill(nv-1, sig);
+         pvert->Fill(nv-1, sig);
 
          hqt->Fill(qt);
          pqt->Fill(qt, sig);
@@ -376,10 +501,116 @@ double Min2LL(const double *x){
          hut_par->Fill(ut_par);
          hut_perp->Fill(ut_perp);
          put->Fill(qt, -ut_par/qt);
+
+         for(int i=0; i < n; i++){
+            double deta = eta[i] - geneta[i];
+            double dphi = TVector2::Phi_mpi_pi( phi[i] - genphi[i] );
+            double dR = TMath::Sqrt(deta*deta + dphi*dphi);
+            
+            hmatch_dR->Fill( dR );
+            hmatch_deta->Fill( fabs(deta) );
+            hmatch_dphi->Fill( fabs(dphi) );
+            hmatch_deta_dphi->Fill( fabs(dphi), fabs(deta) );
+            if( pptcorr[i] > 10 ){
+               hmatch_dR2->Fill( dR );
+               hmatch_deta2->Fill( fabs(deta) );
+               hmatch_dphi2->Fill( fabs(dphi) );
+               hmatch_deta_dphi2->Fill( fabs(dphi), fabs(deta) );
+            }
+            if( pptcorr[i] > 25 ){
+               hmatch_dR3->Fill( dR );
+               hmatch_deta3->Fill( fabs(deta) );
+               hmatch_dphi3->Fill( fabs(dphi) );
+               hmatch_deta_dphi3->Fill( fabs(dphi), fabs(deta) );
+            }
+
+            if( dR < 0.25 /*and pptcorr[i] > 25*/ and genppt[i] != 0 and pptcorr[i] != 0
+                  and ppt[i] != 0 and pptcorr2[i] != 0){
+               hmatch_dpt->Fill( pptcorr[i] / genppt[i] );
+               hmatch_dpt2->Fill( ppt[i] / genppt[i] );
+               hmatch_dpt3->Fill( pptcorr2[i] / genppt[i] );
+            }
+
+            float feta = fabs(eta[i]);
+            double dpt = 0;
+            double dph = 0;
+            if(ppt[i]>10){
+               int index=-1;
+               if(feta<0.5) index=0;
+               else if(feta<1.1) index=1;
+               else if(feta<1.7) index=2;
+               else if(feta<2.3) index=3;
+               else index=4;
+
+               dpt = x[index]*ppt[i]*dpt_(ppt[i], eta[i]);
+               dph = ppt[i]*dph_(ppt[i], eta[i]);
+            }
+            else if (ppt[i] > 3){
+               int index=-1;
+               if(feta<2.4) index=0;
+               else if(feta<3) index=1;
+               else index=2;
+               dpt = x[5+index]*sqrt(ppt[i]);
+               dph = 0;
+            }
+
+            if( dR < 0.3 and dpt > 0 ){
+               hpull_alljets->Fill( (pptcorr[i] - genppt[i]) / dpt );
+               if( ppt[i] > 10 )
+                  hpull_pt10->Fill( (pptcorr[i] - genppt[i]) / dpt );
+               if( ppt[i] > 3 and ppt[i] <= 10 )
+                  hpull_pt3->Fill( (pptcorr[i] - genppt[i]) / dpt );
+               if( ppt[i] > 10  and feta <= 3.0 )
+                  hpull_pt10_barrel->Fill( (pptcorr[i] - genppt[i]) / dpt );
+               if( ppt[i] > 10 and feta > 3.0 )
+                  hpull_pt10_endcap->Fill( (pptcorr[i] - genppt[i]) / dpt );
+               if( ppt[i] > 3 and ppt[i] <= 10 and feta <= 3.0 )
+                  hpull_pt3_barrel->Fill( (pptcorr[i] - genppt[i]) / dpt );
+               if( ppt[i] > 3 and ppt[i] <= 10 and feta > 3.0 )
+                  hpull_pt3_endcap->Fill( (pptcorr[i] - genppt[i]) / dpt );
+            }
+         }
+
+         for(int i=0; i < genbkg_size; i++){
+            double deta = eta[i] - genbkg_eta[i];
+            double dphi = TVector2::Phi_mpi_pi( phi[i] - genbkg_phi[i] );
+            double dR = TMath::Sqrt(deta*deta + dphi*dphi);
+            hmatch_dR_bkg->Fill( dR );
+         }
       }
 
       m2ll += sig+log(det);
    }
 
    return m2ll;
+}
+
+void MatchMCjets(){
+
+   // loop through reco jets
+   for( int ireco=0; ireco < nj; ireco++){
+
+      int matchIndex = -1;
+      double dRtemp = 1000;
+
+      // loop through genjets
+      for(int igen=0; igen < gennj; igen++){
+
+         double dphi = TVector2::Phi_mpi_pi( jph[ireco] - genph[igen] );
+         double deta = jta[ireco] - genta[igen];
+         double dR = TMath::Sqrt( deta*deta + dphi*dphi );
+
+         if( dR < dRtemp ){ 
+            dRtemp = dR;
+            matchIndex = igen;
+         }
+
+      }
+
+      genppt[ireco] = genpt[matchIndex];
+      geneta[ireco] = genta[matchIndex];
+      genphi[ireco] = genph[matchIndex];
+
+   }
+
 }
