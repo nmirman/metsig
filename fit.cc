@@ -405,7 +405,7 @@ double Min2LL(const double *x){
       std::vector<float> pptcorr;
       std::vector<float> pptcorr2;
       for(int i=0; i<n; i++){
-         if( ppt[i] > 10 ){
+         if( ppt[i]*jetcorrL123[i] > 10 ){
             pptcorr.push_back( ppt[i]*(jetcorrL123[i] + 1 - jetcorrL1[i]) );
             pptcorr2.push_back( ppt[i]*(jetcorrL123[i]) );
          }else{
