@@ -67,7 +67,7 @@ TH1D *hpull_pt3 = new TH1D("hpull_pt3","Pull Distribution, Jet 3 < p_{T} < 10 Ge
 TH1D *hpull_pt10_barrel = new TH1D("hpull_pt10_barrel","Pull Distribution, Jet p_{T} > 10 GeV, |#eta| < 3",100,-10,10);
 TH1D *hpull_pt10_endcap = new TH1D("hpull_pt10_endcap","Pull Distribution, Jet p_{T} > 10 GeV, |#eta| > 3",100,-10,10);
 TH1D *hpull_pt3_barrel = new TH1D("hpull_pt3_barrel","Pull Distribution, Jet 3 < p_{T} < 10 GeV, |#eta| < 3",100,-10,10);
-TH1D *hpull_pt3_endcap = new TH1D("hpull_pt3_endcap","Pull Distribution, Jet 3 < p_{T} < 10 GeV, |#eta| > 3",100,-10,10/*-30000,30000*/);
+TH1D *hpull_pt3_endcap = new TH1D("hpull_pt3_endcap","Pull Distribution, Jet 3 < p_{T} < 10 GeV, |#eta| > 3",100,-10,10);
 
 bool FillTree=false;
 bool FillHist=false;
@@ -126,7 +126,7 @@ void fit(){
 
    gROOT->Reset();
 
-   TFile *f = new TFile("Zmumu_ntuple_20121005.root");
+   TFile *f = new TFile("Zmumu_MC_20121005.root");
    TTree *treetuple_MC = (TTree*)f->Get("events");
    treetuple_MC->SetBranchAddress("v_size", &nv);
    treetuple_MC->SetBranchAddress("met_et",&met);
@@ -204,6 +204,10 @@ void fit(){
       treefit_MC->Fill();
    }
 
+   FillTree=false;
+   FillHist=false;
+   FirstFit=true;
+
    ROOT::Math::Minimizer* min = ROOT::Math::Factory::CreateMinimizer("Minuit2", "Migrad");
    min->SetTolerance(0.001);
    min->SetStrategy(0);
@@ -215,12 +219,12 @@ void fit(){
    min->SetVariable(2, "a3", 1.5, 0.01);
    min->SetVariable(3, "a4", 1.5, 0.01);
    min->SetVariable(4, "a5", 1.5, 0.01);
-   min->SetVariable(5, "k0", 1, 0.01);
-   min->SetVariable(6, "k1", 1, 0.01);
-   min->SetVariable(7, "k2", 1, 0.01);
-   min->SetVariable(8, "N1", 4, 0.01);
+   min->SetVariable(5, "k0", 1.0, 0.01);
+   min->SetVariable(6, "k1", 1.0, 0.01);
+   min->SetVariable(7, "k2", 1.0, 0.01);
+   min->SetVariable(8, "N1", 4.0, 0.01);
    min->SetVariable(9, "S1", 0.5, 0.01);
-   min->SetVariable(10,"N2", 4, 0.01);
+   min->SetVariable(10,"N2", 4.0, 0.01);
    min->SetVariable(11,"S2", 0.5, 0.01);
    //fit, first round
    min->Minimize();				
@@ -346,20 +350,23 @@ double Min2LL(const double *x){
             dpt = x[index]*ppt[i]*jetcorrL123[i]*dpt_(ppt[i]*jetcorrL123[i], eta[i]);
             dph = ppt[i]*jetcorrL123[i]*dph_(ppt[i]*jetcorrL123[i], eta[i]);
          }
-         else{
+         else if(ppt[i]*jetcorrL123[i]>0){
             int index=-1;
             if(feta<2.4) index=0;
             else if(feta<3) index=1;
             else index=2;
             dpt = x[5+index]*sqrt(ppt[i]);
             dph = 0;
+         }else{
+            dpt = 0;
+            dph = 0;
          }
 
-         double dtreetuple_MC = dpt*dpt;
+         double dtt = dpt*dpt;
          double dff = dph*dph;
-         cxx += dtreetuple_MC*c*c+ dff*s*s;
-         cxy += c*s*(dtreetuple_MC-dff);
-         cyy += dff*c*c+ dtreetuple_MC*s*s;
+         cxx += dtt*c*c+ dff*s*s;
+         cxy += c*s*(dtt-dff);
+         cyy += dff*c*c+ dtt*s*s;
       }
 
       //muons with 0 resolutions
@@ -372,12 +379,12 @@ double Min2LL(const double *x){
       mex-=lpt*cos(lph);
       mey-=lpt*sin(lph);
 
-      double ctreetuple_MC = x[8]*x[8]+x[9]*x[9]*lst;
+      double ctt = x[8]*x[8]+x[9]*x[9]*lst;
       double cff = x[10]*x[10]+x[11]*x[11]*lst;
 
-      cxx+=ctreetuple_MC*cos(lph)*cos(lph)+cff*sin(lph)*sin(lph);
-      cxy+=cos(lph)*sin(lph)*(ctreetuple_MC-cff);
-      cyy+=cff*cos(lph)*cos(lph)+ctreetuple_MC*sin(lph)*sin(lph);
+      cxx+=ctt*cos(lph)*cos(lph)+cff*sin(lph)*sin(lph);
+      cxy+=cos(lph)*sin(lph)*(ctt-cff);
+      cyy+=cff*cos(lph)*cos(lph)+ctt*sin(lph)*sin(lph);
 
       double det = cxx*cyy-cxy*cxy;
       double nxx = cyy/det;
@@ -438,19 +445,19 @@ double Min2LL(const double *x){
             }
 
             if( dR < 0.3 and dpt > 0 ){
-               hpull_alljets->Fill( (pptcorr[i] - genppt[i]) / dpt );
+               hpull_alljets->Fill( (pptcorr_L123[i] - genppt[i]) / dpt );
                if( pptcorr_L123[i] > JETPT_HIGH )
-                  hpull_pt10->Fill( (pptcorr[i] - genppt[i]) / dpt );
+                  hpull_pt10->Fill( (pptcorr_L123[i] - genppt[i]) / dpt );
                if( pptcorr_L123[i] > JETPT_LOW and pptcorr_L123[i] <= JETPT_HIGH )
-                  hpull_pt3->Fill( (pptcorr[i] - genppt[i]) / dpt );
+                  hpull_pt3->Fill( (pptcorr_L123[i] - genppt[i]) / dpt );
                if( pptcorr_L123[i] > JETPT_HIGH  and feta <= JETPT_LOW )
-                  hpull_pt10_barrel->Fill( (pptcorr[i] - genppt[i]) / dpt );
+                  hpull_pt10_barrel->Fill( (pptcorr_L123[i] - genppt[i]) / dpt );
                if( pptcorr_L123[i] > JETPT_HIGH and feta > JETPT_LOW )
-                  hpull_pt10_endcap->Fill( (pptcorr[i] - genppt[i]) / dpt );
+                  hpull_pt10_endcap->Fill( (pptcorr_L123[i] - genppt[i]) / dpt );
                if( pptcorr_L123[i] > JETPT_LOW and pptcorr_L123[i] <= JETPT_HIGH and feta <= 3.0 )
-                  hpull_pt3_barrel->Fill( (pptcorr[i] - genppt[i]) / dpt );
+                  hpull_pt3_barrel->Fill( (pptcorr_L123[i] - genppt[i]) / dpt );
                if( pptcorr_L123[i] > JETPT_LOW and pptcorr_L123[i] <= JETPT_HIGH and feta > 3.0 )
-                  hpull_pt3_endcap->Fill( (pptcorr[i] - genppt[i]) / dpt );
+                  hpull_pt3_endcap->Fill( (pptcorr_L123[i] - genppt[i]) / dpt );
             }
          }
       }
