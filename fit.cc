@@ -180,13 +180,12 @@ void fit(){
       lst=0;
       for(int i=0; i<nj; ++i){
 
-         jetcorrL123[i] = pfj_l1l2l3[i];
-         jetcorrL1[i] = pfj_l1[i];
-
          if(jpt[i]>JETPT_LOW){
             ppt[n]=jpt[i];
             phi[n]=jph[i];
             eta[n]=jta[i];
+            jetcorrL123[n] = pfj_l1l2l3[i];
+            jetcorrL1[n] = pfj_l1[i];
             ++n;
          }
          else{
