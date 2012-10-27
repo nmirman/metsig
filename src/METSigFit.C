@@ -47,7 +47,7 @@ void Fitter::ReadNtuple(const char* filename, bool isMC){
    float genj_phi[1000];
    float genj_eta[1000];
 
-   TFile *file = new TFile("/eos/uscms/store/user/nmirman/Zmumu/Zmumu_ntuple_20121005.root");
+   TFile *file = new TFile(filename);
    TTree *tree = (TTree*)file->Get("events");
    tree->SetBranchAddress("v_size", &v_size);
    tree->SetBranchAddress("met_et", &met_et);
