@@ -6,7 +6,7 @@ int main(){
    std::cout << "Hello World 1" << std::endl;
    
    Fitter fitter;
-   fitter.ReadNtuple("Zmumu_MC_20121005.root",false);
+   fitter.ReadNtuple("/eos/uscms/store/user/nmirman/Zmumu/Zmumu_ntuple_20121005.root",true);
 
    std::cout << "Hello World 2" << std::endl;
 

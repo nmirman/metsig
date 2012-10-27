@@ -95,5 +95,6 @@ class Fitter{
 
       std::vector<event> eventvec_MC;
       std::vector<event> eventvec_data;
+     
 };
 #endif
