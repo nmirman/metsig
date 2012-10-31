@@ -28,4 +28,3 @@ obj/METSigFit.o : METSigFit.C METSigFit.h
 	$(COMPILE) src/METSigFit.C -o obj/METSigFit.o
 
 .PHONY : clean
-

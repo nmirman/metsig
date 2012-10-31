@@ -10,7 +10,6 @@
 
 class Fitter{
    public:
-      int countmin;
       struct event {
 
          int nvertices;
@@ -48,7 +47,7 @@ class Fitter{
       std::vector<event> eventvec_MC;
       std::vector<event> eventvec_data;
      
-      Fitter() : gMinuit(0), fFunc(0) {countmin=0;}
+      Fitter() : gMinuit(0), fFunc(0) {}
       virtual ~Fitter() { if (gMinuit) delete gMinuit; if (fFunc) delete fFunc; }
 
       void ReadNtuple(const char[], bool);

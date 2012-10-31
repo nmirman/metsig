@@ -17,7 +17,7 @@
 #include <iostream>
 #include <iomanip>
 
-#define JETPT_HIGH 20.0
+#define JETPT_HIGH 30.0
 #define JETPT_LOW 10.0
 
 const float pi = TMath::Pi();
@@ -55,7 +55,6 @@ float lpt;
 float lph;
 float lst;
 
-int countmin = 0;
 
 TH1D *hpc2 = new TH1D("hpc2", "P(#chi^{2}) Distribution", 100, 0, 1);
 TProfile *pvert = new TProfile("pvert", "Significance vs N Vert", 15, 0, 15);
@@ -183,7 +182,6 @@ void fit(){
       float lpy=0;
       lst=0;
 
-      int countjets = 0;
       for(int i=0; i<nj; ++i){
 
          if(jpt[i]>JETPT_LOW){
@@ -199,10 +197,8 @@ void fit(){
             lpy+=jpt[i]*sin(jph[i]);
             lst+=jpt[i];
          }
-         if(jpt[i]*pfj_l1l2l3[i] > JETPT_HIGH and jta[i] > 2.3) countjets++;
 
       }
-      //if(countjets > 1 ) std::cout << ev << ": " << countjets << std::endl;
       lpt = sqrt(lpx*lpx+lpy*lpy);
       lph = atan2(lpy, lpx);
       
@@ -247,11 +243,6 @@ void fit(){
    FillHist=true;
    Min2LL(min->X());
 
-   // test area
-   const double parameter [12] = { 1.5, 1.5, 1.5, 1.5, 5.0,
-                                   1.0, 1.0, 1.0,
-                                   4.0, 0.5, 4.0, 0.5 };
-   std::cout << "M2LL = " << Min2LL(parameter) << std::endl;
 
    TCanvas *canvas = new TCanvas("canvas","canvas",1440,500);
    canvas->Divide(3,1);
@@ -318,9 +309,6 @@ double Min2LL(const double *x){
 
    for(Long64_t ev=0; ev<nevets; ++ev){
 
-      bool fcout = false;//(countmin == 0 and ev < 10);
-      bool fcout2 = false;//(countmin == 0);
-
       if(FirstFit||FillHist) treefit_MC->GetEntry(ev);
       else treefit_MC_coresig->GetEntry(ev);
 
@@ -343,7 +331,6 @@ double Min2LL(const double *x){
          }
       }
 
-      int countjet = 0;
       //scale 2010 resolutions
       for(int i=0; i<n; ++i){
          float feta = fabs(eta[i]);
@@ -356,20 +343,13 @@ double Min2LL(const double *x){
          double dpt=0;
          double dph=0;
 
-         if(false and ev == 410){
-            std::cout << " ### " << ppt[i] << " " << ppt[i]*jetcorrL123[i] << std::endl;
-         }
-
          if(pptcorr_L123[i]>JETPT_HIGH){
             int index=-1;
             if(feta<0.5) index=0;
             else if(feta<1.1) index=1;
             else if(feta<1.7) index=2;
             else if(feta<2.3) index=3;
-            else{ 
-               index=4;
-            }
-            countjet++;
+            else index=4;
 
             dpt = x[index]*pptcorr_L123[i]*dpt_(pptcorr_L123[i], eta[i]);
             dph = pptcorr_L123[i]*dph_(pptcorr_L123[i], eta[i]);
@@ -392,12 +372,6 @@ double Min2LL(const double *x){
          cxy += c*s*(dtt-dff);
          cyy += dff*c*c + dtt*s*s;
 
-         if( fcout and i == 0 ){
-            std::cout << ev << " ########## PT: " << ppt[i] << " " << pptcorr[i] << " "
-               << pptcorr[i]*c << " " << pptcorr[i]*s << std::endl;
-            std::cout << ev << " ########## DPT: " << dpt << " " << dph << " " << std::endl;
-            std::cout << ev << " ########## COV: " << cxx << " " << cxy << " " << cyy << std::endl;
-         }
       }
 
       //muons with 0 resolutions
@@ -417,26 +391,12 @@ double Min2LL(const double *x){
       cxy+=cos(lph)*sin(lph)*(ctt-cff);
       cyy+=cff*cos(lph)*cos(lph)+ctt*sin(lph)*sin(lph);
 
-      if( fcout ){
-         std::cout << ev << " ########## MU: " << mpt[0] << " " << mpt[1] << " "
-            << mph[0] << " " << mph[1] << std::endl;
-         std::cout << ev << " ########## PJET: " << lst << " " << lpt << " " << lph << std::endl;
-      }
-
       double det = cxx*cyy-cxy*cxy;
       double nxx = cyy/det;
       double nxy =-cxy/det;
       double nyy = cxx/det;
 
       double sig=mex*mex*nxx + 2*mex*mey*nxy +mey*mey*nyy;
-
-      if( fcout ){
-         std::cout << ev << " ########## SIG: " << sig << " " << det << std::endl;
-      }
-      //if( countjet > 2 ) std::cout << ev << ": " << countjet << " " << sig + log(det) << std::endl;
-      //fflush(stdout);
-
-      //std::cout << ev << ": " << countjet << std::endl;
 
       double qtx = mpt[0]*cos(mph[0])+mpt[1]*cos(mph[1]);
       double qty = mpt[0]*sin(mph[0])+mpt[1]*sin(mph[1]);
@@ -509,15 +469,8 @@ double Min2LL(const double *x){
 
       m2ll += sig+log(det);
 
-      if( fcout2 ){
-         std::cout << std::setprecision(20)
-            << ev << " + " << sig + log(det) << " ---> " << m2ll << std::endl;
-         std::cout << std::setprecision(6);
-      }
-
    }
 
-   countmin++;
    return m2ll;
 }
 

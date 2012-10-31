@@ -1,4 +1,3 @@
-#include "TRandom3.h"
 #include "TH1.h"
 #include "TH2.h"
 #include "TF1.h"
@@ -9,20 +8,19 @@
 #include "TProfile.h"
 #include "TROOT.h"
 #include "TVector2.h"
+#include "TRandom3.h"
 
 #include <cmath>
 #include <iostream>
 #include <iomanip>
 
-//#include "Math/Minimizer.h"
-//#include "Math/Factory.h"
 #include "Math/Functor.h"
 #include "Minuit2/Minuit2Minimizer.h"
 
 #include "METSigFit.h"
 
 #define JETPT_LOW 10.0
-#define JETPT_HIGH 20.0
+#define JETPT_HIGH 30.0
 
 const double Fitter::sigmaPt[10][4]={{-0.349206, 0.297831, 0, 0.471121},
    {-0.499735, 0.336391, 0, 0.430689},
@@ -114,7 +112,6 @@ void Fitter::ReadNtuple(const char* filename, bool isMC){
          evtemp.muon_phi.push_back( mu_phi[i] );
       }
       // jets
-      int countjets = 0;
       for( int i=0; i < pfj_size; i++){
 
          if( pfj_pt[i] > JETPT_LOW ){
@@ -140,10 +137,8 @@ void Fitter::ReadNtuple(const char* filename, bool isMC){
             pjet_py_temp += pfj_pt[i]*sin(pfj_phi[i]);
 
          }
-         if(pfj_pt[i]*pfj_l1l2l3[i] > JETPT_HIGH and pfj_eta[i] > 2.3) countjets++;
 
       } // pfj loop
-      //if(countjets > 1) std::cout << ev << ": " << countjets << std::endl;
 
       // fill pseudojet quantities
       evtemp.pjet_scalpt = pjet_scalpt_temp;
@@ -230,22 +225,15 @@ void Fitter::RunMinimizer(std::vector<event>& eventref_temp){
 
 double Fitter::Min2LL(const double *x){
 
-   // load significance values into eventref
+   // load significance values into eventvec
    FindSignificance(x, *eventvecPnt);
 
    // event loop
    double m2ll = 0;
    for( std::vector<event>::iterator ev = eventvecPnt->begin(); ev < eventvecPnt->end(); ev++){
-      int evIndex = int(ev - eventvecPnt->begin());
       m2ll += ev->sig + log(ev->det);
-      if(countmin == -1){
-         std::cout << std::setprecision(20)
-            << evIndex << " + " << ev->sig + log(ev->det) << " ---> " << m2ll << std::endl;
-         std::cout << std::setprecision(6);
-      }
    }
 
-   countmin++;
    return m2ll;
 }
 
@@ -254,9 +242,6 @@ void Fitter::FindSignificance(const double *x, std::vector<event>& eventref_temp
    // event loop
    for( std::vector<event>::iterator ev = eventref_temp.begin(); ev < eventref_temp.end(); ev++){
 
-      int evIndex = int( ev - eventref_temp.begin() );
-      bool fcout = false;//(countmin == 0 and evIndex < 10);
-
       double met_x=0;
       double met_y=0;
       double cov_xx=0;
@@ -264,7 +249,6 @@ void Fitter::FindSignificance(const double *x, std::vector<event>& eventref_temp
       double cov_yy=0;
 
       // clustered jets
-      int countjet = 0;
       for(int i=0; i < int(ev->jet_pt.size()); i++){
 
          float feta = fabs(ev->jet_eta[i]);
@@ -277,10 +261,6 @@ void Fitter::FindSignificance(const double *x, std::vector<event>& eventref_temp
          double dpt=0;
          double dph=0;
 
-         if(false and evIndex == 410){
-            std::cout << " ### " << ev->jet_pt[i] << " " << ev->jet_ptL123[i] << std::endl;
-         }
-
          if( ev->jet_ptL123[i] > JETPT_HIGH ){
             int index=-1;
             if(feta<0.5) index=0;
@@ -290,7 +270,6 @@ void Fitter::FindSignificance(const double *x, std::vector<event>& eventref_temp
             else{
                index=4;
             }
-            countjet++;
 
             // CMS 2010 Resolutions -- parameterized by L123 corrected pt
             dpt = x[index] * (ev->jet_ptL123[i]) * dpt_(ev->jet_ptL123[i], ev->jet_eta[i]);
@@ -316,15 +295,6 @@ void Fitter::FindSignificance(const double *x, std::vector<event>& eventref_temp
          cov_xy += (dtt-dff)*cos*sin;
          cov_yy += dff*cos*cos + dtt*sin*sin;
 
-         if( fcout and i == 0 ){
-            std::cout << evIndex << " ########## PT: " << ev->jet_pt[i] << " "
-               << ev->jet_ptT1[i] << " " << ev->jet_ptT1[i]*cos << " " 
-               << ev->jet_ptT1[i]*sin << std::endl;
-            std::cout << evIndex << " ########## DPT: " << dpt << " " << dph << " " << std::endl;
-            std::cout << evIndex << " ########## COV: " << cov_xx << " " << cov_xy << " "
-               << cov_yy << std::endl;
-         }
-
       }
 
       // muons -- assume zero resolutions
@@ -347,13 +317,6 @@ void Fitter::FindSignificance(const double *x, std::vector<event>& eventref_temp
       cov_xy += (ctt-cff)*cos*sin;
       cov_yy += cff*cos*cos + ctt*sin*sin;  
 
-      if( fcout ){
-         std::cout << evIndex << " ########## MU: " << ev->muon_pt[0] << " " << ev->muon_pt[1] << " "
-            << ev->muon_phi[0] << " " << ev->muon_phi[1] << std::endl;
-         std::cout << evIndex << " ########## PJET: " << ev->pjet_scalpt << " " 
-            << ev->pjet_vectpt << " " << ev->pjet_phi << std::endl;
-      }
-
       double det = cov_xx*cov_yy - cov_xy*cov_xy;
 
       double ncov_xx = cov_yy / det;
@@ -362,16 +325,8 @@ void Fitter::FindSignificance(const double *x, std::vector<event>& eventref_temp
 
       double sig = met_x*met_x*ncov_xx + 2*met_x*met_y*ncov_xy + met_y*met_y*ncov_yy;
 
-      if( fcout ){
-         std::cout << evIndex << " ########## SIG: " << sig << " " << det << std::endl;
-      }
-
       ev->sig = sig;
       ev->det = det;
-      if( false and countjet > 2 ) std::cout << evIndex << ": " << countjet << " "
-         << ev->sig + log(ev->det) << std::endl;
-      
-      //std::cout << evIndex << ": " << countjet << std::endl;
    }
 }
 
