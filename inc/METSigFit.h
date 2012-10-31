@@ -10,6 +10,7 @@
 
 class Fitter{
    public:
+      int countmin;
       struct event {
 
          int nvertices;
@@ -34,9 +35,9 @@ class Fitter{
          std::vector<double> jet_matchdR;
 
          // pseudojet
-         double pjet_pt; // vector sum of unclustered energy
          double pjet_phi;
-         double pjet_ht; // scalar sum of unclustered energy
+         double pjet_vectpt;
+         double pjet_scalpt;
 
          std::vector<double> genjet_pt;
          std::vector<double> genjet_phi;
@@ -46,14 +47,13 @@ class Fitter{
 
       std::vector<event> eventvec_MC;
       std::vector<event> eventvec_data;
-      std::vector<event>* eventvecPnt;
      
-      Fitter() : gMinuit(0), fFunc(0) {}
+      Fitter() : gMinuit(0), fFunc(0) {countmin=0;}
       virtual ~Fitter() { if (gMinuit) delete gMinuit; if (fFunc) delete fFunc; }
 
       void ReadNtuple(const char[], bool);
       void RunMinimizer(std::vector<event>&);
-      void CalcSignificance(const double*, std::vector<event>&);
+      void FindSignificance(const double*, std::vector<event>&);
 
    private:
       double Min2LL(const double*);
@@ -61,6 +61,8 @@ class Fitter{
 
       ROOT::Minuit2::Minuit2Minimizer* gMinuit;
       ROOT::Math::IMultiGenFunction* fFunc;
+
+      std::vector<event>* eventvecPnt;
 
       //jet resolutions from 2010
       static const double sigmaPt[10][4];

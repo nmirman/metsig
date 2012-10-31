@@ -126,7 +126,7 @@ void fit(){
 
    gROOT->Reset();
 
-   TFile *f = new TFile("Zmumu_MC_20121005.root");
+   TFile *f = new TFile("/eos/uscms/store/user/nmirman/Zmumu/Zmumu_ntuple_20121005.root");
    TTree *treetuple_MC = (TTree*)f->Get("events");
    treetuple_MC->SetBranchAddress("v_size", &nv);
    treetuple_MC->SetBranchAddress("met_et",&met);
