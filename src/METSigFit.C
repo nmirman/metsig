@@ -67,7 +67,7 @@ const double Fitter::sigmaPhi[10][5]={{926.978, 2.52747, 0.0304001, -926.224, -1
    {    259.189,   0.00132792,    -0.311411,  -258.647,            0}};
 
 void Fitter::ReadNtuple(const char* filename, std::vector<event>& eventref_temp, const bool isMC){
-   std::cout << "ReadNtuple -->" << std::endl;
+   std::cout << "---> ReadNtuple" << std::endl;
 
    int v_size;
    float met_et;
@@ -113,7 +113,7 @@ void Fitter::ReadNtuple(const char* filename, std::vector<event>& eventref_temp,
       tree->SetBranchAddress("genj_eta", genj_eta);
    }
 
-   std::cout << "  fill event vector" << std::endl;
+   std::cout << " -----> fill event vector" << std::endl;
 
    for( int ev=0; ev<tree->GetEntries(); ev++){
       tree->GetEntry(ev);
@@ -181,11 +181,10 @@ void Fitter::ReadNtuple(const char* filename, std::vector<event>& eventref_temp,
    } // event loop
 
    delete file;
-   std::cout << "<--" << std::endl;
 }
 
 void Fitter::RunMinimizer(std::vector<event>& eventref_temp){
-   std::cout << "RunMinimizer -->" << std::endl;
+   std::cout << "---> RunMinimizer" << std::endl;
 
    gMinuit = new ROOT::Minuit2::Minuit2Minimizer ( ROOT::Minuit2::kMigrad );
    gMinuit->SetTolerance(0.001);
@@ -208,12 +207,12 @@ void Fitter::RunMinimizer(std::vector<event>& eventref_temp){
    gMinuit->SetVariable(11,"S2", 0.5, 0.01);
 
    // set event vector and minimize
-   std::cout << "  minimize, first pass" << std::endl;
+   std::cout << " -----> minimize, first pass" << std::endl;
    eventvecPnt = &eventref_temp;
    gMinuit->Minimize();
 
    // new event vector with core of significance
-   std::cout << "  build core sig vector" << std::endl;
+   std::cout << " -----> build core sig vector" << std::endl;
    std::vector<event> eventvec_coretemp;
    for( std::vector<event>::iterator ev = eventvecPnt->begin(); ev < eventvecPnt->end(); ev++){
 
@@ -224,18 +223,17 @@ void Fitter::RunMinimizer(std::vector<event>& eventref_temp){
    }
 
    // minimize core sig
-   std::cout << "  minimize, core sig" << std::endl;
+   std::cout << " -----> minimize, core sig" << std::endl;
    eventvecPnt = &eventvec_coretemp;
    gMinuit->SetStrategy(1);
    gMinuit->Minimize();
    gMinuit->Hesse();
 
    // load best-fit significance values
-   std::cout << "  fill event vec with best-fit significance" << std::endl;
+   std::cout << " -----> fill event vec with best-fit significance" << std::endl;
    const double *xmin = gMinuit->X();
    FindSignificance(xmin, eventref_temp);
 
-   std::cout << "<--" << std::endl;
 }
 
 double Fitter::Min2LL(const double *x){
@@ -276,7 +274,9 @@ void Fitter::FindSignificance(const double *x, std::vector<event>& eventref_temp
          double dpt=0;
          double dph=0;
 
-         if( ev->jet_ptL123[i] > jetfitHIGH ){
+         // resolutions for two jet categories
+         if( ev->jet_pt[i] > jetfitHIGH ){
+
             int index=-1;
             if(feta<0.5) index=0;
             else if(feta<1.1) index=1;
@@ -289,8 +289,10 @@ void Fitter::FindSignificance(const double *x, std::vector<event>& eventref_temp
             // CMS 2010 Resolutions -- parameterized by L123 corrected pt
             dpt = x[index] * (ev->jet_ptL123[i]) * dpt_(ev->jet_ptL123[i], ev->jet_eta[i]);
             dph =            (ev->jet_ptL123[i]) * dph_(ev->jet_ptL123[i], ev->jet_eta[i]);
+
          }
-         else if( ev->jet_ptL123[i] > 0 ){
+         else if( ev->jet_pt[i] > jetfitLOW ){
+
             int index=-1;
             if(feta<2.4) index=0;
             else if(feta<3) index=1;
@@ -299,9 +301,9 @@ void Fitter::FindSignificance(const double *x, std::vector<event>& eventref_temp
             // parameterized by T1 corrected pt
             dpt = x[5+index]*sqrt(ev->jet_ptT1[i]);
             dph = 0;
+
          }else{
-            dpt = 0;
-            dph = 0;
+            std::cout << "ERROR: JET PT OUT OF RANGE" << std::endl;
          }
 
          double dtt = dpt*dpt;
@@ -346,7 +348,7 @@ void Fitter::FindSignificance(const double *x, std::vector<event>& eventref_temp
 }
 
 void Fitter::MatchMCjets(std::vector<event>& eventref_temp){
-   std::cout << "  match MC jets" << std::endl;
+   std::cout << "---> MatchMCjets" << std::endl;
 
    for( std::vector<event>::iterator ev = eventref_temp.begin(); ev < eventref_temp.end(); ev++){
 
@@ -378,7 +380,7 @@ void Fitter::MatchMCjets(std::vector<event>& eventref_temp){
       } // jets
 
       if( ev->jet_pt.size() != ev->jet_matchIndex.size() ){
-         std::cout << "VECTOR SIZE MISMATCH" << std::endl;
+         std::cout << "ERROR: VECTOR SIZE MISMATCH" << std::endl;
       }
 
    } // event loop

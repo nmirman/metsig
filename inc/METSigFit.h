@@ -53,9 +53,6 @@ class Fitter{
       void RunMinimizer(std::vector<event>&);
       void FindSignificance(const double*, std::vector<event>&);
 
-      std::vector<event> eventvec_MC;
-      std::vector<event> eventvec_data;
-
       double jetfitLOW, jetfitHIGH, jetcorrMIN;
 
    private:
