@@ -19,8 +19,30 @@
 
 #include "METSigFit.h"
 
-#define JETPT_LOW 10.0
-#define JETPT_HIGH 30.0
+//
+// constructor and destructor
+//
+
+Fitter::Fitter(){
+   // MINUIT variables
+   gMinuit = 0;
+   fFunc = 0;
+
+   // jet pt bounds
+   jetfitLOW = 10.0;
+   jetfitHIGH = 30.0;
+   jetcorrMIN = 10.0;
+
+}
+
+Fitter::~Fitter(){
+   if (gMinuit) delete gMinuit;
+   if (fFunc) delete fFunc;
+}
+
+//
+// member definitions
+//
 
 const double Fitter::sigmaPt[10][4]={{-0.349206, 0.297831, 0, 0.471121},
    {-0.499735, 0.336391, 0, 0.430689},
@@ -44,8 +66,7 @@ const double Fitter::sigmaPhi[10][5]={{926.978, 2.52747, 0.0304001, -926.224, -1
    {   0.765787, -3.90638e-06, -4.70224e-08,   0.11831,      -1.4675},
    {    259.189,   0.00132792,    -0.311411,  -258.647,            0}};
 
-
-void Fitter::ReadNtuple(const char* filename, bool isMC){
+void Fitter::ReadNtuple(const char* filename, std::vector<event>& eventref_temp, const bool isMC){
    std::cout << "ReadNtuple -->" << std::endl;
 
    int v_size;
@@ -114,14 +135,14 @@ void Fitter::ReadNtuple(const char* filename, bool isMC){
       // jets
       for( int i=0; i < pfj_size; i++){
 
-         if( pfj_pt[i] > JETPT_LOW ){
+         if( pfj_pt[i] > jetfitLOW ){
             // clustered jets
 
             evtemp.jet_pt.push_back( pfj_pt[i] );
             evtemp.jet_phi.push_back( pfj_phi[i] );
             evtemp.jet_eta.push_back( pfj_eta[i] );
 
-            if( pfj_pt[i]*pfj_l1l2l3[i] > 10 ){
+            if( pfj_pt[i]*pfj_l1l2l3[i] > jetcorrMIN ){
                evtemp.jet_ptL123.push_back( pfj_pt[i]*pfj_l1l2l3[i] );
                evtemp.jet_ptT1.push_back( pfj_pt[i]*(pfj_l1l2l3[i] + 1 - pfj_l1[i]) );
             }else{
@@ -155,15 +176,9 @@ void Fitter::ReadNtuple(const char* filename, bool isMC){
       }
 
       // fill event vector
-      if( isMC ){
-         eventvec_MC.push_back( evtemp );
-      }else{
-         eventvec_data.push_back( evtemp );
-      }
+      eventref_temp.push_back( evtemp );
 
    } // event loop
-
-   if(isMC) MatchMCjets();
 
    delete file;
    std::cout << "<--" << std::endl;
@@ -175,7 +190,7 @@ void Fitter::RunMinimizer(std::vector<event>& eventref_temp){
    gMinuit = new ROOT::Minuit2::Minuit2Minimizer ( ROOT::Minuit2::kMigrad );
    gMinuit->SetTolerance(0.001);
    gMinuit->SetStrategy(0);
-   gMinuit->SetPrintLevel(3);
+   gMinuit->SetPrintLevel(2);
 
    fFunc = new ROOT::Math::Functor ( this, &Fitter::Min2LL, 12);
    gMinuit->SetFunction( *fFunc );
@@ -261,7 +276,7 @@ void Fitter::FindSignificance(const double *x, std::vector<event>& eventref_temp
          double dpt=0;
          double dph=0;
 
-         if( ev->jet_ptL123[i] > JETPT_HIGH ){
+         if( ev->jet_ptL123[i] > jetfitHIGH ){
             int index=-1;
             if(feta<0.5) index=0;
             else if(feta<1.1) index=1;
@@ -330,10 +345,10 @@ void Fitter::FindSignificance(const double *x, std::vector<event>& eventref_temp
    }
 }
 
-void Fitter::MatchMCjets(){
+void Fitter::MatchMCjets(std::vector<event>& eventref_temp){
    std::cout << "  match MC jets" << std::endl;
 
-   for( std::vector<event>::iterator ev = eventvec_MC.begin(); ev < eventvec_MC.end(); ev++){
+   for( std::vector<event>::iterator ev = eventref_temp.begin(); ev < eventref_temp.end(); ev++){
 
       // loop through reco jets
       for(int ireco=0; ireco < int(ev->jet_pt.size()); ireco++){
