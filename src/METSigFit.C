@@ -13,6 +13,7 @@
 #include <cmath>
 #include <iostream>
 #include <iomanip>
+#include <list>
 
 #include "Math/Functor.h"
 #include "Minuit2/Minuit2Minimizer.h"
@@ -79,6 +80,10 @@ void Fitter::ReadNtuple(const char* filename, std::vector<event>& eventref_temp,
 
    int mu_size=0;
    float mu_pt[100];
+   float mu_px[100];
+   float mu_py[100];
+   float mu_pz[100];
+   float mu_e[100];
    float mu_phi[100];
 
    float pfj_l1[1000];
@@ -101,6 +106,10 @@ void Fitter::ReadNtuple(const char* filename, std::vector<event>& eventref_temp,
 
    tree->SetBranchAddress("mu_size", &mu_size);
    tree->SetBranchAddress("mu_pt", mu_pt);
+   tree->SetBranchAddress("mu_px", mu_px);
+   tree->SetBranchAddress("mu_py", mu_py);
+   tree->SetBranchAddress("mu_pz", mu_pz);
+   tree->SetBranchAddress("mu_e", mu_e);
    tree->SetBranchAddress("mu_phi", mu_phi);
 
    tree->SetBranchAddress("pfj_l1", pfj_l1);
@@ -117,8 +126,13 @@ void Fitter::ReadNtuple(const char* filename, std::vector<event>& eventref_temp,
 
    for( int ev=0; ev<tree->GetEntries(); ev++){
       tree->GetEntry(ev);
-      if( mu_size != 2 or mu_pt[0] < 25 or mu_pt[1] < 20) continue;
 
+      if( ev % 100000 == 0 and ev > 0) std::cout << "    -----> getting entry " << ev << std::endl;
+      TLorentzVector mu1temp( mu_px[0], mu_py[0], mu_pz[0], mu_e[0] );
+      TLorentzVector mu2temp( mu_px[1], mu_py[1], mu_pz[1], mu_e[1] );
+      if( (mu1temp+mu2temp).M() < 86 or (mu1temp+mu2temp).M() > 96 ) continue;
+
+      int pjet_size_temp = 0;
       double pjet_scalpt_temp = 0;
       double pjet_px_temp = 0;
       double pjet_py_temp = 0;
@@ -129,8 +143,10 @@ void Fitter::ReadNtuple(const char* filename, std::vector<event>& eventref_temp,
       evtemp.nvertices = v_size;
       // muons
       for( int i=0; i < mu_size; i++){
+         TLorentzVector ptemp( mu_px[i], mu_py[i], mu_pz[i], mu_e[i] );
          evtemp.muon_pt.push_back( mu_pt[i] );
          evtemp.muon_phi.push_back( mu_phi[i] );
+         evtemp.muon_4vect.push_back( ptemp );
       }
       // jets
       for( int i=0; i < pfj_size; i++){
@@ -156,6 +172,7 @@ void Fitter::ReadNtuple(const char* filename, std::vector<event>& eventref_temp,
             pjet_scalpt_temp += pfj_pt[i];
             pjet_px_temp += pfj_pt[i]*cos(pfj_phi[i]);
             pjet_py_temp += pfj_pt[i]*sin(pfj_phi[i]);
+            pjet_size_temp++;
 
          }
 
@@ -165,6 +182,7 @@ void Fitter::ReadNtuple(const char* filename, std::vector<event>& eventref_temp,
       evtemp.pjet_scalpt = pjet_scalpt_temp;
       evtemp.pjet_vectpt = sqrt( pjet_px_temp*pjet_px_temp + pjet_py_temp*pjet_py_temp );
       evtemp.pjet_phi = atan2( pjet_py_temp, pjet_px_temp );
+      evtemp.pjet_size = pjet_size_temp;
 
       // genjets
       if(isMC){
@@ -193,18 +211,18 @@ void Fitter::RunMinimizer(std::vector<event>& eventref_temp){
 
    fFunc = new ROOT::Math::Functor ( this, &Fitter::Min2LL, 12);
    gMinuit->SetFunction( *fFunc );
-   gMinuit->SetVariable(0, "a1", 1.5, 0.01);
-   gMinuit->SetVariable(1, "a2", 1.5, 0.01);
-   gMinuit->SetVariable(2, "a3", 1.5, 0.01);
-   gMinuit->SetVariable(3, "a4", 1.5, 0.01);
-   gMinuit->SetVariable(4, "a5", 1.5, 0.01);
-   gMinuit->SetVariable(5, "k0", 1.0, 0.01);
-   gMinuit->SetVariable(6, "k1", 1.0, 0.01);
-   gMinuit->SetVariable(7, "k2", 1.0, 0.01);
-   gMinuit->SetVariable(8, "N1", 4.0, 0.01);
-   gMinuit->SetVariable(9, "S1", 0.5, 0.01);
-   gMinuit->SetVariable(10,"N2", 4.0, 0.01);
-   gMinuit->SetVariable(11,"S2", 0.5, 0.01);
+   gMinuit->SetLowerLimitedVariable(0, "a1", 1.5, 0.01, 0.0);
+   gMinuit->SetLowerLimitedVariable(1, "a2", 1.5, 0.01, 0.0);
+   gMinuit->SetLowerLimitedVariable(2, "a3", 1.5, 0.01, 0.0);
+   gMinuit->SetLowerLimitedVariable(3, "a4", 1.5, 0.01, 0.0);
+   gMinuit->SetLowerLimitedVariable(4, "a5", 1.5, 0.01, 0.0);
+   gMinuit->SetLowerLimitedVariable(5, "k0", 1.0, 0.01, 0.0);
+   gMinuit->SetLowerLimitedVariable(6, "k1", 1.0, 0.01, 0.0);
+   gMinuit->SetLowerLimitedVariable(7, "k2", 1.0, 0.01, 0.0);
+   gMinuit->SetLowerLimitedVariable(8, "N1", 4.0, 0.01, 0.0);
+   gMinuit->SetLowerLimitedVariable(9, "S1", 0.5, 0.01, 0.0);
+   gMinuit->SetLowerLimitedVariable(10,"N2", 4.0, 0.01, 0.0);
+   gMinuit->SetLowerLimitedVariable(11,"S2", 0.5, 0.01, 0.0);
 
    // set event vector and minimize
    std::cout << " -----> minimize, first pass" << std::endl;
@@ -234,6 +252,7 @@ void Fitter::RunMinimizer(std::vector<event>& eventref_temp){
    const double *xmin = gMinuit->X();
    FindSignificance(xmin, eventref_temp);
 
+   parameter = gMinuit->X();
 }
 
 double Fitter::Min2LL(const double *x){
@@ -344,6 +363,10 @@ void Fitter::FindSignificance(const double *x, std::vector<event>& eventref_temp
 
       ev->sig = sig;
       ev->det = det;
+
+      ev->cov_xx = cov_xx;
+      ev->cov_xy = cov_xy;
+      ev->cov_yy = cov_yy;
    }
 }
 

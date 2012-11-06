@@ -5,6 +5,7 @@
 #include <cmath>
 
 #include "TMath.h"
+#include "TLorentzVector.h"
 #include "Math/Functor.h"
 #include "Minuit2/Minuit2Minimizer.h"
 
@@ -14,6 +15,9 @@ struct event {
 
    double sig;
    double det;
+   double cov_xx;
+   double cov_xy;
+   double cov_yy;
 
    double qt;
    double ut;
@@ -21,6 +25,7 @@ struct event {
 
    std::vector<double> muon_pt;
    std::vector<double> muon_phi;
+   std::vector<TLorentzVector> muon_4vect;
 
    // high pt jets
    std::vector<double> jet_pt;
@@ -35,6 +40,7 @@ struct event {
    double pjet_phi;
    double pjet_vectpt;
    double pjet_scalpt;
+   double pjet_size;
 
    std::vector<double> genjet_pt;
    std::vector<double> genjet_phi;
@@ -54,6 +60,8 @@ class Fitter{
       void FindSignificance(const double*, std::vector<event>&);
 
       double jetfitLOW, jetfitHIGH, jetcorrMIN;
+
+      const double *parameter;
 
    private:
       double Min2LL(const double*);
