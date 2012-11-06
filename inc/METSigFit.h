@@ -22,6 +22,7 @@ struct event {
    double qt;
    double ut;
    double ut_par;
+   double ut_perp;
 
    std::vector<double> muon_pt;
    std::vector<double> muon_phi;

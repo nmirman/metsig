@@ -124,13 +124,15 @@ void Fitter::ReadNtuple(const char* filename, std::vector<event>& eventref_temp,
 
    std::cout << " -----> fill event vector" << std::endl;
 
-   for( int ev=0; ev<tree->GetEntries(); ev++){
+   int countev = 0;
+   for( int ev=0; ev<tree->GetEntries() and countev < 10000; ev++){
       tree->GetEntry(ev);
 
       if( ev % 100000 == 0 and ev > 0) std::cout << "    -----> getting entry " << ev << std::endl;
       TLorentzVector mu1temp( mu_px[0], mu_py[0], mu_pz[0], mu_e[0] );
       TLorentzVector mu2temp( mu_px[1], mu_py[1], mu_pz[1], mu_e[1] );
       if( (mu1temp+mu2temp).M() < 86 or (mu1temp+mu2temp).M() > 96 ) continue;
+      countev++;
 
       int pjet_size_temp = 0;
       double pjet_scalpt_temp = 0;
@@ -367,6 +369,26 @@ void Fitter::FindSignificance(const double *x, std::vector<event>& eventref_temp
       ev->cov_xx = cov_xx;
       ev->cov_xy = cov_xy;
       ev->cov_yy = cov_yy;
+
+      // fill qt, ut
+      double qt_x = ev->muon_pt[0]*std::cos(ev->muon_phi[0])
+         + ev->muon_pt[1]*std::cos(ev->muon_phi[1]);
+      double qt_y = ev->muon_pt[0]*std::sin(ev->muon_phi[0])
+         + ev->muon_pt[1]*std::sin(ev->muon_phi[1]);
+      double qt = sqrt( qt_x*qt_x + qt_y*qt_y );
+
+      double ut_x = -met_x - qt_x;
+      double ut_y = -met_y - qt_y;
+      double ut = sqrt( ut_x*ut_x + ut_y*ut_y );
+
+      double ut_par = (ut_x*qt_x + ut_y*qt_y)/qt;
+      double ut_perp = (ut_y*qt_x - qt_y*ut_x)/qt;
+
+      ev->qt = qt;
+      ev->ut = ut;
+      ev->ut_par = ut_par;
+      ev->ut_perp = ut_perp;
+
    }
 }
 

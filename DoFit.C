@@ -18,14 +18,11 @@ int main(){
    eventvec_data.reserve( 1000000 );
 
    // fill eventvecs
-   fitter.jetfitLOW = 5;
-   fitter.jetfitHIGH = 20;
-   fitter.ReadNtuple( "~/nobackup/testMC.root",
+   fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Zmumu/Zmumu_MC_DYJettoLL_TuneZ2_M-50_7TeV_madgraph_tauola_20121104.root",
          eventvec_MC, true);
    fitter.MatchMCjets( eventvec_MC );
 
-   fitter.ReadNtuple(
-         "~/nobackup/testa.root",
+   fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Zmumu/Zmumu_data_DoubleMu_Run2011A_08Nov2011_v1_20121104.root",
          eventvec_data, false);
 
    std::cout << "SIZE MC = " << eventvec_MC.size() << std::endl;
@@ -73,6 +70,8 @@ int main(){
    histsMC_["pjet_size"  ] = new TH1D("pjet_size_MC", "N jets", 100, 0, 500);
    histsMC_["pjet_scalpt"] = new TH1D("pjet_scalpt_MC", "Pseudojet Scalar p_{T}", 100, 0, 500);
    histsMC_["pjet_vectpt"] = new TH1D("pjet_vectpt_MC", "Pseudojet Scalar p_{T}", 100, 0, 200);
+   histsMC_["qt"] = new TH1D("qt_MC", "q_{T}", 100, 0, 200);
+   histsMC_["ut_par"] = new TH1D("ut_par_MC", "(u_{T})_{#parallel}", 100, 0, 100);
    histsMC_["nvert"] = new TH1D("nvert_MC", "N Vertices", 100, 0, 100);
    histsMC_["cov_xx"] = new TH1D("cov_xx_MC", "Cov_{xx}", 100, 0, 300);
    histsMC_["cov_xy"] = new TH1D("cov_xy_MC", "Cov_{xy}", 100, -100, 100);
@@ -91,6 +90,8 @@ int main(){
    histsMCnoPR_["pjet_size"  ] = new TH1D("pjet_size_MCnoPR", "N jets", 100, 0, 500);
    histsMCnoPR_["pjet_scalpt"] = new TH1D("pjet_scalpt_MCnoPR", "Pseudojet Scalar p_{T}", 100, 0, 500);
    histsMCnoPR_["pjet_vectpt"] = new TH1D("pjet_vectpt_MCnoPR", "Pseudojet Scalar p_{T}", 100, 0, 200);
+   histsMCnoPR_["qt"] = new TH1D("qt_MCnoPR", "q_{T}", 100, 0, 200);
+   histsMCnoPR_["ut_par"] = new TH1D("ut_par_MCnoPR", "(u_{T})_{#parallel}", 100, 0, 100);
    histsMCnoPR_["nvert"] = new TH1D("nvert_MCnoPR", "N Vertices", 100, 0, 100);
    histsMCnoPR_["cov_xx"] = new TH1D("cov_xx_MCnoPR", "Cov_{xx}", 100, 0, 300);
    histsMCnoPR_["cov_xy"] = new TH1D("cov_xy_MCnoPR", "Cov_{xy}", 100, -100, 100);
@@ -109,6 +110,8 @@ int main(){
    histsData_["pjet_size"  ] = new TH1D("pjet_size_Data", "N jets", 100, 0, 500);
    histsData_["pjet_scalpt"] = new TH1D("pjet_scalpt_Data", "Pseudojet Scalar p_{T}", 100, 0, 500);
    histsData_["pjet_vectpt"] = new TH1D("pjet_vectpt_Data", "Pseudojet Scalar p_{T}", 100, 0, 200);
+   histsData_["qt"] = new TH1D("qt_Data", "q_{T}", 100, 0, 200);
+   histsData_["ut_par"] = new TH1D("ut_par_Data", "(u_{T})_{#parallel}", 100, 0, 100);
    histsData_["nvert"] = new TH1D("nvert_Data", "N Vertices", 100, 0, 100);
    histsData_["cov_xx"] = new TH1D("cov_xx_Data", "Cov_{xx}", 100, 0, 500);
    histsData_["cov_xy"] = new TH1D("cov_xy_Data", "Cov_{xy}", 100, -150, 150);
@@ -168,6 +171,9 @@ int main(){
          hists_["pjet_scalpt"]->Fill( ev->pjet_scalpt , weights[nvert] );
          hists_["pjet_vectpt"]->Fill( ev->pjet_vectpt , weights[nvert] );
          hists_["pjet_size"]->Fill( ev->pjet_size , weights[nvert] );
+
+         hists_["qt"]->Fill( ev->qt, weights[nvert] );
+         hists_["ut_par"]->Fill( ev->ut_par, weights[nvert] );
 
          hists_["nvert"]->Fill( nvert , weights[nvert] );
 
@@ -439,6 +445,36 @@ int main(){
    histsMC_["pchi2"]->SetMaximum( 0.025 );
    histsMC_["pchi2"]->SetMinimum( 0.0 );
    cpchi2->Write();
+
+   TCanvas *cqt = new TCanvas("cqt","cqt",700,700);
+   cqt->cd();
+   histsMC_["qt"]->SetLineColor(2);
+   histsMC_["qt"]->Scale( 1.0/eventvec_MC.size() );
+   histsMC_["qt"]->Draw();
+   histsMCnoPR_["qt"]->SetLineColor(4);
+   histsMCnoPR_["qt"]->Scale( 1.0/eventvec_MC.size() );
+   histsMCnoPR_["qt"]->Draw("same");
+   histsData_["qt"]->SetLineColor(1);
+   histsData_["qt"]->SetMarkerStyle(20);
+   histsData_["qt"]->Sumw2();
+   histsData_["qt"]->Scale( 1.0/eventvec_data.size() );
+   histsData_["qt"]->Draw("EP same");
+   cqt->Write();
+
+   TCanvas *cut_par = new TCanvas("cut_par","cut_par",700,700);
+   cut_par->cd();
+   histsMC_["ut_par"]->SetLineColor(2);
+   histsMC_["ut_par"]->Scale( 1.0/eventvec_MC.size() );
+   histsMC_["ut_par"]->Draw();
+   histsMCnoPR_["ut_par"]->SetLineColor(4);
+   histsMCnoPR_["ut_par"]->Scale( 1.0/eventvec_MC.size() );
+   histsMCnoPR_["ut_par"]->Draw("same");
+   histsData_["ut_par"]->SetLineColor(1);
+   histsData_["ut_par"]->SetMarkerStyle(20);
+   histsData_["ut_par"]->Sumw2();
+   histsData_["ut_par"]->Scale( 1.0/eventvec_data.size() );
+   histsData_["ut_par"]->Draw("EP same");
+   cut_par->Write();
 
    return 0;
 }
