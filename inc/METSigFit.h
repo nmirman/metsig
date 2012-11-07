@@ -60,6 +60,8 @@ class Fitter{
       void RunMinimizer(std::vector<event>&);
       void FindSignificance(const double*, std::vector<event>&);
 
+      void PlotsDataMC(std::vector<event>&, std::vector<event>&, const char[]);
+
       double jetfitLOW, jetfitHIGH, jetcorrMIN;
 
       const double *parameter;
