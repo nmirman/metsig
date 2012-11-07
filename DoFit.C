@@ -12,29 +12,35 @@ int main(){
 
    // declarations
    Fitter fitter;
-   std::vector<event> eventvec_MC;
-   std::vector<event> eventvec_data;
+   vector<event> eventvec_MC;
+   vector<event> eventvec_data;
 
    // fill eventvecs
-   fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Zmumu/"
-         "Zmumu_MC_DYJettoLL_TuneZ2_M-50_7TeV_madgraph_tauola_20121104.root",
-         eventvec_MC, 100000, true);
+   int numevents = 100000;
+   fitter.ReadNtuple( //"/eos/uscms/store/user/nmirman/Zmumu/"
+         //"Zmumu_MC_DYJettoLL_TuneZ2_M-50_7TeV_madgraph_tauola_20121104.root",
+         "~/nobackup/tempMC.root",
+         eventvec_MC, numevents, true);
    fitter.MatchMCjets( eventvec_MC );
 
    fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Zmumu/"
          "Zmumu_data_DoubleMu_Run2011A_08Nov2011_v1_20121104.root",
-         eventvec_data, 50000, false);
+         eventvec_data, numevents/2, false);
    fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Zmumu/"
          "Zmumu_data_DoubleMu_Run2011B_19Nov2011_v1_20121104.root",
-         eventvec_data, 50000, false);
+         eventvec_data, numevents/2, false);
 
-   std::cout << "MC EVENTS:   " << eventvec_MC.size() << std::endl;
-   std::cout << "DATA EVENTS: " << eventvec_data.size() << std::endl;
+   cout << "\n  MC EVENTS: " << eventvec_MC.size() << endl;
+   cout << "DATA EVENTS: " << eventvec_data.size() << endl;
 
    // minimize
-   std::cout << " ########### MC ########### " << std::endl;
+   cout << "\n ############################ " << endl;
+   cout << " ###########  MC  ########### " << endl;
+   cout << " ############################ \n" << endl;
    fitter.RunMinimizer( eventvec_MC );
-   std::cout << " ########### Data ########### " << std::endl;
+   cout << "\n ############################ " << endl;
+   cout << " ########### Data ########### " << endl;
+   cout << " ############################ \n" << endl;
    fitter.RunMinimizer( eventvec_data );
 
    fitter.PlotsDataMC( eventvec_MC, eventvec_data, "results/plotsDataMC.root" );

@@ -68,9 +68,9 @@ const double Fitter::sigmaPhi[10][5]={{926.978, 2.52747, 0.0304001, -926.224, -1
    {   0.765787, -3.90638e-06, -4.70224e-08,   0.11831,      -1.4675},
    {    259.189,   0.00132792,    -0.311411,  -258.647,            0}};
 
-void Fitter::ReadNtuple(const char* filename, std::vector<event>& eventref_temp, const int maxevents,
+void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, const int maxevents,
       const bool isMC){
-   std::cout << "---> ReadNtuple" << std::endl;
+   cout << "---> ReadNtuple" << endl;
 
    int v_size;
    float met_et;
@@ -114,7 +114,7 @@ void Fitter::ReadNtuple(const char* filename, std::vector<event>& eventref_temp,
    tree->SetBranchAddress("mu_e", mu_e);
    tree->SetBranchAddress("mu_phi", mu_phi);
 
-   tree->SetBranchAddress("pfj_l1", pfj_l1);
+tree->SetBranchAddress("pfj_l1", pfj_l1);
    tree->SetBranchAddress("pfj_l1l2l3", pfj_l1l2l3);
 
    if(isMC){
@@ -124,13 +124,13 @@ void Fitter::ReadNtuple(const char* filename, std::vector<event>& eventref_temp,
       tree->SetBranchAddress("genj_eta", genj_eta);
    }
 
-   std::cout << " -----> fill event vector" << std::endl;
+   cout << " -----> fill event vector" << endl;
 
    int countev=0;
    for( int ev=0; ev<tree->GetEntries() and countev < maxevents; ev++){
 
       tree->GetEntry(ev);
-      if( ev % 100000 == 0 and ev > 0) std::cout << "    -----> getting entry " << ev << std::endl;
+      if( ev % 100000 == 0 and ev > 0) cout << "    -----> getting entry " << ev << endl;
 
       // ####################### Z PEAK FILTER #######################
       TLorentzVector mu1temp( mu_px[0], mu_py[0], mu_pz[0], mu_e[0] );
@@ -149,6 +149,7 @@ void Fitter::ReadNtuple(const char* filename, std::vector<event>& eventref_temp,
 
       // vertices
       evtemp.nvertices = v_size;
+
       // muons
       for( int i=0; i < mu_size; i++){
          TLorentzVector ptemp( mu_px[i], mu_py[i], mu_pz[i], mu_e[i] );
@@ -156,6 +157,7 @@ void Fitter::ReadNtuple(const char* filename, std::vector<event>& eventref_temp,
          evtemp.muon_phi.push_back( mu_phi[i] );
          evtemp.muon_4vect.push_back( ptemp );
       }
+
       // jets
       for( int i=0; i < pfj_size; i++){
 
@@ -186,7 +188,7 @@ void Fitter::ReadNtuple(const char* filename, std::vector<event>& eventref_temp,
 
       } // pfj loop
 
-      // fill pseudojet quantities
+      // pseudojet
       evtemp.pjet_scalpt = pjet_scalpt_temp;
       evtemp.pjet_vectpt = sqrt( pjet_px_temp*pjet_px_temp + pjet_py_temp*pjet_py_temp );
       evtemp.pjet_phi = atan2( pjet_py_temp, pjet_px_temp );
@@ -209,38 +211,38 @@ void Fitter::ReadNtuple(const char* filename, std::vector<event>& eventref_temp,
    delete file;
 }
 
-void Fitter::RunMinimizer(std::vector<event>& eventref_temp){
-   std::cout << "---> RunMinimizer" << std::endl;
+void Fitter::RunMinimizer(vector<event>& eventref_temp){
+   cout << "---> RunMinimizer" << endl;
 
    gMinuit = new ROOT::Minuit2::Minuit2Minimizer ( ROOT::Minuit2::kMigrad );
    gMinuit->SetTolerance(0.001);
    gMinuit->SetStrategy(0);
    gMinuit->SetPrintLevel(2);
 
-   fFunc = new ROOT::Math::Functor ( this, &Fitter::Min2LL, 12);
+   fFunc = new ROOT::Math::Functor ( this, &Fitter::Min2LL, 12 );
    gMinuit->SetFunction( *fFunc );
-   gMinuit->SetLowerLimitedVariable(0, "a1", 1.5, 0.01, 0.0);
-   gMinuit->SetLowerLimitedVariable(1, "a2", 1.5, 0.01, 0.0);
-   gMinuit->SetLowerLimitedVariable(2, "a3", 1.5, 0.01, 0.0);
-   gMinuit->SetLowerLimitedVariable(3, "a4", 1.5, 0.01, 0.0);
-   gMinuit->SetLowerLimitedVariable(4, "a5", 1.5, 0.01, 0.0);
-   gMinuit->SetLowerLimitedVariable(5, "k0", 1.0, 0.01, 0.0);
-   gMinuit->SetLowerLimitedVariable(6, "k1", 1.0, 0.01, 0.0);
-   gMinuit->SetLowerLimitedVariable(7, "k2", 1.0, 0.01, 0.0);
-   gMinuit->SetLowerLimitedVariable(8, "N1", 4.0, 0.01, 0.0);
-   gMinuit->SetLowerLimitedVariable(9, "S1", 0.5, 0.01, 0.0);
-   gMinuit->SetLowerLimitedVariable(10,"N2", 4.0, 0.01, 0.0);
-   gMinuit->SetLowerLimitedVariable(11,"S2", 0.5, 0.01, 0.0);
+   gMinuit->SetVariable(0, "a1", 1.5, 0.01);
+   gMinuit->SetVariable(1, "a2", 1.5, 0.01);
+   gMinuit->SetVariable(2, "a3", 1.5, 0.01);
+   gMinuit->SetVariable(3, "a4", 1.5, 0.01);
+   gMinuit->SetVariable(4, "a5", 1.5, 0.01);
+   gMinuit->SetVariable(5, "k0", 1.0, 0.01);
+   gMinuit->SetVariable(6, "k1", 1.0, 0.01);
+   gMinuit->SetVariable(7, "k2", 1.0, 0.01);
+   gMinuit->SetVariable(8, "N1", 4.0, 0.01);
+   gMinuit->SetVariable(9, "S1", 0.5, 0.01);
+   gMinuit->SetVariable(10,"N2", 4.0, 0.01);
+   gMinuit->SetVariable(11,"S2", 0.5, 0.01);
 
    // set event vector and minimize
-   std::cout << " -----> minimize, first pass" << std::endl;
+   cout << " -----> minimize, first pass" << endl;
    eventvecPnt = &eventref_temp;
    gMinuit->Minimize();
 
    // new event vector with core of significance
-   std::cout << " -----> build core sig vector" << std::endl;
-   std::vector<event> eventvec_coretemp;
-   for( std::vector<event>::iterator ev = eventvecPnt->begin(); ev < eventvecPnt->end(); ev++){
+   cout << " -----> build core sig vector" << endl;
+   vector<event> eventvec_coretemp;
+   for( vector<event>::iterator ev = eventvecPnt->begin(); ev < eventvecPnt->end(); ev++){
 
       if( ev->sig < 9 ){
          eventvec_coretemp.push_back( *ev );
@@ -249,14 +251,14 @@ void Fitter::RunMinimizer(std::vector<event>& eventref_temp){
    }
 
    // minimize core sig
-   std::cout << " -----> minimize, core sig" << std::endl;
+   cout << " -----> minimize, core sig" << endl;
    eventvecPnt = &eventvec_coretemp;
    gMinuit->SetStrategy(1);
    gMinuit->Minimize();
    gMinuit->Hesse();
 
    // load best-fit significance values
-   std::cout << " -----> fill event vec with best-fit significance" << std::endl;
+   cout << " -----> fill event vec with best-fit significance" << endl;
    const double *xmin = gMinuit->X();
    FindSignificance(xmin, eventref_temp);
 
@@ -269,17 +271,17 @@ double Fitter::Min2LL(const double *x){
 
    // event loop
    double m2ll = 0;
-   for( std::vector<event>::iterator ev = eventvecPnt->begin(); ev < eventvecPnt->end(); ev++){
+   for( vector<event>::iterator ev = eventvecPnt->begin(); ev < eventvecPnt->end(); ev++){
       m2ll += ev->sig + log(ev->det);
    }
 
    return m2ll;
 }
 
-void Fitter::FindSignificance(const double *x, std::vector<event>& eventref_temp){
+void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
 
    // event loop
-   for( std::vector<event>::iterator ev = eventref_temp.begin(); ev < eventref_temp.end(); ev++){
+   for( vector<event>::iterator ev = eventref_temp.begin(); ev < eventref_temp.end(); ev++){
 
       double met_x=0;
       double met_y=0;
@@ -291,11 +293,11 @@ void Fitter::FindSignificance(const double *x, std::vector<event>& eventref_temp
       for(int i=0; i < int(ev->jet_pt.size()); i++){
 
          float feta = fabs(ev->jet_eta[i]);
-         double cos = std::cos(ev->jet_phi[i]);
-         double sin = std::sin(ev->jet_phi[i]);
+         double c = cos(ev->jet_phi[i]);
+         double s = sin(ev->jet_phi[i]);
 
-         met_x -= cos*(ev->jet_ptT1[i]);
-         met_y -= sin*(ev->jet_ptT1[i]);
+         met_x -= c*(ev->jet_ptT1[i]);
+         met_y -= s*(ev->jet_ptT1[i]);
 
          double dpt=0;
          double dph=0;
@@ -329,14 +331,14 @@ void Fitter::FindSignificance(const double *x, std::vector<event>& eventref_temp
             dph = 0;
 
          }else{
-            std::cout << "ERROR: JET PT OUT OF RANGE" << std::endl;
+            cout << "ERROR: JET PT OUT OF RANGE" << endl;
          }
 
          double dtt = dpt*dpt;
          double dff = dph*dph;
-         cov_xx += dtt*cos*cos + dff*sin*sin;
-         cov_xy += (dtt-dff)*cos*sin;
-         cov_yy += dff*cos*cos + dtt*sin*sin;
+         cov_xx += dtt*c*c + dff*s*s;
+         cov_xy += (dtt-dff)*c*s;
+         cov_yy += dff*c*c + dtt*s*s;
 
       }
 
@@ -347,18 +349,18 @@ void Fitter::FindSignificance(const double *x, std::vector<event>& eventref_temp
       met_y -= sin(ev->muon_phi[1])*(ev->muon_pt[1]);
 
       // unclustered energy -- parameterize by scalar sum of ET
-      double cos = std::cos(ev->pjet_phi);
-      double sin = std::sin(ev->pjet_phi);
+      double c = cos(ev->pjet_phi);
+      double s = sin(ev->pjet_phi);
 
-      met_x -= cos*(ev->pjet_vectpt);
-      met_y -= sin*(ev->pjet_vectpt);
+      met_x -= c*(ev->pjet_vectpt);
+      met_y -= s*(ev->pjet_vectpt);
 
       double ctt = x[8]*x[8] + x[9]*x[9]*(ev->pjet_scalpt);
       double cff = x[10]*x[10] + x[11]*x[11]*(ev->pjet_scalpt);
 
-      cov_xx += ctt*cos*cos + cff*sin*sin;
-      cov_xy += (ctt-cff)*cos*sin;
-      cov_yy += cff*cos*cos + ctt*sin*sin;  
+      cov_xx += ctt*c*c + cff*s*s;
+      cov_xy += (ctt-cff)*c*s;
+      cov_yy += cff*c*c + ctt*s*s;  
 
       double det = cov_xx*cov_yy - cov_xy*cov_xy;
 
@@ -376,10 +378,10 @@ void Fitter::FindSignificance(const double *x, std::vector<event>& eventref_temp
       ev->cov_yy = cov_yy;
 
       // fill qt, ut
-      double qt_x = ev->muon_pt[0]*std::cos(ev->muon_phi[0])
-         + ev->muon_pt[1]*std::cos(ev->muon_phi[1]);
-      double qt_y = ev->muon_pt[0]*std::sin(ev->muon_phi[0])
-         + ev->muon_pt[1]*std::sin(ev->muon_phi[1]);
+      double qt_x = ev->muon_pt[0]*cos(ev->muon_phi[0])
+         + ev->muon_pt[1]*cos(ev->muon_phi[1]);
+      double qt_y = ev->muon_pt[0]*sin(ev->muon_phi[0])
+         + ev->muon_pt[1]*sin(ev->muon_phi[1]);
       double qt = sqrt( qt_x*qt_x + qt_y*qt_y );
 
       double ut_x = -met_x - qt_x;
@@ -397,10 +399,10 @@ void Fitter::FindSignificance(const double *x, std::vector<event>& eventref_temp
    }
 }
 
-void Fitter::MatchMCjets(std::vector<event>& eventref_temp){
-   std::cout << "---> MatchMCjets" << std::endl;
+void Fitter::MatchMCjets(vector<event>& eventref_temp){
+   cout << "---> MatchMCjets" << endl;
 
-   for( std::vector<event>::iterator ev = eventref_temp.begin(); ev < eventref_temp.end(); ev++){
+   for( vector<event>::iterator ev = eventref_temp.begin(); ev < eventref_temp.end(); ev++){
 
       // loop through reco jets
       for(int ireco=0; ireco < int(ev->jet_pt.size()); ireco++){
@@ -430,30 +432,30 @@ void Fitter::MatchMCjets(std::vector<event>& eventref_temp){
       } // jets
 
       if( ev->jet_pt.size() != ev->jet_matchIndex.size() ){
-         std::cout << "ERROR: VECTOR SIZE MISMATCH" << std::endl;
+         cout << "ERROR: VECTOR SIZE MISMATCH" << endl;
       }
 
    } // event loop
 
 }
 
-void Fitter::PlotsDataMC(std::vector<event>& eventref_MC, std::vector<event>& eventref_data, 
+void Fitter::PlotsDataMC(vector<event>& eventref_MC, vector<event>& eventref_data, 
       const char* filename){
 
    // pileup reweighting
-   int verts_MC [100] = {0};
-   int verts_Data [100] = {0};
-   double weights_MC [100];
-   double weights_Data [100];
-   std::fill_n(weights_MC,100,1.0);
-   std::fill_n(weights_Data,100,1.0);
-   for( std::vector<event>::iterator ev = eventref_MC.begin(); ev < eventref_MC.end(); ev++){
+   int verts_MC [50] = {0};
+   int verts_Data [50] = {0};
+   double weights_MC [50];
+   double weights_Data [50];
+   fill_n(weights_MC,50,1.0);
+   fill_n(weights_Data,50,1.0);
+   for( vector<event>::iterator ev = eventref_MC.begin(); ev < eventref_MC.end(); ev++){
       verts_MC[ ev->nvertices ] += 1;
    }
-   for( std::vector<event>::iterator ev = eventref_data.begin(); ev < eventref_data.end(); ev++){
+   for( vector<event>::iterator ev = eventref_data.begin(); ev < eventref_data.end(); ev++){
       verts_Data[ ev->nvertices ] += 1;
    }
-   for(int i=0; i < 100; i++){
+   for(int i=0; i < 50; i++){
       if( verts_MC[i] != 0){
          weights_MC[i] = (1.0*eventref_MC.size()/eventref_data.size())
             * (1.0*verts_Data[i]/verts_MC[i]);
@@ -461,10 +463,10 @@ void Fitter::PlotsDataMC(std::vector<event>& eventref_MC, std::vector<event>& ev
    }
 
    // histograms
-   std::map<std::string, TH1*> histsData_;
-   std::map<std::string, TH1*> histsMC_;
-   std::map<std::string, TProfile*> profsData_;
-   std::map<std::string, TProfile*> profsMC_;
+   map<string, TH1*> histsData_;
+   map<string, TH1*> histsMC_;
+   map<string, TProfile*> profsData_;
+   map<string, TProfile*> profsMC_;
 
    // data hists
    histsData_["muon_pt"] = new TH1D("muon_pt_Data", "Muon p_{T}", 100, 0, 200);
@@ -494,18 +496,18 @@ void Fitter::PlotsDataMC(std::vector<event>& eventref_MC, std::vector<event>& ev
          "Response = |<u_{#parallel}>|/q_{T} vs. q_{T};q_{T} (GeV);Response", 25, 0, 100);
 
    // clone data hists for MC
-   for(std::map<std::string,TH1*>::const_iterator it = histsData_.begin();
+   for(map<string,TH1*>::const_iterator it = histsData_.begin();
          it != histsData_.end(); it++){
       
-      std::string hname = it->first;
+      string hname = it->first;
       TH1D *hist = (TH1D*)it->second;
       histsMC_[hname] = (TH1D*)hist->Clone((char*)hname.c_str());
          
    }
-   for(std::map<std::string,TProfile*>::const_iterator it = profsData_.begin();
+   for(map<string,TProfile*>::const_iterator it = profsData_.begin();
          it != profsData_.end(); it++){
       
-      std::string pname = it->first;
+      string pname = it->first;
       TProfile *prof = (TProfile*)it->second;
       profsMC_[pname] = (TProfile*)prof->Clone((char*)pname.c_str());
          
@@ -515,10 +517,10 @@ void Fitter::PlotsDataMC(std::vector<event>& eventref_MC, std::vector<event>& ev
    // fill hists
    for( int i=0; i < 2; i++ ){
 
-      std::map<std::string, TH1*> hists_;
-      std::map<std::string, TProfile*> profs_;
-      std::vector<event>::iterator iter_begin;
-      std::vector<event>::iterator iter_end;
+      map<string, TH1*> hists_;
+      map<string, TProfile*> profs_;
+      vector<event>::iterator iter_begin;
+      vector<event>::iterator iter_end;
       double *weights;
 
       if( i==0 ){
@@ -536,7 +538,7 @@ void Fitter::PlotsDataMC(std::vector<event>& eventref_MC, std::vector<event>& ev
          weights = weights_Data;
       }
       
-      for( std::vector<event>::iterator ev = iter_begin; ev < iter_end; ev++ ){
+      for( vector<event>::iterator ev = iter_begin; ev < iter_end; ev++ ){
          int nvert = ev->nvertices;
 
          // muons
@@ -584,10 +586,10 @@ void Fitter::PlotsDataMC(std::vector<event>& eventref_MC, std::vector<event>& ev
    TFile *file = new TFile(filename,"RECREATE");
    file->cd();
 
-   for(std::map<std::string,TH1*>::const_iterator it = histsData_.begin();
+   for(map<string,TH1*>::const_iterator it = histsData_.begin();
          it != histsData_.end(); it++){
    
-      std::string hname = it->first;
+      string hname = it->first;
       TH1D *histData = (TH1D*)it->second;
       TH1D *histMC = (TH1D*)histsMC_[hname];
 
@@ -599,17 +601,17 @@ void Fitter::PlotsDataMC(std::vector<event>& eventref_MC, std::vector<event>& ev
       histData->SetLineColor(1);
       histData->SetMarkerStyle(20);
       
-      histMC->SetMaximum( 1.1*std::max(histMC->GetMaximum(), histData->GetMaximum()) );
+      histMC->SetMaximum( 1.1*max(histMC->GetMaximum(), histData->GetMaximum()) );
 
       histMC->Draw();
       histData->Draw("EP same");
 
       canvas->Write();
    }
-   for(std::map<std::string,TProfile*>::const_iterator it = profsData_.begin();
+   for(map<string,TProfile*>::const_iterator it = profsData_.begin();
          it != profsData_.end(); it++){
    
-      std::string pname = it->first;
+      string pname = it->first;
       TProfile *profData = (TProfile*)it->second;
       TProfile *profMC = (TProfile*)profsMC_[pname];
 
@@ -620,8 +622,8 @@ void Fitter::PlotsDataMC(std::vector<event>& eventref_MC, std::vector<event>& ev
       profData->SetLineColor(1);
       profData->SetMarkerStyle(20);
       
-      profMC->SetMaximum( 1.1*std::max(profMC->GetMaximum(), profData->GetMaximum()) );
-      profMC->SetMinimum( 0.8*std::min(profMC->GetMinimum(), profData->GetMinimum()) );
+      profMC->SetMaximum( 1.1*max(profMC->GetMaximum(), profData->GetMaximum()) );
+      profMC->SetMinimum( 0.8*min(profMC->GetMinimum(), profData->GetMinimum()) );
 
       profMC->Draw("HIST");
       profData->Draw("EP same");

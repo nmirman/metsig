@@ -25,18 +25,18 @@ struct event {
    double ut_par;
    double ut_perp;
 
-   std::vector<double> muon_pt;
-   std::vector<double> muon_phi;
-   std::vector<TLorentzVector> muon_4vect;
+   vector<double> muon_pt;
+   vector<double> muon_phi;
+   vector<TLorentzVector> muon_4vect;
 
    // high pt jets
-   std::vector<double> jet_pt;
-   std::vector<double> jet_phi;
-   std::vector<double> jet_eta;
-   std::vector<double> jet_ptL123;
-   std::vector<double> jet_ptT1;
-   std::vector<int> jet_matchIndex;
-   std::vector<double> jet_matchdR;
+   vector<double> jet_pt;
+   vector<double> jet_phi;
+   vector<double> jet_eta;
+   vector<double> jet_ptL123;
+   vector<double> jet_ptT1;
+   vector<int> jet_matchIndex;
+   vector<double> jet_matchdR;
 
    // pseudojet
    double pjet_phi;
@@ -44,9 +44,9 @@ struct event {
    double pjet_scalpt;
    double pjet_size;
 
-   std::vector<double> genjet_pt;
-   std::vector<double> genjet_phi;
-   std::vector<double> genjet_eta;
+   vector<double> genjet_pt;
+   vector<double> genjet_phi;
+   vector<double> genjet_eta;
 
 };
 
@@ -56,11 +56,11 @@ class Fitter{
       Fitter();
       ~Fitter();
 
-      void ReadNtuple(const char[], std::vector<event>&, const int, const bool);
-      void MatchMCjets(std::vector<event>&);
-      void RunMinimizer(std::vector<event>&);
-      void FindSignificance(const double*, std::vector<event>&);
-      void PlotsDataMC(std::vector<event>&, std::vector<event>&, const char[]);
+      void ReadNtuple(const char[], vector<event>&, const int, const bool);
+      void MatchMCjets(vector<event>&);
+      void RunMinimizer(vector<event>&);
+      void FindSignificance(const double*, vector<event>&);
+      void PlotsDataMC(vector<event>&, vector<event>&, const char[]);
 
       double jetfitLOW, jetfitHIGH, jetcorrMIN;
 
@@ -71,11 +71,12 @@ class Fitter{
 
       ROOT::Math::IMultiGenFunction* fFunc;
 
-      std::vector<event>* eventvecPnt;
+      vector<event>* eventvecPnt;
 
       //jet resolutions from 2010
       static const double sigmaPt[10][4];
       static const double sigmaPhi[10][5];
+      static const double puWeights[50];
 
       double dpt_(double x, double _eta){
          double feta = fabs(_eta);
