@@ -8,6 +8,7 @@
 #include "TLorentzVector.h"
 #include "Math/Functor.h"
 #include "Minuit2/Minuit2Minimizer.h"
+using namespace std;
 
 struct event {
 
@@ -55,21 +56,19 @@ class Fitter{
       Fitter();
       ~Fitter();
 
-      void ReadNtuple(const char[], std::vector<event>&, const bool);
+      void ReadNtuple(const char[], std::vector<event>&, const int, const bool);
       void MatchMCjets(std::vector<event>&);
       void RunMinimizer(std::vector<event>&);
       void FindSignificance(const double*, std::vector<event>&);
-
       void PlotsDataMC(std::vector<event>&, std::vector<event>&, const char[]);
 
       double jetfitLOW, jetfitHIGH, jetcorrMIN;
 
-      const double *parameter;
+      ROOT::Minuit2::Minuit2Minimizer* gMinuit;
 
    private:
       double Min2LL(const double*);
 
-      ROOT::Minuit2::Minuit2Minimizer* gMinuit;
       ROOT::Math::IMultiGenFunction* fFunc;
 
       std::vector<event>* eventvecPnt;
