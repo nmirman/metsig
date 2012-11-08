@@ -164,9 +164,9 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
          if( pfj_pt[i] > jetfitLOW ){
             // clustered jets
 
-            evtemp.jet_pt.push_back( pfj_pt[i] );
             evtemp.jet_phi.push_back( pfj_phi[i] );
             evtemp.jet_eta.push_back( pfj_eta[i] );
+            evtemp.jet_ptUncor.push_back( pfj_pt[i] );
 
             if( pfj_pt[i]*pfj_l1l2l3[i] > jetcorrMIN ){
                evtemp.jet_ptL123.push_back( pfj_pt[i]*pfj_l1l2l3[i] );
@@ -219,7 +219,7 @@ void Fitter::RunMinimizer(vector<event>& eventref_temp){
    gMinuit->SetStrategy(0);
    gMinuit->SetPrintLevel(2);
 
-   fFunc = new ROOT::Math::Functor ( this, &Fitter::Min2LL, 12 );
+   fFunc = new ROOT::Math::Functor ( this, &Fitter::Min2LL, 11 );
    gMinuit->SetFunction( *fFunc );
    gMinuit->SetVariable(0, "a1", 1.5, 0.01);
    gMinuit->SetVariable(1, "a2", 1.5, 0.01);
@@ -231,8 +231,7 @@ void Fitter::RunMinimizer(vector<event>& eventref_temp){
    gMinuit->SetVariable(7, "k2", 1.0, 0.01);
    gMinuit->SetVariable(8, "N1", 4.0, 0.01);
    gMinuit->SetVariable(9, "S1", 0.5, 0.01);
-   gMinuit->SetVariable(10,"N2", 4.0, 0.01);
-   gMinuit->SetVariable(11,"S2", 0.5, 0.01);
+   gMinuit->SetVariable(10,"S2", 0.5, 0.01);
 
    // set event vector and minimize
    cout << " -----> minimize, first pass" << endl;
@@ -290,7 +289,7 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       double cov_yy=0;
 
       // clustered jets
-      for(int i=0; i < int(ev->jet_pt.size()); i++){
+      for(int i=0; i < int(ev->jet_ptUncor.size()); i++){
 
          float feta = fabs(ev->jet_eta[i]);
          double c = cos(ev->jet_phi[i]);
@@ -303,7 +302,7 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
          double dph=0;
 
          // resolutions for two jet categories
-         if( ev->jet_pt[i] > jetfitHIGH ){
+         if( ev->jet_ptUncor[i] > jetfitHIGH ){
 
             int index=-1;
             if(feta<0.5) index=0;
@@ -319,7 +318,7 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
             dph =            (ev->jet_ptL123[i]) * dph_(ev->jet_ptL123[i], ev->jet_eta[i]);
 
          }
-         else if( ev->jet_pt[i] > jetfitLOW ){
+         else if( ev->jet_ptUncor[i] > jetfitLOW ){
 
             int index=-1;
             if(feta<2.4) index=0;
@@ -356,7 +355,7 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       met_y -= s*(ev->pjet_vectpt);
 
       double ctt = x[8]*x[8] + x[9]*x[9]*(ev->pjet_scalpt);
-      double cff = x[10]*x[10] + x[11]*x[11]*(ev->pjet_scalpt);
+      double cff = x[10]*x[10]*(ev->pjet_scalpt);
 
       cov_xx += ctt*c*c + cff*s*s;
       cov_xy += (ctt-cff)*c*s;
@@ -405,7 +404,7 @@ void Fitter::MatchMCjets(vector<event>& eventref_temp){
    for( vector<event>::iterator ev = eventref_temp.begin(); ev < eventref_temp.end(); ev++){
 
       // loop through reco jets
-      for(int ireco=0; ireco < int(ev->jet_pt.size()); ireco++){
+      for(int ireco=0; ireco < int(ev->jet_ptUncor.size()); ireco++){
 
          int matchIndex = -1;
          double dR = 1000;
@@ -431,7 +430,7 @@ void Fitter::MatchMCjets(vector<event>& eventref_temp){
 
       } // jets
 
-      if( ev->jet_pt.size() != ev->jet_matchIndex.size() ){
+      if( ev->jet_ptUncor.size() != ev->jet_matchIndex.size() ){
          cout << "ERROR: VECTOR SIZE MISMATCH" << endl;
       }
 

@@ -30,9 +30,9 @@ struct event {
    vector<TLorentzVector> muon_4vect;
 
    // high pt jets
-   vector<double> jet_pt;
    vector<double> jet_phi;
    vector<double> jet_eta;
+   vector<double> jet_ptUncor;
    vector<double> jet_ptL123;
    vector<double> jet_ptT1;
    vector<int> jet_matchIndex;
