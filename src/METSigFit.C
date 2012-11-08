@@ -114,7 +114,7 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    tree->SetBranchAddress("mu_e", mu_e);
    tree->SetBranchAddress("mu_phi", mu_phi);
 
-tree->SetBranchAddress("pfj_l1", pfj_l1);
+   tree->SetBranchAddress("pfj_l1", pfj_l1);
    tree->SetBranchAddress("pfj_l1l2l3", pfj_l1l2l3);
 
    if(isMC){
@@ -498,19 +498,19 @@ void Fitter::PlotsDataMC(vector<event>& eventref_MC, vector<event>& eventref_dat
    // clone data hists for MC
    for(map<string,TH1*>::const_iterator it = histsData_.begin();
          it != histsData_.end(); it++){
-      
+
       string hname = it->first;
       TH1D *hist = (TH1D*)it->second;
       histsMC_[hname] = (TH1D*)hist->Clone((char*)hname.c_str());
-         
+
    }
    for(map<string,TProfile*>::const_iterator it = profsData_.begin();
          it != profsData_.end(); it++){
-      
+
       string pname = it->first;
       TProfile *prof = (TProfile*)it->second;
       profsMC_[pname] = (TProfile*)prof->Clone((char*)pname.c_str());
-         
+
    }
 
 
@@ -537,7 +537,7 @@ void Fitter::PlotsDataMC(vector<event>& eventref_MC, vector<event>& eventref_dat
          iter_end = eventref_data.end();
          weights = weights_Data;
       }
-      
+
       for( vector<event>::iterator ev = iter_begin; ev < iter_end; ev++ ){
          int nvert = ev->nvertices;
 
@@ -588,7 +588,7 @@ void Fitter::PlotsDataMC(vector<event>& eventref_MC, vector<event>& eventref_dat
 
    for(map<string,TH1*>::const_iterator it = histsData_.begin();
          it != histsData_.end(); it++){
-   
+
       string hname = it->first;
       TH1D *histData = (TH1D*)it->second;
       TH1D *histMC = (TH1D*)histsMC_[hname];
@@ -600,7 +600,7 @@ void Fitter::PlotsDataMC(vector<event>& eventref_MC, vector<event>& eventref_dat
       histMC->Scale( double(eventref_data.size()) / eventref_MC.size() );
       histData->SetLineColor(1);
       histData->SetMarkerStyle(20);
-      
+
       histMC->SetMaximum( 1.1*max(histMC->GetMaximum(), histData->GetMaximum()) );
 
       histMC->Draw();
@@ -610,7 +610,7 @@ void Fitter::PlotsDataMC(vector<event>& eventref_MC, vector<event>& eventref_dat
    }
    for(map<string,TProfile*>::const_iterator it = profsData_.begin();
          it != profsData_.end(); it++){
-   
+
       string pname = it->first;
       TProfile *profData = (TProfile*)it->second;
       TProfile *profMC = (TProfile*)profsMC_[pname];
@@ -621,7 +621,7 @@ void Fitter::PlotsDataMC(vector<event>& eventref_MC, vector<event>& eventref_dat
       profMC->SetLineColor(2);
       profData->SetLineColor(1);
       profData->SetMarkerStyle(20);
-      
+
       profMC->SetMaximum( 1.1*max(profMC->GetMaximum(), profData->GetMaximum()) );
       profMC->SetMinimum( 0.8*min(profMC->GetMinimum(), profData->GetMinimum()) );
 

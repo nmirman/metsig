@@ -17,9 +17,8 @@ int main(){
 
    // fill eventvecs
    int numevents = 100000;
-   fitter.ReadNtuple( //"/eos/uscms/store/user/nmirman/Zmumu/"
-         //"Zmumu_MC_DYJettoLL_TuneZ2_M-50_7TeV_madgraph_tauola_20121104.root",
-         "~/nobackup/tempMC.root",
+   fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Zmumu/"
+         "Zmumu_MC_DYJettoLL_TuneZ2_M-50_7TeV_madgraph_tauola_20121107.root",
          eventvec_MC, numevents, true);
    fitter.MatchMCjets( eventvec_MC );
 
