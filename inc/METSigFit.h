@@ -13,7 +13,9 @@ using namespace std;
 struct event {
 
    int nvertices;
+   double weight;
 
+   double met;
    double sig;
    double det;
    double cov_xx;
@@ -58,6 +60,7 @@ class Fitter{
 
       void ReadNtuple(const char[], vector<event>&, const int, const bool);
       void MatchMCjets(vector<event>&);
+      void GetPUWeights(vector<event>&, vector<event>&);
       void RunMinimizer(vector<event>&);
       void FindSignificance(const double*, vector<event>&);
       void PlotsDataMC(vector<event>&, vector<event>&, const char[]);

@@ -28,6 +28,9 @@ int main(){
    fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Zmumu/"
          "Zmumu_data_DoubleMu_Run2011B_19Nov2011_v1_20121104.root",
          eventvec_data, numevents/2, false);
+   
+   // pile-up reweighting
+   fitter.GetPUWeights( eventvec_data, eventvec_MC );
 
    cout << "\n  MC EVENTS: " << eventvec_MC.size() << endl;
    cout << "DATA EVENTS: " << eventvec_data.size() << endl;
@@ -42,7 +45,7 @@ int main(){
    cout << " ############################ \n" << endl;
    fitter.RunMinimizer( eventvec_data );
 
-   fitter.PlotsDataMC( eventvec_MC, eventvec_data, "results/plotsDataMC.root" );
+   fitter.PlotsDataMC( eventvec_data, eventvec_MC, "results/plotsDataMC.root" );
 
    return 0;
 }

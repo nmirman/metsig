@@ -7,6 +7,7 @@
 #include "TCanvas.h"
 #include "TProfile.h"
 #include "TROOT.h"
+#include "TStyle.h"
 #include "TVector2.h"
 #include "TRandom3.h"
 
@@ -87,6 +88,16 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    float mu_pz[100];
    float mu_e[100];
    float mu_phi[100];
+   float mu_isGlobal[100];
+   float mu_chi2[100];
+   float mu_muonHits[100];
+   float mu_nMatches[100];
+   float mu_dxy[100];
+   float mu_pixelHits[100];
+   float mu_numberOfValidTrackerLayers[100];
+   float mu_dr03TkSumPt[100];
+   float mu_dr03EcalRecHitSumEt[100];
+   float mu_dr03HcalTowerSumEt[100];
 
    float pfj_l1[1000];
    float pfj_l1l2l3[1000];
@@ -114,6 +125,17 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    tree->SetBranchAddress("mu_e", mu_e);
    tree->SetBranchAddress("mu_phi", mu_phi);
 
+   tree->SetBranchAddress("mu_isGlobal", &mu_isGlobal);
+   tree->SetBranchAddress("mu_chi2", &mu_chi2);
+   tree->SetBranchAddress("mu_muonHits", &mu_muonHits);
+   tree->SetBranchAddress("mu_nMatches", &mu_nMatches);
+   tree->SetBranchAddress("mu_dxy", &mu_dxy);
+   tree->SetBranchAddress("mu_pixelHits", &mu_pixelHits);
+   tree->SetBranchAddress("mu_numberOfValidTrackerLayers", &mu_numberOfValidTrackerLayers);
+   tree->SetBranchAddress("mu_dr03TkSumPt", &mu_dr03TkSumPt);
+   tree->SetBranchAddress("mu_dr03EcalRecHitSumEt", &mu_dr03EcalRecHitSumEt);
+   tree->SetBranchAddress("mu_dr03HcalTowerSumEt", &mu_dr03HcalTowerSumEt);
+
    tree->SetBranchAddress("pfj_l1", pfj_l1);
    tree->SetBranchAddress("pfj_l1l2l3", pfj_l1l2l3);
 
@@ -132,11 +154,27 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       tree->GetEntry(ev);
       if( ev % 100000 == 0 and ev > 0) cout << "    -----> getting entry " << ev << endl;
 
-      // ####################### Z PEAK FILTER #######################
+      // ###################################### MUON SELECTION ######################################
+      bool mu_tight = true;
+      bool mu_iso = true;
+      for(int i=0; i < 2; i++){
+         // tight muon selection
+         if( !(mu_isGlobal[i] and mu_chi2[i] < 10 and mu_muonHits[i] > 0
+                  /*and mu_nMatches[i] > 1 */and mu_dxy[i] < 0.2 and mu_pixelHits[i] > 0
+                  /*and mu_numberOfValidTrackerLayers[i] > 8*/) ){
+            mu_tight = false;
+         }
+         // isolation
+         if( !( (mu_dr03TkSumPt[i]+mu_dr03EcalRecHitSumEt[i]+mu_dr03HcalTowerSumEt[i])
+                  / mu_pt[i] < 0.1) ){
+            mu_iso = false;
+         }
+      }
       TLorentzVector mu1temp( mu_px[0], mu_py[0], mu_pz[0], mu_e[0] );
       TLorentzVector mu2temp( mu_px[1], mu_py[1], mu_pz[1], mu_e[1] );
-      if( (mu1temp+mu2temp).M() < 86 or (mu1temp+mu2temp).M() > 96 ) continue;
-      // #############################################################
+      bool mu_zpeak = (mu1temp+mu2temp).M() > 60 and (mu1temp+mu2temp).M() < 120;
+      if( !(mu_tight and mu_iso and mu_zpeak) ) continue;
+      // ############################################################################################
 
       countev++;
 
@@ -149,6 +187,7 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
 
       // vertices
       evtemp.nvertices = v_size;
+      evtemp.weight = 1.0; // initialization -- fill with real value in GetPUWeights()
 
       // muons
       for( int i=0; i < mu_size; i++){
@@ -369,6 +408,7 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
 
       double sig = met_x*met_x*ncov_xx + 2*met_x*met_y*ncov_xy + met_y*met_y*ncov_yy;
 
+      ev->met = sqrt( met_x*met_x + met_y*met_y );
       ev->sig = sig;
       ev->det = det;
 
@@ -438,28 +478,38 @@ void Fitter::MatchMCjets(vector<event>& eventref_temp){
 
 }
 
-void Fitter::PlotsDataMC(vector<event>& eventref_MC, vector<event>& eventref_data, 
-      const char* filename){
+void Fitter::GetPUWeights(vector<event>& eventref_data, vector<event>& eventref_MC){
 
-   // pileup reweighting
-   int verts_MC [50] = {0};
-   int verts_Data [50] = {0};
-   double weights_MC [50];
-   double weights_Data [50];
-   fill_n(weights_MC,50,1.0);
-   fill_n(weights_Data,50,1.0);
+   int verts_MC [100] = {0};
+   int verts_Data [100] = {0};
+   double weights [100];
+   fill_n(weights,100,1.0);
+
+   // get vertex spectrum
    for( vector<event>::iterator ev = eventref_MC.begin(); ev < eventref_MC.end(); ev++){
       verts_MC[ ev->nvertices ] += 1;
    }
    for( vector<event>::iterator ev = eventref_data.begin(); ev < eventref_data.end(); ev++){
       verts_Data[ ev->nvertices ] += 1;
    }
-   for(int i=0; i < 50; i++){
+
+   // determine weights for MC
+   for(int i=0; i < 100; i++){
       if( verts_MC[i] != 0){
-         weights_MC[i] = (1.0*eventref_MC.size()/eventref_data.size())
+         weights[i] = (1.0*eventref_MC.size()/eventref_data.size())
             * (1.0*verts_Data[i]/verts_MC[i]);
       }
    }
+
+   // fill MC eventvec with weights
+   for( vector<event>::iterator ev = eventref_MC.begin(); ev < eventref_MC.end(); ev++){
+      ev->weight = weights[ ev->nvertices ];
+   }
+
+}
+
+void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_MC, 
+      const char* filename){
 
    // histograms
    map<string, TH1*> histsData_;
@@ -482,13 +532,14 @@ void Fitter::PlotsDataMC(vector<event>& eventref_MC, vector<event>& eventref_dat
    histsData_["cov_xx"] = new TH1D("cov_xx_Data", "Cov_{xx}", 100, 0, 500);
    histsData_["cov_xy"] = new TH1D("cov_xy_Data", "Cov_{xy}", 100, -150, 150);
    histsData_["cov_yy"] = new TH1D("cov_yy_Data", "Cov_{yy}", 100, 0, 500);
+   histsData_["met"] = new TH1D("met_Data", "Missing E_{T}", 100, 0, 100);
    histsData_["sig"] = new TH1D("sig_Data", "Significance", 100, 0, 50);
    histsData_["det"] = new TH1D("det_Data", "Determinant", 100, 0, 100000);
    histsData_["pchi2"] = new TH1D("pchi2_Data", "P(#chi^{2})", 100, 0, 1);
 
    // profile histograms
    profsData_["psig_vert"] = new TProfile("psig_vert_Data",
-         "Significance vs. N Vertices;N Vertices;<S_{E}>", 15, 0, 15);
+         "Significance vs. N Vertices;N Vertices;<S_{E}>", 30, 0, 30);
    profsData_["psig_qt"] = new TProfile("psig_qt_Data",
          "Significance vs. q_{T};q_{T} (GeV);<S_{E}>", 15, 0, 100);
    profsData_["presp_qt"] = new TProfile("presp_qt_Data",
@@ -520,59 +571,56 @@ void Fitter::PlotsDataMC(vector<event>& eventref_MC, vector<event>& eventref_dat
       map<string, TProfile*> profs_;
       vector<event>::iterator iter_begin;
       vector<event>::iterator iter_end;
-      double *weights;
 
       if( i==0 ){
          hists_ = histsMC_;
          profs_ = profsMC_;
          iter_begin = eventref_MC.begin();
          iter_end = eventref_MC.end();
-         weights = weights_MC;
       }
       if( i==1 ){
          hists_ = histsData_;
          profs_ = profsData_;
          iter_begin = eventref_data.begin();
          iter_end = eventref_data.end();
-         weights = weights_Data;
       }
 
       for( vector<event>::iterator ev = iter_begin; ev < iter_end; ev++ ){
-         int nvert = ev->nvertices;
 
          // muons
          for( int j=0; j < int(ev->muon_pt.size()); j++){
-            hists_["muon_pt"]->Fill( ev->muon_pt[j] , weights[nvert]);
+            hists_["muon_pt"]->Fill( ev->muon_pt[j] , ev->weight);
          }
          hists_["muon_invmass"]->Fill( ((ev->muon_4vect[0])+(ev->muon_4vect[1])).M(), 
-               weights[nvert] );
+               ev->weight );
 
          // jets
-         hists_["njets"]->Fill( ev->jet_ptL123.size() , weights[nvert] );
+         hists_["njets"]->Fill( ev->jet_ptL123.size() , ev->weight );
          for( int j=0; j < int(ev->jet_ptL123.size()); j++){
-            hists_["jet_pt"]->Fill( ev->jet_ptL123[j] , weights[nvert] );
+            hists_["jet_pt"]->Fill( ev->jet_ptL123[j] , ev->weight );
          }
          if( ev->jet_ptL123.size() > 0 ){
-            hists_["jet1_pt"]->Fill( ev->jet_ptL123[0] , weights[nvert] );
+            hists_["jet1_pt"]->Fill( ev->jet_ptL123[0] , ev->weight );
          }
 
          // pseudojet
-         hists_["pjet_scalpt"]->Fill( ev->pjet_scalpt , weights[nvert] );
-         hists_["pjet_vectpt"]->Fill( ev->pjet_vectpt , weights[nvert] );
-         hists_["pjet_size"]->Fill( ev->pjet_size , weights[nvert] );
+         hists_["pjet_scalpt"]->Fill( ev->pjet_scalpt , ev->weight );
+         hists_["pjet_vectpt"]->Fill( ev->pjet_vectpt , ev->weight );
+         hists_["pjet_size"]->Fill( ev->pjet_size , ev->weight );
 
          // other observables
-         hists_["nvert"]->Fill( nvert , weights[nvert] );
+         hists_["nvert"]->Fill( ev->nvertices , ev->weight );
 
-         hists_["qt"]->Fill( ev->qt, weights[nvert] );
-         hists_["ut_par"]->Fill( fabs(ev->ut_par), weights[nvert] );
+         hists_["qt"]->Fill( ev->qt, ev->weight );
+         hists_["ut_par"]->Fill( fabs(ev->ut_par), ev->weight );
 
-         hists_["cov_xx"]->Fill( ev->cov_xx, weights[nvert] );
-         hists_["cov_xy"]->Fill( ev->cov_xy, weights[nvert] );
-         hists_["cov_yy"]->Fill( ev->cov_yy, weights[nvert] );
-         hists_["sig"]->Fill( ev->sig, weights[nvert] );
-         hists_["det"]->Fill( ev->det, weights[nvert] );
-         hists_["pchi2"]->Fill( TMath::Prob(ev->sig,2), weights[nvert] );
+         hists_["cov_xx"]->Fill( ev->cov_xx, ev->weight );
+         hists_["cov_xy"]->Fill( ev->cov_xy, ev->weight );
+         hists_["cov_yy"]->Fill( ev->cov_yy, ev->weight );
+         hists_["met"]->Fill( ev->met, ev->weight );
+         hists_["sig"]->Fill( ev->sig, ev->weight );
+         hists_["det"]->Fill( ev->det, ev->weight );
+         hists_["pchi2"]->Fill( TMath::Prob(ev->sig,2), ev->weight );
 
          // profiles
          profs_["psig_vert"]->Fill( ev->nvertices, ev->sig );
@@ -592,19 +640,63 @@ void Fitter::PlotsDataMC(vector<event>& eventref_MC, vector<event>& eventref_dat
       TH1D *histData = (TH1D*)it->second;
       TH1D *histMC = (TH1D*)histsMC_[hname];
 
-      TCanvas *canvas  = new TCanvas( (char*)hname.c_str(), (char*)hname.c_str(), 700, 700 );
-      canvas->cd();
+      TCanvas *canvas  = new TCanvas( (char*)hname.c_str(), (char*)hname.c_str(), 800, 800 );
+      TPad *pad1 = new TPad("pad1","pad1",0,0.33,1,1);
+      TPad *pad2 = new TPad("pad2","pad2",0,0,1,0.33);
+      pad1->SetBottomMargin(0.00001);
+      pad1->SetBorderMode(0);
+      pad1->SetLogy();
+      pad2->SetTopMargin(0.00001);
+      pad2->SetBottomMargin(0.1);
+      pad2->SetBorderMode(0);
+      pad1->Draw();
+      pad2->Draw();
+      
+      pad1->cd();
 
-      histMC->SetLineColor(2);
+      histMC->SetLineColor(38);
+      histMC->SetFillColor(38);
       histMC->Scale( double(eventref_data.size()) / eventref_MC.size() );
       histData->SetLineColor(1);
       histData->SetMarkerStyle(20);
 
       histMC->SetMaximum( 1.1*max(histMC->GetMaximum(), histData->GetMaximum()) );
+      histMC->GetYaxis()->SetLabelFont(63);
+      histMC->GetYaxis()->SetLabelSize(16);
 
       histMC->Draw();
       histData->Draw("EP same");
 
+      pad2->cd();
+
+      TH1D *hresid = (TH1D*)histData->Clone("hresid");
+      hresid->Sumw2();
+      hresid->Add( histMC, -1.0 );
+      hresid->Divide( histMC );
+      //for(int bin=1; bin <= histData->GetNbinsX(); bin++){
+      //   double err = histData->GetBinError(bin) > 0 ? histData->GetBinError(bin) : 1;
+      //   hresid->SetBinContent( bin, double(hresid->GetBinContent(bin))/err );
+      //}
+
+      hresid->GetXaxis()->SetLabelFont(63);
+      hresid->GetXaxis()->SetLabelSize(16);
+      hresid->GetYaxis()->SetLabelFont(63);
+      hresid->GetYaxis()->SetLabelSize(16);
+      hresid->SetTitle(0);
+      hresid->SetStats(0);
+      hresid->GetYaxis()->SetTitle("Data - MC");
+      hresid->GetYaxis()->CenterTitle();
+      hresid->GetYaxis()->SetTitleSize(0.1);
+      hresid->GetYaxis()->SetTitleOffset(0.3);
+      hresid->Draw("EP");
+
+      TF1 *func = new TF1("func","[0]",-10E6,10E6);
+      func->SetParameter(0,0.0);
+      func->SetLineWidth(1);
+      func->SetLineStyle(7);
+      func->Draw("same");
+
+      canvas->cd();
       canvas->Write();
    }
    for(map<string,TProfile*>::const_iterator it = profsData_.begin();
@@ -614,7 +706,7 @@ void Fitter::PlotsDataMC(vector<event>& eventref_MC, vector<event>& eventref_dat
       TProfile *profData = (TProfile*)it->second;
       TProfile *profMC = (TProfile*)profsMC_[pname];
 
-      TCanvas *canvas  = new TCanvas( (char*)pname.c_str(), (char*)pname.c_str(), 700, 700 );
+      TCanvas *canvas  = new TCanvas( (char*)pname.c_str(), (char*)pname.c_str(), 800, 800 );
       canvas->cd();
 
       profMC->SetLineColor(2);
