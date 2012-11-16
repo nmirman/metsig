@@ -18,15 +18,15 @@ int main(){
    // fill eventvecs
    int numevents = 100000;
    fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Zmumu/"
-         "Zmumu_MC_DYJettoLL_TuneZ2_M-50_7TeV_madgraph_tauola_20121107.root",
+         "Zmumu_MC_DYJettoLL_TuneZ2_M-50_7TeV_madgraph_tauola_20121116.root",
          eventvec_MC, numevents, true);
    fitter.MatchMCjets( eventvec_MC );
 
    fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Zmumu/"
-         "Zmumu_data_DoubleMu_Run2011A_08Nov2011_v1_20121104.root",
+         "Zmumu_data_DoubleMu_Run2011A_08Nov2011_v1_20121116.root",
          eventvec_data, numevents/2, false);
    fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Zmumu/"
-         "Zmumu_data_DoubleMu_Run2011B_19Nov2011_v1_20121104.root",
+         "Zmumu_data_DoubleMu_Run2011B_19Nov2011_v1_20121116.root",
          eventvec_data, numevents/2, false);
    
    // pile-up reweighting
