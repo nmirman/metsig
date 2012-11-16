@@ -39,6 +39,7 @@ struct event {
    vector<double> jet_ptT1;
    vector<int> jet_matchIndex;
    vector<double> jet_matchdR;
+   vector<bool> jet_id;
 
    // pseudojet
    double pjet_phi;
@@ -69,18 +70,6 @@ class Fitter{
 
       ROOT::Minuit2::Minuit2Minimizer* gMinuit;
 
-   private:
-      double Min2LL(const double*);
-
-      ROOT::Math::IMultiGenFunction* fFunc;
-
-      vector<event>* eventvecPnt;
-
-      //jet resolutions from 2010
-      static const double sigmaPt[10][4];
-      static const double sigmaPhi[10][5];
-      static const double puWeights[50];
-
       double dpt_(double x, double _eta){
          double feta = fabs(_eta);
          int ieta =feta<4.5? feta/0.5 : 9;
@@ -101,6 +90,19 @@ class Fitter{
          double p4 = sigmaPhi[ieta][4];
          return (sqrt((p0*p0/x/x+(p1*p1/x))+p2*p2)+(p3/x))   + ((p4/x)/sqrt(x));
       }
+
+   private:
+      double Min2LL(const double*);
+
+      ROOT::Math::IMultiGenFunction* fFunc;
+
+      vector<event>* eventvecPnt;
+
+      //jet resolutions from 2010
+      static const double sigmaPt[10][4];
+      static const double sigmaPhi[10][5];
+      static const double puWeights[50];
+
 
 }; 
 #endif

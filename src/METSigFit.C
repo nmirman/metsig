@@ -81,6 +81,13 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    float pfj_phi[1000];
    float pfj_eta[1000];
 
+   float pfj_neutralHadronFraction[1000];
+   float pfj_neutralEmFraction[1000];
+   float pfj_chargedHadronFraction[1000];
+   float pfj_chargedHadronMultiplicity[1000];
+   float pfj_chargedEmFraction[1000];
+   int pfj_numConstituents[1000];
+
    int mu_size=0;
    float mu_pt[100];
    float mu_px[100];
@@ -88,13 +95,14 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    float mu_pz[100];
    float mu_e[100];
    float mu_phi[100];
-   float mu_isGlobal[100];
+   float mu_eta[100];
+   int mu_isGlobal[100];
    float mu_chi2[100];
-   float mu_muonHits[100];
-   float mu_nMatches[100];
+   int mu_muonHits[100];
+   int mu_nMatches[100];
    float mu_dxy[100];
-   float mu_pixelHits[100];
-   float mu_numberOfValidTrackerLayers[100];
+   int mu_pixelHits[100];
+   int mu_numberOfValidTrackerLayers[100];
    float mu_dr03TkSumPt[100];
    float mu_dr03EcalRecHitSumEt[100];
    float mu_dr03HcalTowerSumEt[100];
@@ -117,6 +125,13 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    tree->SetBranchAddress("pfj_phi", pfj_phi);
    tree->SetBranchAddress("pfj_eta", pfj_eta);
 
+   tree->SetBranchAddress("pfj_neutralHadronFraction", pfj_neutralHadronFraction);
+   tree->SetBranchAddress("pfj_neutralEmFraction", pfj_neutralEmFraction);
+   tree->SetBranchAddress("pfj_chargedHadronFraction", pfj_chargedHadronFraction);
+   tree->SetBranchAddress("pfj_chargedHadronMultiplicity", pfj_chargedHadronMultiplicity);
+   tree->SetBranchAddress("pfj_chargedEmFraction", pfj_chargedEmFraction);
+   tree->SetBranchAddress("pfj_numConstituents", pfj_numConstituents);
+
    tree->SetBranchAddress("mu_size", &mu_size);
    tree->SetBranchAddress("mu_pt", mu_pt);
    tree->SetBranchAddress("mu_px", mu_px);
@@ -124,6 +139,7 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    tree->SetBranchAddress("mu_pz", mu_pz);
    tree->SetBranchAddress("mu_e", mu_e);
    tree->SetBranchAddress("mu_phi", mu_phi);
+   tree->SetBranchAddress("mu_eta", mu_eta);
 
    tree->SetBranchAddress("mu_isGlobal", &mu_isGlobal);
    tree->SetBranchAddress("mu_chi2", &mu_chi2);
@@ -157,11 +173,13 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       // ###################################### MUON SELECTION ######################################
       bool mu_tight = true;
       bool mu_iso = true;
-      for(int i=0; i < 2; i++){
+      bool mu_checketa = true;
+      bool mu_checksize = mu_size == 2;
+      for(int i=0; i < mu_size; i++){
          // tight muon selection
          if( !(mu_isGlobal[i] and mu_chi2[i] < 10 and mu_muonHits[i] > 0
-                  /*and mu_nMatches[i] > 1 */and mu_dxy[i] < 0.2 and mu_pixelHits[i] > 0
-                  /*and mu_numberOfValidTrackerLayers[i] > 8*/) ){
+                  and mu_nMatches[i] > 1 and mu_dxy[i] < 0.2 and mu_pixelHits[i] > 0
+                  and mu_numberOfValidTrackerLayers[i] > 8) ){
             mu_tight = false;
          }
          // isolation
@@ -169,11 +187,12 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
                   / mu_pt[i] < 0.1) ){
             mu_iso = false;
          }
+         if( !(fabs(mu_eta[i]) < 2.4) ) mu_checketa = false;
       }
       TLorentzVector mu1temp( mu_px[0], mu_py[0], mu_pz[0], mu_e[0] );
       TLorentzVector mu2temp( mu_px[1], mu_py[1], mu_pz[1], mu_e[1] );
       bool mu_zpeak = (mu1temp+mu2temp).M() > 60 and (mu1temp+mu2temp).M() < 120;
-      if( !(mu_tight and mu_iso and mu_zpeak) ) continue;
+      if( !(mu_tight and mu_iso and mu_zpeak and mu_checksize and mu_checketa) ) continue;
       // ############################################################################################
 
       countev++;
@@ -200,14 +219,28 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       // jets
       for( int i=0; i < pfj_size; i++){
 
-         if( pfj_pt[i] > jetfitLOW ){
+         double jet_ptL123_temp = (pfj_pt[i]*pfj_l1l2l3[i] > jetcorrMIN)
+            ? pfj_pt[i]*pfj_l1l2l3[i] : pfj_pt[i];
+
+         bool jet_id = false;
+         if( pfj_neutralHadronFraction[i] < 0.99 and pfj_neutralEmFraction[i] < 0.99
+               and pfj_numConstituents[i] > 1 ){
+            if( (fabs(pfj_eta[i]) < 2.4 and pfj_chargedHadronFraction[i] > 0
+                     and pfj_chargedHadronMultiplicity[i] > 0
+                     and pfj_chargedEmFraction[i] < 0.99) or fabs(pfj_eta[i]) >= 2.4 ){
+               jet_id = true;
+            }
+         }
+
+         if( (jet_id and jet_ptL123_temp > jetfitLOW) or (!jet_id and pfj_pt[i] > jetfitLOW) ){
             // clustered jets
 
+            evtemp.jet_id.push_back( jet_id );
             evtemp.jet_phi.push_back( pfj_phi[i] );
             evtemp.jet_eta.push_back( pfj_eta[i] );
             evtemp.jet_ptUncor.push_back( pfj_pt[i] );
 
-            if( pfj_pt[i]*pfj_l1l2l3[i] > jetcorrMIN ){
+            if( jet_id and pfj_pt[i]*pfj_l1l2l3[i] > jetcorrMIN ){
                evtemp.jet_ptL123.push_back( pfj_pt[i]*pfj_l1l2l3[i] );
                evtemp.jet_ptT1.push_back( pfj_pt[i]*(pfj_l1l2l3[i] + 1 - pfj_l1[i]) );
             }else{
@@ -310,7 +343,7 @@ double Fitter::Min2LL(const double *x){
    // event loop
    double m2ll = 0;
    for( vector<event>::iterator ev = eventvecPnt->begin(); ev < eventvecPnt->end(); ev++){
-      m2ll += ev->sig + log(ev->det);
+      m2ll += /*ev->weight**/(ev->sig + log(ev->det));
    }
 
    return m2ll;
@@ -341,7 +374,7 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
          double dph=0;
 
          // resolutions for two jet categories
-         if( ev->jet_ptUncor[i] > jetfitHIGH ){
+         if( ev->jet_ptL123[i] > jetfitHIGH ){
 
             int index=-1;
             if(feta<0.5) index=0;
@@ -353,11 +386,11 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
             }
 
             // CMS 2010 Resolutions -- parameterized by L123 corrected pt
-            dpt = x[index] * (ev->jet_ptL123[i]) * dpt_(ev->jet_ptL123[i], ev->jet_eta[i]);
-            dph =            (ev->jet_ptL123[i]) * dph_(ev->jet_ptL123[i], ev->jet_eta[i]);
+            dpt = x[index] * (ev->jet_ptT1[i]) * dpt_(ev->jet_ptL123[i], ev->jet_eta[i]);
+            dph =            (ev->jet_ptT1[i]) * dph_(ev->jet_ptL123[i], ev->jet_eta[i]);
 
          }
-         else if( ev->jet_ptUncor[i] > jetfitLOW ){
+         else if( ev->jet_ptL123[i] > jetfitLOW ){
 
             int index=-1;
             if(feta<2.4) index=0;
@@ -523,6 +556,7 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
    histsData_["njets"  ] = new TH1D("njets_Data", "N jets", 100, 0, 100);
    histsData_["jet_pt" ] = new TH1D("jet_pt_Data", "Jet p_{T}", 100, 0, 200);
    histsData_["jet1_pt"] = new TH1D("jet1_pt_Data", "Jet 1 p_{T}", 100, 0, 200);
+   histsData_["jet_eta" ] = new TH1D("jet_eta_Data", "Jet #eta, p_{T} > 30 GeV", 100, -5, 5);
    histsData_["pjet_size"  ] = new TH1D("pjet_size_Data", "N jets", 100, 0, 500);
    histsData_["pjet_scalpt"] = new TH1D("pjet_scalpt_Data", "Pseudojet Scalar p_{T}", 100, 0, 500);
    histsData_["pjet_vectpt"] = new TH1D("pjet_vectpt_Data", "Pseudojet Scalar p_{T}", 100, 0, 200);
@@ -595,11 +629,14 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
                ev->weight );
 
          // jets
-         hists_["njets"]->Fill( ev->jet_ptL123.size() , ev->weight );
+         hists_["njets"]->Fill( ev->jet_ptL123.size(), ev->weight );
          for( int j=0; j < int(ev->jet_ptL123.size()); j++){
-            hists_["jet_pt"]->Fill( ev->jet_ptL123[j] , ev->weight );
+            hists_["jet_pt"]->Fill( ev->jet_ptL123[j], ev->weight );
+            if( ev->jet_ptL123[j] > 30 ){
+               hists_["jet_eta"]->Fill( ev->jet_eta[j], ev->weight );
+            }
          }
-         if( ev->jet_ptL123.size() > 0 ){
+         if( ev->jet_ptL123.size() > 0 and ev->jet_id[0] ){
             hists_["jet1_pt"]->Fill( ev->jet_ptL123[0] , ev->weight );
          }
 
@@ -640,18 +677,20 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
       TH1D *histData = (TH1D*)it->second;
       TH1D *histMC = (TH1D*)histsMC_[hname];
 
+      bool log_axis = (hname != "jet_eta") and (hname != "pchi2");
+
       TCanvas *canvas  = new TCanvas( (char*)hname.c_str(), (char*)hname.c_str(), 800, 800 );
       TPad *pad1 = new TPad("pad1","pad1",0,0.33,1,1);
       TPad *pad2 = new TPad("pad2","pad2",0,0,1,0.33);
       pad1->SetBottomMargin(0.00001);
       pad1->SetBorderMode(0);
-      pad1->SetLogy();
+      if( log_axis ) pad1->SetLogy();
       pad2->SetTopMargin(0.00001);
       pad2->SetBottomMargin(0.1);
       pad2->SetBorderMode(0);
       pad1->Draw();
       pad2->Draw();
-      
+
       pad1->cd();
 
       histMC->SetLineColor(38);
@@ -673,10 +712,6 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
       hresid->Sumw2();
       hresid->Add( histMC, -1.0 );
       hresid->Divide( histMC );
-      //for(int bin=1; bin <= histData->GetNbinsX(); bin++){
-      //   double err = histData->GetBinError(bin) > 0 ? histData->GetBinError(bin) : 1;
-      //   hresid->SetBinContent( bin, double(hresid->GetBinContent(bin))/err );
-      //}
 
       hresid->GetXaxis()->SetLabelFont(63);
       hresid->GetXaxis()->SetLabelSize(16);
@@ -684,10 +719,10 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
       hresid->GetYaxis()->SetLabelSize(16);
       hresid->SetTitle(0);
       hresid->SetStats(0);
-      hresid->GetYaxis()->SetTitle("Data - MC");
+      hresid->GetYaxis()->SetTitle("#frac{Data - MC}{MC}");
       hresid->GetYaxis()->CenterTitle();
       hresid->GetYaxis()->SetTitleSize(0.1);
-      hresid->GetYaxis()->SetTitleOffset(0.3);
+      hresid->GetYaxis()->SetTitleOffset(0.4);
       hresid->Draw("EP");
 
       TF1 *func = new TF1("func","[0]",-10E6,10E6);
