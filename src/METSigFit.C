@@ -81,13 +81,6 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    float pfj_phi[1000];
    float pfj_eta[1000];
 
-   float pfj_neutralHadronFraction[1000];
-   float pfj_neutralEmFraction[1000];
-   float pfj_chargedHadronFraction[1000];
-   float pfj_chargedHadronMultiplicity[1000];
-   float pfj_chargedEmFraction[1000];
-   int pfj_numConstituents[1000];
-
    int mu_size=0;
    float mu_pt[100];
    float mu_px[100];
@@ -124,13 +117,6 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    tree->SetBranchAddress("pfj_pt", pfj_pt);
    tree->SetBranchAddress("pfj_phi", pfj_phi);
    tree->SetBranchAddress("pfj_eta", pfj_eta);
-
-   tree->SetBranchAddress("pfj_neutralHadronFraction", pfj_neutralHadronFraction);
-   tree->SetBranchAddress("pfj_neutralEmFraction", pfj_neutralEmFraction);
-   tree->SetBranchAddress("pfj_chargedHadronFraction", pfj_chargedHadronFraction);
-   tree->SetBranchAddress("pfj_chargedHadronMultiplicity", pfj_chargedHadronMultiplicity);
-   tree->SetBranchAddress("pfj_chargedEmFraction", pfj_chargedEmFraction);
-   tree->SetBranchAddress("pfj_numConstituents", pfj_numConstituents);
 
    tree->SetBranchAddress("mu_size", &mu_size);
    tree->SetBranchAddress("mu_pt", mu_pt);
@@ -222,25 +208,14 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
          double jet_ptL123_temp = (pfj_pt[i]*pfj_l1l2l3[i] > jetcorrMIN)
             ? pfj_pt[i]*pfj_l1l2l3[i] : pfj_pt[i];
 
-         bool jet_id = false;
-         if( pfj_neutralHadronFraction[i] < 0.99 and pfj_neutralEmFraction[i] < 0.99
-               and pfj_numConstituents[i] > 1 ){
-            if( (fabs(pfj_eta[i]) < 2.4 and pfj_chargedHadronFraction[i] > 0
-                     and pfj_chargedHadronMultiplicity[i] > 0
-                     and pfj_chargedEmFraction[i] < 0.99) or fabs(pfj_eta[i]) >= 2.4 ){
-               jet_id = true;
-            }
-         }
-
-         if( (jet_id and jet_ptL123_temp > jetfitLOW) or (!jet_id and pfj_pt[i] > jetfitLOW) ){
+         if( jet_ptL123_temp > jetfitLOW ){
             // clustered jets
 
-            evtemp.jet_id.push_back( jet_id );
             evtemp.jet_phi.push_back( pfj_phi[i] );
             evtemp.jet_eta.push_back( pfj_eta[i] );
             evtemp.jet_ptUncor.push_back( pfj_pt[i] );
 
-            if( jet_id and pfj_pt[i]*pfj_l1l2l3[i] > jetcorrMIN ){
+            if( pfj_pt[i]*pfj_l1l2l3[i] > jetcorrMIN ){
                evtemp.jet_ptL123.push_back( pfj_pt[i]*pfj_l1l2l3[i] );
                evtemp.jet_ptT1.push_back( pfj_pt[i]*(pfj_l1l2l3[i] + 1 - pfj_l1[i]) );
             }else{
@@ -636,7 +611,7 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
                hists_["jet_eta"]->Fill( ev->jet_eta[j], ev->weight );
             }
          }
-         if( ev->jet_ptL123.size() > 0 and ev->jet_id[0] ){
+         if( ev->jet_ptL123.size() > 0 ){
             hists_["jet1_pt"]->Fill( ev->jet_ptL123[0] , ev->weight );
          }
 
