@@ -318,7 +318,7 @@ double Fitter::Min2LL(const double *x){
    // event loop
    double m2ll = 0;
    for( vector<event>::iterator ev = eventvecPnt->begin(); ev < eventvecPnt->end(); ev++){
-      m2ll += /*ev->weight**/(ev->sig + log(ev->det));
+      m2ll += ev->weight*(ev->sig + log(ev->det));
    }
 
    return m2ll;
