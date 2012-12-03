@@ -266,7 +266,7 @@ void Fitter::RunMinimizer(vector<event>& eventref_temp){
    gMinuit->SetStrategy(0);
    gMinuit->SetPrintLevel(2);
 
-   fFunc = new ROOT::Math::Functor ( this, &Fitter::Min2LL, 11 );
+   fFunc = new ROOT::Math::Functor ( this, &Fitter::Min2LL, 10 );
    gMinuit->SetFunction( *fFunc );
    gMinuit->SetVariable(0, "a1", 1.5, 0.01);
    gMinuit->SetVariable(1, "a2", 1.5, 0.01);
@@ -278,7 +278,6 @@ void Fitter::RunMinimizer(vector<event>& eventref_temp){
    gMinuit->SetVariable(7, "k2", 1.0, 0.01);
    gMinuit->SetVariable(8, "N1", 4.0, 0.01);
    gMinuit->SetVariable(9, "S1", 0.5, 0.01);
-   gMinuit->SetVariable(10,"S2", 0.5, 0.01);
 
    // set event vector and minimize
    cout << " -----> minimize, first pass" << endl;
@@ -402,11 +401,9 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       met_y -= s*(ev->pjet_vectpt);
 
       double ctt = x[8]*x[8] + x[9]*x[9]*(ev->pjet_scalpt);
-      double cff = x[10]*x[10]*(ev->pjet_scalpt);
 
-      cov_xx += ctt*c*c + cff*s*s;
-      cov_xy += (ctt-cff)*c*s;
-      cov_yy += cff*c*c + ctt*s*s;  
+      cov_xx += ctt;
+      cov_yy += ctt;
 
       double det = cov_xx*cov_yy - cov_xy*cov_xy;
 
