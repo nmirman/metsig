@@ -10,6 +10,7 @@
 #include "TStyle.h"
 #include "TVector2.h"
 #include "TRandom3.h"
+#include "TProfile.h"
 
 #include <cmath>
 #include <iostream>
@@ -266,7 +267,7 @@ void Fitter::RunMinimizer(vector<event>& eventref_temp){
    gMinuit->SetStrategy(0);
    gMinuit->SetPrintLevel(2);
 
-   fFunc = new ROOT::Math::Functor ( this, &Fitter::Min2LL, 11 );
+   fFunc = new ROOT::Math::Functor ( this, &Fitter::Min2LL, 10 );
    gMinuit->SetFunction( *fFunc );
    gMinuit->SetVariable(0, "a1", 1.5, 0.01);
    gMinuit->SetVariable(1, "a2", 1.5, 0.01);
@@ -278,7 +279,6 @@ void Fitter::RunMinimizer(vector<event>& eventref_temp){
    gMinuit->SetVariable(7, "k2", 1.0, 0.01);
    gMinuit->SetVariable(8, "N1", 4.0, 0.01);
    gMinuit->SetVariable(9, "S1", 0.5, 0.01);
-   gMinuit->SetVariable(10,"T1", 1.0, 0.01);
 
    // set event vector and minimize
    cout << " -----> minimize, first pass" << endl;
@@ -401,8 +401,7 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       met_x -= c*(ev->pjet_vectpt);
       met_y -= s*(ev->pjet_vectpt);
 
-      double ctt = x[8]*x[8] + x[9]*x[9]*(ev->pjet_scalpt)
-         + x[10]*x[10]*(ev->pjet_scalpt)*(ev->pjet_scalpt);
+      double ctt = x[8]*x[8] + x[9]*x[9]*(ev->pjet_scalpt);
 
       cov_xx += ctt;
       cov_yy += ctt;
@@ -546,12 +545,12 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
    histsData_["pchi2"] = new TH1D("pchi2_Data", "P(#chi^{2})", 100, 0, 1);
 
    // profile histograms
-   profsData_["psig_vert"] = new TH2("psig_vert_Data",
+   profsData_["psig_vert"] = new TH2D("psig_vert_Data",
          "Significance vs. N Vertices;N Vertices;<S_{E}>", 30, 0, 30, 100, 0, 50);
-   profsData_["psig_qt"] = new TH2("psig_qt_Data",
+   profsData_["psig_qt"] = new TH2D("psig_qt_Data",
          "Significance vs. q_{T};q_{T} (GeV);<S_{E}>", 15, 0, 100, 100, 0, 50);
-   profsData_["presp_qt"] = new TH2("presp_qt_Data",
-         "Response = |<u_{#parallel}>|/q_{T} vs. q_{T};q_{T} (GeV);Response", 25, 0, 100, 100, 0, 10.0);
+   profsData_["presp_qt"] = new TH2D("presp_qt_Data",
+         "Response = |<u_{#parallel}>|/q_{T} vs. q_{T};q_{T} (GeV);Response", 25, 0, 100, 100, -100, 100);
 
    // clone data hists for MC
    for(map<string,TH1*>::const_iterator it = histsData_.begin();
@@ -714,8 +713,8 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
       string pname = it->first;
       TH2 *histData = (TH2*)it->second;
       TH2 *histMC = (TH2*)profsMC_[pname];
-      TProfile *profData = histData->ProfileX();
-      TProfile *profMC = histMC->ProfileX();
+      TProfile *profData = (TProfile*)histData->ProfileX();
+      TProfile *profMC = (TProfile*)histMC->ProfileX();
 
       TCanvas *canvas  = new TCanvas( (char*)pname.c_str(), (char*)pname.c_str(), 800, 800 );
       canvas->cd();
@@ -731,6 +730,19 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
       profData->Draw("EP same");
 
       canvas->Write();
+
+      cout << pname << ": " << histData->GetCorrelationFactor() << ", "
+         << histMC->GetCorrelationFactor() << endl;
    }
 
+   psig_nvert_corr = profsData_["psig_vert"]->GetCorrelationFactor();
+   psig_qt_corr = profsData_["psig_qt"]->GetCorrelationFactor();
+
+   TF1 *pchi2_left = new TF1("pchi2_left","pol1",0.0,0.03);
+   histsData_["pchi2"]->Fit("pchi2_left","R");
+   pchi2slope_left = pchi2_left->GetParameter(1);
+
+   TF1 *pchi2_right = new TF1("pchi2_right","pol1",0.5,1.0);
+   histsData_["pchi2"]->Fit("pchi2_right","R");
+   pchi2slope_right = pchi2_right->GetParameter(1);
 }

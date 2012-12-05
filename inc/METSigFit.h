@@ -67,6 +67,7 @@ class Fitter{
       void PlotsDataMC(vector<event>&, vector<event>&, const char[]);
 
       double jetfitLOW, jetfitHIGH, jetcorrMIN;
+      double psig_nvert_corr, psig_qt_corr, pchi2slope_left, pchi2slope_right;
 
       ROOT::Minuit2::Minuit2Minimizer* gMinuit;
 
