@@ -1,7 +1,6 @@
 universe = vanilla
 Executable = scripts/RunCondor.sh
 Requirements = Memory >= 199 &&OpSys == "LINUX"&& (Arch != "DUMMY" )
-#Transfer_Input_Files = 
 Should_Transfer_Files = YES
 when_to_transfer_output  = ON_EXIT
 transfer_output_remaps = "fitresults.root=condorjob/fitresults_$(Cluster)_$(Process).root"
@@ -11,4 +10,4 @@ Log = condorlogs/fitter_$(Cluster)_$(Cluster)_$(Process).condorlog
 notify_user = nem46@cornell.edu
 notification = ERROR
 Arguments = $(Process)
-Queue 880
+Queue 1580

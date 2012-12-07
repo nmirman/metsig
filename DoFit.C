@@ -49,8 +49,8 @@ int main(int argc, char* argv[]){
       switch(c)
       {
          case 'n' :
-            fitter.jetfitLOW = 10.0 + atoi(optarg)%21;
-            fitter.jetfitHIGH = 10.0 + atoi(optarg)/21;
+            fitter.jetfitLOW = 0.0 + atoi(optarg)%31;
+            fitter.jetfitHIGH = 0.0 + atoi(optarg)/31;
             break;
 
          default :
