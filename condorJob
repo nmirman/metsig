@@ -10,4 +10,4 @@ Log = condorlogs/fitter_$(Cluster)_$(Cluster)_$(Process).condorlog
 notify_user = nem46@cornell.edu
 notification = ERROR
 Arguments = $(Process)
-Queue 1580
+Queue 50

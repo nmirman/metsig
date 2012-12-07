@@ -267,18 +267,15 @@ void Fitter::RunMinimizer(vector<event>& eventref_temp){
    gMinuit->SetStrategy(0);
    gMinuit->SetPrintLevel(2);
 
-   fFunc = new ROOT::Math::Functor ( this, &Fitter::Min2LL, 10 );
+   fFunc = new ROOT::Math::Functor ( this, &Fitter::Min2LL, 7 );
    gMinuit->SetFunction( *fFunc );
    gMinuit->SetVariable(0, "a1", 1.5, 0.01);
    gMinuit->SetVariable(1, "a2", 1.5, 0.01);
    gMinuit->SetVariable(2, "a3", 1.5, 0.01);
    gMinuit->SetVariable(3, "a4", 1.5, 0.01);
    gMinuit->SetVariable(4, "a5", 1.5, 0.01);
-   gMinuit->SetVariable(5, "k0", 1.0, 0.01);
-   gMinuit->SetVariable(6, "k1", 1.0, 0.01);
-   gMinuit->SetVariable(7, "k2", 1.0, 0.01);
-   gMinuit->SetVariable(8, "N1", 4.0, 0.01);
-   gMinuit->SetVariable(9, "S1", 0.5, 0.01);
+   gMinuit->SetVariable(5, "N1", 4.0, 0.01);
+   gMinuit->SetVariable(6, "S1", 0.5, 0.01);
 
    // set event vector and minimize
    cout << " -----> minimize, first pass" << endl;
@@ -349,7 +346,7 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
          double dph=0;
 
          // resolutions for two jet categories
-         if( ev->jet_ptL123[i] > jetfitHIGH ){
+         if( ev->jet_ptL123[i] > jetfitLOW ){
 
             int index=-1;
             if(feta<0.5) index=0;
@@ -363,18 +360,6 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
             // CMS 2010 Resolutions -- parameterized by L123 corrected pt
             dpt = x[index] * (ev->jet_ptT1[i]) * dpt_(ev->jet_ptL123[i], ev->jet_eta[i]);
             dph =            (ev->jet_ptT1[i]) * dph_(ev->jet_ptL123[i], ev->jet_eta[i]);
-
-         }
-         else if( ev->jet_ptL123[i] > jetfitLOW ){
-
-            int index=-1;
-            if(feta<2.4) index=0;
-            else if(feta<3) index=1;
-            else index=2;
-
-            // parameterized by T1 corrected pt
-            dpt = x[5+index]*sqrt(ev->jet_ptT1[i]);
-            dph = 0;
 
          }else{
             cout << "ERROR: JET PT OUT OF RANGE" << endl;
@@ -401,7 +386,7 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       met_x -= c*(ev->pjet_vectpt);
       met_y -= s*(ev->pjet_vectpt);
 
-      double ctt = x[8]*x[8] + x[9]*x[9]*(ev->pjet_scalpt);
+      double ctt = x[5]*x[5] + x[6]*x[6]*(ev->pjet_scalpt);
 
       cov_xx += ctt;
       cov_yy += ctt;
