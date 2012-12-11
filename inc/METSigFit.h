@@ -27,6 +27,9 @@ struct event {
    double ut_par;
    double ut_perp;
 
+   double pjsig;
+   double jmsig;
+
    vector<double> muon_pt;
    vector<double> muon_phi;
    vector<TLorentzVector> muon_4vect;

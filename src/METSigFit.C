@@ -379,6 +379,15 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       met_x -= cos(ev->muon_phi[1])*(ev->muon_pt[1]);
       met_y -= sin(ev->muon_phi[1])*(ev->muon_pt[1]);
 
+      // compute jmu significance
+      double jmdet = cov_xx*cov_yy - cov_xy*cov_xy;
+      double jmncov_xx = cov_yy / jmdet;
+      double jmncov_xy = -cov_xy / jmdet;
+      double jmncov_yy = cov_xx / jmdet;
+
+      double jmsig = met_x*met_x*jmncov_xx + 2*met_x*met_y*jmncov_xy + met_y*met_y*jmncov_yy;
+      ev->jmsig = jmsig;
+
       // unclustered energy -- parameterize by scalar sum of ET
       double c = cos(ev->pjet_phi);
       double s = sin(ev->pjet_phi);
@@ -426,6 +435,16 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       ev->ut_par = ut_par;
       ev->ut_perp = ut_perp;
 
+      // compute pseudojet significance
+      double pjcov_xx = ctt;
+      double pjcov_yy = ctt;
+      double pjdet = pjcov_xx*pjcov_yy;
+      double pjncov_xx = pjcov_yy / pjdet;
+      double pjncov_yy = pjcov_xx / pjdet;
+      double pjmet_x = -c*(ev->pjet_vectpt);
+      double pjmet_y = -s*(ev->pjet_vectpt);
+      double pjsig = pjmet_x*pjmet_x*pjncov_xx + pjmet_y*pjmet_y*pjncov_yy;
+      ev->pjsig = pjsig;
    }
 }
 
@@ -544,6 +563,10 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
          "Cov_{xy} vs. N Vertices;N Vertices;<Cov_{xy}>", 30, 0, 30, 100, -300, 300);
    profsData_["pcovyy_vert"] = new TH2D("pcovyy_vert_Data",
          "Cov_{yy} vs. N Vertices;N Vertices;<Cov_{yy}>", 30, 0, 30, 100, 0, 600);
+   profsData_["ppjsig_vert"] = new TH2D("ppjsig_vert_Data",
+         "Pseudojet Significance vs. N Vertices;N Vertices;<S_{E}>", 30, 0, 30, 100, 0, 50);
+   profsData_["pjmsig_vert"] = new TH2D("pjmsig_vert_Data",
+         "Jet/Muon Significance vs. N Vertices;N Vertices;<S_{E}>", 30, 0, 30, 100, 0, 50);
 
    // clone data hists for MC
    for(map<string,TH1*>::const_iterator it = histsData_.begin();
@@ -634,6 +657,9 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
          profs_["pcovxx_vert"]->Fill( ev->nvertices, ev->cov_xx );
          profs_["pcovxy_vert"]->Fill( ev->nvertices, ev->cov_xy );
          profs_["pcovyy_vert"]->Fill( ev->nvertices, ev->cov_yy );
+
+         profs_["ppjsig_vert"]->Fill( ev->nvertices, ev->pjsig );
+         profs_["pjmsig_vert"]->Fill( ev->nvertices, ev->jmsig );
       }
    }
 
@@ -759,4 +785,12 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
    profsData_["pcovyy_vert"]->Draw("colz");
    canvas3->cd();
    canvas3->Write();
+
+   TCanvas *canvas4 = new TCanvas("psig_vert_separated_2D", "ppjsig_vert_separated_2D", 1440, 800);
+   canvas4->Divide(2,1);
+   canvas4->cd(1);
+   profsData_["ppjsig_vert"]->Draw("colz");
+   canvas4->cd(2);
+   profsData_["pjmsig_vert"]->Draw("colz");
+   canvas4->Write();
 }
