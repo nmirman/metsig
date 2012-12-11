@@ -15,7 +15,7 @@ int main(int argc, char* argv[]){
    // tree with fit results
    double jetfitLOW=0, jetfitHIGH=0, psig_nvert_corr=0, psig_qt_corr=0,
           pchi2slope_left=0, pchi2slope_right=0,
-          a1=0, a2=0, a3=0, a4=0, a5=0, k0=0, k1=0, k2=0, N1=0, S1=0;
+          a1=0, a2=0, a3=0, a4=0, a5=0, N1=0, S1=0;
    int fitStatus=-1;
 
    TTree *tree = new TTree("FitResults", "FitResults");
@@ -27,9 +27,6 @@ int main(int argc, char* argv[]){
    tree->Branch("a3", &a3);
    tree->Branch("a4", &a4);
    tree->Branch("a5", &a5);
-   tree->Branch("k0", &k0);
-   tree->Branch("k1", &k1);
-   tree->Branch("k2", &k2);
    tree->Branch("N1", &N1);
    tree->Branch("S1", &S1);
    tree->Branch("psig_vert_corr", &psig_nvert_corr);
@@ -56,7 +53,6 @@ int main(int argc, char* argv[]){
             continue;
       }
    }
-   if( fitter.jetfitLOW > fitter.jetfitHIGH ) return 0;
 
    // fill eventvecs
    int numevents = 100000;
@@ -100,11 +96,8 @@ int main(int argc, char* argv[]){
    a3 = par[2];
    a4 = par[3];
    a5 = par[4];
-   k0 = par[5];
-   k1 = par[6];
-   k2 = par[7];
-   N1 = par[8];
-   S1 = par[9];
+   N1 = par[5];
+   S1 = par[6];
    psig_nvert_corr = fitter.psig_nvert_corr;
    psig_qt_corr = fitter.psig_qt_corr;
    pchi2slope_left = fitter.pchi2slope_left;

@@ -33,7 +33,7 @@ Fitter::Fitter(){
    fFunc = 0;
 
    // jet pt bounds
-   jetfitLOW = 10.0;
+   jetfitLOW = 30.0;
    jetfitHIGH = 30.0;
    jetcorrMIN = 10.0;
 
@@ -536,6 +536,14 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
          "Significance vs. q_{T};q_{T} (GeV);<S_{E}>", 15, 0, 100, 100, 0, 50);
    profsData_["presp_qt"] = new TH2D("presp_qt_Data",
          "Response = |<u_{#parallel}>|/q_{T} vs. q_{T};q_{T} (GeV);Response", 25, 0, 100, 100, -100, 100);
+   profsData_["pET_vert"] = new TH2D("pET_vert_Data",
+         "MET vs. N Vertices;N Vertices;<MET>", 30, 0, 30, 100, 0, 100);
+   profsData_["pcovxx_vert"] = new TH2D("pcovxx_vert_Data",
+         "Cov_{xx} vs. N Vertices;N Vertices;<Cov_{xx}>", 30, 0, 30, 100, 0, 600);
+   profsData_["pcovxy_vert"] = new TH2D("pcovxy_vert_Data",
+         "Cov_{xy} vs. N Vertices;N Vertices;<Cov_{xy}>", 30, 0, 30, 100, -300, 300);
+   profsData_["pcovyy_vert"] = new TH2D("pcovyy_vert_Data",
+         "Cov_{yy} vs. N Vertices;N Vertices;<Cov_{yy}>", 30, 0, 30, 100, 0, 600);
 
    // clone data hists for MC
    for(map<string,TH1*>::const_iterator it = histsData_.begin();
@@ -621,6 +629,11 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
          profs_["psig_vert"]->Fill( ev->nvertices, ev->sig );
          profs_["psig_qt"]->Fill( ev->qt, ev->sig );
          profs_["presp_qt"]->Fill( ev->qt, -(ev->ut_par)/(ev->qt) );
+
+         profs_["pET_vert"]->Fill( ev->nvertices, ev->met );
+         profs_["pcovxx_vert"]->Fill( ev->nvertices, ev->cov_xx );
+         profs_["pcovxy_vert"]->Fill( ev->nvertices, ev->cov_xy );
+         profs_["pcovyy_vert"]->Fill( ev->nvertices, ev->cov_yy );
       }
    }
 
@@ -730,4 +743,20 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
    TF1 *pchi2_right = new TF1("pchi2_right","pol1",0.5,1.0);
    histsData_["pchi2"]->Fit("pchi2_right","R");
    pchi2slope_right = pchi2_right->GetParameter(1);
+
+   TCanvas *canvas2 = new TCanvas("pMET_vert_2D", "pMET_vert_2D", 800, 800);
+   canvas2->cd();
+   profsData_["pET_vert"]->Draw("colz");
+   canvas2->Write();
+
+   TCanvas *canvas3 = new TCanvas("pcov_vert_2D", "pcov_vert_2D", 1440, 500);
+   canvas3->Divide(3,1);
+   canvas3->cd(1);
+   profsData_["pcovxx_vert"]->Draw("colz");
+   canvas3->cd(2);
+   profsData_["pcovxy_vert"]->Draw("colz");
+   canvas3->cd(3);
+   profsData_["pcovyy_vert"]->Draw("colz");
+   canvas3->cd();
+   canvas3->Write();
 }
