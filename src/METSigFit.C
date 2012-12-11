@@ -635,9 +635,9 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
          hists_["pchi2"]->Fill( TMath::Prob(ev->sig,2), ev->weight );
 
          // profiles
-         profs_["psig_vert"]->Fill( ev->nvertices, ev->sig );
-         profs_["psig_qt"]->Fill( ev->qt, ev->sig );
-         profs_["presp_qt"]->Fill( ev->qt, -(ev->ut_par)/(ev->qt) );
+         profs_["psig_vert"]->Fill( ev->nvertices, ev->sig, ev->weight );
+         profs_["psig_qt"]->Fill( ev->qt, ev->sig, ev->weight );
+         profs_["presp_qt"]->Fill( ev->qt, -(ev->ut_par)/(ev->qt), ev->weight );
       }
    }
 
