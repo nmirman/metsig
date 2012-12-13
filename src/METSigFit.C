@@ -649,17 +649,17 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
          hists_["pchi2"]->Fill( TMath::Prob(ev->sig,2), ev->weight );
 
          // profiles
-         profs_["psig_vert"]->Fill( ev->nvertices, ev->sig );
-         profs_["psig_qt"]->Fill( ev->qt, ev->sig );
-         profs_["presp_qt"]->Fill( ev->qt, -(ev->ut_par)/(ev->qt) );
+         profs_["psig_vert"]->Fill( ev->nvertices, ev->sig, ev->weight );
+         profs_["psig_qt"]->Fill( ev->qt, ev->sig, ev->weight );
+         profs_["presp_qt"]->Fill( ev->qt, -(ev->ut_par)/(ev->qt), ev->weight );
 
-         profs_["pET_vert"]->Fill( ev->nvertices, ev->met );
-         profs_["pcovxx_vert"]->Fill( ev->nvertices, ev->cov_xx );
-         profs_["pcovxy_vert"]->Fill( ev->nvertices, ev->cov_xy );
-         profs_["pcovyy_vert"]->Fill( ev->nvertices, ev->cov_yy );
+         profs_["pET_vert"]->Fill( ev->nvertices, ev->met, ev->weight );
+         profs_["pcovxx_vert"]->Fill( ev->nvertices, ev->cov_xx, ev->weight );
+         profs_["pcovxy_vert"]->Fill( ev->nvertices, ev->cov_xy, ev->weight );
+         profs_["pcovyy_vert"]->Fill( ev->nvertices, ev->cov_yy, ev->weight );
 
-         profs_["ppjsig_vert"]->Fill( ev->nvertices, ev->pjsig );
-         profs_["pjmsig_vert"]->Fill( ev->nvertices, ev->jmsig );
+         profs_["ppjsig_vert"]->Fill( ev->nvertices, ev->pjsig, ev->weight );
+         profs_["pjmsig_vert"]->Fill( ev->nvertices, ev->jmsig, ev->weight );
       }
    }
 
