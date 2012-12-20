@@ -15,7 +15,7 @@ int main(int argc, char* argv[]){
    // tree with fit results
    double jetfitLOW=0, jetfitHIGH=0, psig_nvert_corr=0, psig_qt_corr=0,
           pchi2slope_left=0, pchi2slope_right=0,
-          a1=0, a2=0, a3=0, a4=0, a5=0, N1=0, S1=0;
+          a1=0, a2=0, a3=0, a4=0, a5=0, N1=0, S1=0, P1=0;
    int fitStatus=-1;
 
    TTree *tree = new TTree("FitResults", "FitResults");
@@ -29,6 +29,7 @@ int main(int argc, char* argv[]){
    tree->Branch("a5", &a5);
    tree->Branch("N1", &N1);
    tree->Branch("S1", &S1);
+   tree->Branch("P1", &P1);
    tree->Branch("psig_vert_corr", &psig_nvert_corr);
    tree->Branch("psig_qt_corr", &psig_qt_corr);
    tree->Branch("pchi2slope_left", &pchi2slope_left);
@@ -55,7 +56,7 @@ int main(int argc, char* argv[]){
    }
 
    // fill eventvecs
-   int numevents = 100000;
+   int numevents = 10000000;
    fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Zmumu/"
          "Zmumu_MC_DYJettoLL_TuneZ2_M-50_7TeV_madgraph_tauola_20121116.root",
          eventvec_MC, numevents, true);
@@ -98,6 +99,7 @@ int main(int argc, char* argv[]){
    a5 = par[4];
    N1 = par[5];
    S1 = par[6];
+   P1 = par[7];
    psig_nvert_corr = fitter.psig_nvert_corr;
    psig_qt_corr = fitter.psig_qt_corr;
    pchi2slope_left = fitter.pchi2slope_left;

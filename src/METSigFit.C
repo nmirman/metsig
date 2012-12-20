@@ -179,7 +179,8 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       TLorentzVector mu1temp( mu_px[0], mu_py[0], mu_pz[0], mu_e[0] );
       TLorentzVector mu2temp( mu_px[1], mu_py[1], mu_pz[1], mu_e[1] );
       bool mu_zpeak = (mu1temp+mu2temp).M() > 60 and (mu1temp+mu2temp).M() < 120;
-      if( !(mu_tight and mu_iso and mu_zpeak and mu_checksize and mu_checketa) ) continue;
+      bool nvert_check = true;//ev > 500000;
+      if( !(mu_tight and mu_iso and mu_zpeak and mu_checksize and mu_checketa and nvert_check) ) continue;
       // ############################################################################################
 
       countev++;
@@ -267,7 +268,7 @@ void Fitter::RunMinimizer(vector<event>& eventref_temp){
    gMinuit->SetStrategy(0);
    gMinuit->SetPrintLevel(2);
 
-   fFunc = new ROOT::Math::Functor ( this, &Fitter::Min2LL, 7 );
+   fFunc = new ROOT::Math::Functor ( this, &Fitter::Min2LL, 8 );
    gMinuit->SetFunction( *fFunc );
    gMinuit->SetVariable(0, "a1", 1.5, 0.01);
    gMinuit->SetVariable(1, "a2", 1.5, 0.01);
@@ -276,6 +277,7 @@ void Fitter::RunMinimizer(vector<event>& eventref_temp){
    gMinuit->SetVariable(4, "a5", 1.5, 0.01);
    gMinuit->SetVariable(5, "N1", 4.0, 0.01);
    gMinuit->SetVariable(6, "S1", 0.5, 0.01);
+   gMinuit->SetVariable(7, "P1", 0.0, 0.01);
 
    // set event vector and minimize
    cout << " -----> minimize, first pass" << endl;
@@ -395,7 +397,7 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       met_x -= c*(ev->pjet_vectpt);
       met_y -= s*(ev->pjet_vectpt);
 
-      double ctt = x[5]*x[5] + x[6]*x[6]*(ev->pjet_scalpt);
+      double ctt = x[5]*x[5] + x[6]*x[6]*(ev->pjet_scalpt) + x[7]*(ev->nvertices);
 
       cov_xx += ctt;
       cov_yy += ctt;
