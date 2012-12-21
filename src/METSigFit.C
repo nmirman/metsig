@@ -5,11 +5,12 @@
 #include "TTree.h"
 #include "TFile.h"
 #include "TCanvas.h"
-#include "TProfile.h"
+#include "TH2.h"
 #include "TROOT.h"
 #include "TStyle.h"
 #include "TVector2.h"
 #include "TRandom3.h"
+#include "TProfile.h"
 
 #include <cmath>
 #include <iostream>
@@ -32,9 +33,8 @@ Fitter::Fitter(){
    fFunc = 0;
 
    // jet pt bounds
-   jetfitLOW = 10.0;
-   jetfitHIGH = 30.0;
-   jetcorrMIN = 10.0;
+   jetbinpt = 30.0;
+   jetcorrpt = 10.0;
 
 }
 
@@ -69,7 +69,7 @@ const double Fitter::sigmaPhi[10][5]={{926.978, 2.52747, 0.0304001, -926.224, -1
    {   0.765787, -3.90638e-06, -4.70224e-08,   0.11831,      -1.4675},
    {    259.189,   0.00132792,    -0.311411,  -258.647,            0}};
 
-void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, const int maxevents,
+void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, const int numevents,
       const bool isMC){
    cout << "---> ReadNtuple" << endl;
 
@@ -151,36 +151,11 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    cout << " -----> fill event vector" << endl;
 
    int countev=0;
+   int maxevents = (numevents > 0) ? numevents : tree->GetEntries();
    for( int ev=0; ev<tree->GetEntries() and countev < maxevents; ev++){
 
       tree->GetEntry(ev);
       if( ev % 100000 == 0 and ev > 0) cout << "    -----> getting entry " << ev << endl;
-
-      // ###################################### MUON SELECTION ######################################
-      bool mu_tight = true;
-      bool mu_iso = true;
-      bool mu_checketa = true;
-      bool mu_checksize = mu_size == 2;
-      for(int i=0; i < mu_size; i++){
-         // tight muon selection
-         if( !(mu_isGlobal[i] and mu_chi2[i] < 10 and mu_muonHits[i] > 0
-                  and mu_nMatches[i] > 1 and mu_dxy[i] < 0.2 and mu_pixelHits[i] > 0
-                  and mu_numberOfValidTrackerLayers[i] > 8) ){
-            mu_tight = false;
-         }
-         // isolation
-         if( !( (mu_dr03TkSumPt[i]+mu_dr03EcalRecHitSumEt[i]+mu_dr03HcalTowerSumEt[i])
-                  / mu_pt[i] < 0.1) ){
-            mu_iso = false;
-         }
-         if( !(fabs(mu_eta[i]) < 2.4) ) mu_checketa = false;
-      }
-      TLorentzVector mu1temp( mu_px[0], mu_py[0], mu_pz[0], mu_e[0] );
-      TLorentzVector mu2temp( mu_px[1], mu_py[1], mu_pz[1], mu_e[1] );
-      bool mu_zpeak = (mu1temp+mu2temp).M() > 60 and (mu1temp+mu2temp).M() < 120;
-      if( !(mu_tight and mu_iso and mu_zpeak and mu_checksize and mu_checketa) ) continue;
-      // ############################################################################################
-
       countev++;
 
       int pjet_size_temp = 0;
@@ -205,17 +180,17 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       // jets
       for( int i=0; i < pfj_size; i++){
 
-         double jet_ptL123_temp = (pfj_pt[i]*pfj_l1l2l3[i] > jetcorrMIN)
+         double jet_ptL123_temp = (pfj_pt[i]*pfj_l1l2l3[i] > jetcorrpt)
             ? pfj_pt[i]*pfj_l1l2l3[i] : pfj_pt[i];
 
-         if( jet_ptL123_temp > jetfitLOW ){
+         if( jet_ptL123_temp > jetbinpt ){
             // clustered jets
 
             evtemp.jet_phi.push_back( pfj_phi[i] );
             evtemp.jet_eta.push_back( pfj_eta[i] );
             evtemp.jet_ptUncor.push_back( pfj_pt[i] );
 
-            if( pfj_pt[i]*pfj_l1l2l3[i] > jetcorrMIN ){
+            if( pfj_pt[i]*pfj_l1l2l3[i] > jetcorrpt ){
                evtemp.jet_ptL123.push_back( pfj_pt[i]*pfj_l1l2l3[i] );
                evtemp.jet_ptT1.push_back( pfj_pt[i]*(pfj_l1l2l3[i] + 1 - pfj_l1[i]) );
             }else{
@@ -266,19 +241,16 @@ void Fitter::RunMinimizer(vector<event>& eventref_temp){
    gMinuit->SetStrategy(0);
    gMinuit->SetPrintLevel(2);
 
-   fFunc = new ROOT::Math::Functor ( this, &Fitter::Min2LL, 11 );
+   fFunc = new ROOT::Math::Functor ( this, &Fitter::Min2LL, 8 );
    gMinuit->SetFunction( *fFunc );
    gMinuit->SetVariable(0, "a1", 1.5, 0.01);
    gMinuit->SetVariable(1, "a2", 1.5, 0.01);
    gMinuit->SetVariable(2, "a3", 1.5, 0.01);
    gMinuit->SetVariable(3, "a4", 1.5, 0.01);
    gMinuit->SetVariable(4, "a5", 1.5, 0.01);
-   gMinuit->SetVariable(5, "k0", 1.0, 0.01);
-   gMinuit->SetVariable(6, "k1", 1.0, 0.01);
-   gMinuit->SetVariable(7, "k2", 1.0, 0.01);
-   gMinuit->SetVariable(8, "N1", 4.0, 0.01);
-   gMinuit->SetVariable(9, "S1", 0.5, 0.01);
-   gMinuit->SetVariable(10,"S2", 0.5, 0.01);
+   gMinuit->SetVariable(5, "N1", 4.0, 0.01);
+   gMinuit->SetVariable(6, "S1", 0.5, 0.01);
+   gMinuit->SetVariable(7, "P1", 0.0, 0.01);
 
    // set event vector and minimize
    cout << " -----> minimize, first pass" << endl;
@@ -349,7 +321,7 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
          double dph=0;
 
          // resolutions for two jet categories
-         if( ev->jet_ptL123[i] > jetfitHIGH ){
+         if( ev->jet_ptL123[i] > jetbinpt ){
 
             int index=-1;
             if(feta<0.5) index=0;
@@ -363,18 +335,6 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
             // CMS 2010 Resolutions -- parameterized by L123 corrected pt
             dpt = x[index] * (ev->jet_ptT1[i]) * dpt_(ev->jet_ptL123[i], ev->jet_eta[i]);
             dph =            (ev->jet_ptT1[i]) * dph_(ev->jet_ptL123[i], ev->jet_eta[i]);
-
-         }
-         else if( ev->jet_ptL123[i] > jetfitLOW ){
-
-            int index=-1;
-            if(feta<2.4) index=0;
-            else if(feta<3) index=1;
-            else index=2;
-
-            // parameterized by T1 corrected pt
-            dpt = x[5+index]*sqrt(ev->jet_ptT1[i]);
-            dph = 0;
 
          }else{
             cout << "ERROR: JET PT OUT OF RANGE" << endl;
@@ -401,12 +361,10 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       met_x -= c*(ev->pjet_vectpt);
       met_y -= s*(ev->pjet_vectpt);
 
-      double ctt = x[8]*x[8] + x[9]*x[9]*(ev->pjet_scalpt);
-      double cff = x[10]*x[10]*(ev->pjet_scalpt);
+      double ctt = x[5]*x[5] + x[6]*x[6]*(ev->pjet_scalpt) + x[7]*(ev->nvertices);
 
-      cov_xx += ctt*c*c + cff*s*s;
-      cov_xy += (ctt-cff)*c*s;
-      cov_yy += cff*c*c + ctt*s*s;  
+      cov_xx += ctt;
+      cov_yy += ctt;
 
       double det = cov_xx*cov_yy - cov_xy*cov_xy;
 
@@ -522,8 +480,8 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
    // histograms
    map<string, TH1*> histsData_;
    map<string, TH1*> histsMC_;
-   map<string, TProfile*> profsData_;
-   map<string, TProfile*> profsMC_;
+   map<string, TH2*> profsData_;
+   map<string, TH2*> profsMC_;
 
    // data hists
    histsData_["muon_pt"] = new TH1D("muon_pt_Data", "Muon p_{T}", 100, 0, 200);
@@ -547,12 +505,14 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
    histsData_["pchi2"] = new TH1D("pchi2_Data", "P(#chi^{2})", 100, 0, 1);
 
    // profile histograms
-   profsData_["psig_vert"] = new TProfile("psig_vert_Data",
-         "Significance vs. N Vertices;N Vertices;<S_{E}>", 30, 0, 30);
-   profsData_["psig_qt"] = new TProfile("psig_qt_Data",
-         "Significance vs. q_{T};q_{T} (GeV);<S_{E}>", 15, 0, 100);
-   profsData_["presp_qt"] = new TProfile("presp_qt_Data",
-         "Response = |<u_{#parallel}>|/q_{T} vs. q_{T};q_{T} (GeV);Response", 25, 0, 100);
+   profsData_["psig_nvert"] = new TH2D("psig_nvert_Data",
+         "Significance vs. N Vertices;N Vertices;<S_{E}>", 30, 0, 30, 100, 0, 50);
+   profsData_["psig_qt"] = new TH2D("psig_qt_Data",
+         "Significance vs. q_{T};q_{T} (GeV);<S_{E}>", 15, 0, 100, 100, 0, 50);
+   profsData_["presp_qt"] = new TH2D("presp_qt_Data",
+         "Response = |<u_{#parallel}>|/q_{T} vs. q_{T};q_{T} (GeV);Response", 25, 0, 100, 100, -100, 100);
+   profsData_["pET_nvert"] = new TH2D("pET_nvert_Data",
+         "MET vs. N Vertices;N Vertices;<MET>", 30, 0, 30, 100, 0, 100);
 
    // clone data hists for MC
    for(map<string,TH1*>::const_iterator it = histsData_.begin();
@@ -563,21 +523,20 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
       histsMC_[hname] = (TH1D*)hist->Clone((char*)hname.c_str());
 
    }
-   for(map<string,TProfile*>::const_iterator it = profsData_.begin();
+   for(map<string,TH2*>::const_iterator it = profsData_.begin();
          it != profsData_.end(); it++){
 
       string pname = it->first;
-      TProfile *prof = (TProfile*)it->second;
-      profsMC_[pname] = (TProfile*)prof->Clone((char*)pname.c_str());
+      TH2 *prof = (TH2*)it->second;
+      profsMC_[pname] = (TH2*)prof->Clone((char*)pname.c_str());
 
    }
-
 
    // fill hists
    for( int i=0; i < 2; i++ ){
 
       map<string, TH1*> hists_;
-      map<string, TProfile*> profs_;
+      map<string, TH2*> profs_;
       vector<event>::iterator iter_begin;
       vector<event>::iterator iter_end;
 
@@ -635,9 +594,10 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
          hists_["pchi2"]->Fill( TMath::Prob(ev->sig,2), ev->weight );
 
          // profiles
-         profs_["psig_vert"]->Fill( ev->nvertices, ev->sig, ev->weight );
+         profs_["psig_nvert"]->Fill( ev->nvertices, ev->sig, ev->weight );
          profs_["psig_qt"]->Fill( ev->qt, ev->sig, ev->weight );
          profs_["presp_qt"]->Fill( ev->qt, -(ev->ut_par)/(ev->qt), ev->weight );
+         profs_["pET_nvert"]->Fill( ev->nvertices, ev->met, ev->weight );
       }
    }
 
@@ -709,12 +669,15 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
       canvas->cd();
       canvas->Write();
    }
-   for(map<string,TProfile*>::const_iterator it = profsData_.begin();
+   cout << "\nCORRELATION COEFFICIENTS: data, mc" << endl;
+   for(map<string,TH2*>::const_iterator it = profsData_.begin();
          it != profsData_.end(); it++){
 
       string pname = it->first;
-      TProfile *profData = (TProfile*)it->second;
-      TProfile *profMC = (TProfile*)profsMC_[pname];
+      TH2 *histData = (TH2*)it->second;
+      TH2 *histMC = (TH2*)profsMC_[pname];
+      TProfile *profData = (TProfile*)histData->ProfileX();
+      TProfile *profMC = (TProfile*)histMC->ProfileX();
 
       TCanvas *canvas  = new TCanvas( (char*)pname.c_str(), (char*)pname.c_str(), 800, 800 );
       canvas->cd();
@@ -730,6 +693,19 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
       profData->Draw("EP same");
 
       canvas->Write();
+
+      cout << pname << ": " << histData->GetCorrelationFactor() << ", "
+         << histMC->GetCorrelationFactor() << endl;
    }
 
+   TF1 *pchi2_left = new TF1("pchi2_left","pol1",0.0,0.03);
+   histsData_["pchi2"]->Fit("pchi2_left","QR");
+   pchi2slope_left = pchi2_left->GetParameter(1);
+
+   TF1 *pchi2_right = new TF1("pchi2_right","pol1",0.5,1.0);
+   histsData_["pchi2"]->Fit("pchi2_right","QR");
+   pchi2slope_right = pchi2_right->GetParameter(1);
+
+   cout << "\nP(CHI2) SLOPES: " << pchi2slope_left << " L, " << pchi2slope_right << " R" << endl;
+   cout << endl;
 }
