@@ -159,7 +159,6 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
 
       tree->GetEntry(ev);
       if( ev % 100000 == 0 and ev > 0) cout << "    -----> getting entry " << ev << endl;
-      if(v_size <= 9) continue;
       countev++;
 
       int pjet_size_temp = 0;
@@ -311,8 +310,6 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       double cov_xy=0;
       double cov_yy=0;
       double cov_xx_highpt=0;
-      double cov_xy_highpt=0;
-      double cov_yy_highpt=0;
       double cov_xx_pjet=0;
 
       // clustered jets
@@ -355,8 +352,6 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
          cov_yy += dff*c*c + dtt*s*s;
 
          cov_xx_highpt += dtt*c*c + dff*s*s;
-         cov_xy_highpt += (dtt-dff)*c*s;
-         cov_yy_highpt += dff*c*c + dtt*s*s;
       }
 
       // muons -- assume zero resolutions
