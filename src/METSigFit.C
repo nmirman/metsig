@@ -103,6 +103,8 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    float pfj_l1[1000];
    float pfj_l1l2l3[1000];
 
+   float puMyWeight;
+
    int genj_size;
    float genj_pt[1000];
    float genj_phi[1000];
@@ -142,6 +144,7 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    tree->SetBranchAddress("pfj_l1l2l3", pfj_l1l2l3);
 
    if(isMC){
+      tree->SetBranchAddress("puMyWeight", &puMyWeight);
       tree->SetBranchAddress("genj_size", &genj_size);
       tree->SetBranchAddress("genj_pt", genj_pt);
       tree->SetBranchAddress("genj_phi", genj_phi);
@@ -156,6 +159,7 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
 
       tree->GetEntry(ev);
       if( ev % 100000 == 0 and ev > 0) cout << "    -----> getting entry " << ev << endl;
+      if(v_size <= 9) continue;
       countev++;
 
       int pjet_size_temp = 0;
@@ -167,7 +171,7 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
 
       // vertices
       evtemp.nvertices = v_size;
-      evtemp.weight = 1.0; // initialization -- fill with real value in GetPUWeights()
+      evtemp.weight = isMC ? puMyWeight : 1.0;
 
       // muons
       for( int i=0; i < mu_size; i++){
@@ -306,6 +310,10 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       double cov_xx=0;
       double cov_xy=0;
       double cov_yy=0;
+      double cov_xx_highpt=0;
+      double cov_xy_highpt=0;
+      double cov_yy_highpt=0;
+      double cov_xx_pjet=0;
 
       // clustered jets
       for(int i=0; i < int(ev->jet_ptUncor.size()); i++){
@@ -346,6 +354,9 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
          cov_xy += (dtt-dff)*c*s;
          cov_yy += dff*c*c + dtt*s*s;
 
+         cov_xx_highpt += dtt*c*c + dff*s*s;
+         cov_xy_highpt += (dtt-dff)*c*s;
+         cov_yy_highpt += dff*c*c + dtt*s*s;
       }
 
       // muons -- assume zero resolutions
@@ -366,6 +377,8 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       cov_xx += ctt;
       cov_yy += ctt;
 
+      cov_xx_pjet += ctt;
+
       double det = cov_xx*cov_yy - cov_xy*cov_xy;
 
       double ncov_xx = cov_yy / det;
@@ -381,6 +394,9 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       ev->cov_xx = cov_xx;
       ev->cov_xy = cov_xy;
       ev->cov_yy = cov_yy;
+
+      ev->cov_xx_highpt = cov_xx_highpt;
+      ev->cov_xx_pjet = cov_xx_pjet;
 
       // fill qt, ut
       double qt_x = ev->muon_pt[0]*cos(ev->muon_phi[0])
@@ -401,6 +417,12 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       ev->ut_par = ut_par;
       ev->ut_perp = ut_perp;
 
+      // parallel and perpendicular components of covariance matrix
+      double cov_par = (cov_xx*qt_x + cov_yy*qt_y)/qt;
+      double cov_perp = (cov_yy*qt_x - qt_y*cov_xx)/qt;
+
+      ev->cov_par = cov_par;
+      ev->cov_perp = cov_perp;
    }
 }
 
@@ -444,36 +466,6 @@ void Fitter::MatchMCjets(vector<event>& eventref_temp){
 
 }
 
-void Fitter::GetPUWeights(vector<event>& eventref_data, vector<event>& eventref_MC){
-
-   int verts_MC [100] = {0};
-   int verts_Data [100] = {0};
-   double weights [100];
-   fill_n(weights,100,1.0);
-
-   // get vertex spectrum
-   for( vector<event>::iterator ev = eventref_MC.begin(); ev < eventref_MC.end(); ev++){
-      verts_MC[ ev->nvertices ] += 1;
-   }
-   for( vector<event>::iterator ev = eventref_data.begin(); ev < eventref_data.end(); ev++){
-      verts_Data[ ev->nvertices ] += 1;
-   }
-
-   // determine weights for MC
-   for(int i=0; i < 100; i++){
-      if( verts_MC[i] != 0){
-         weights[i] = (1.0*eventref_MC.size()/eventref_data.size())
-            * (1.0*verts_Data[i]/verts_MC[i]);
-      }
-   }
-
-   // fill MC eventvec with weights
-   for( vector<event>::iterator ev = eventref_MC.begin(); ev < eventref_MC.end(); ev++){
-      ev->weight = weights[ ev->nvertices ];
-   }
-
-}
-
 void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_MC, 
       const char* filename){
 
@@ -503,6 +495,9 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
    histsData_["sig"] = new TH1D("sig_Data", "Significance", 100, 0, 50);
    histsData_["det"] = new TH1D("det_Data", "Determinant", 100, 0, 100000);
    histsData_["pchi2"] = new TH1D("pchi2_Data", "P(#chi^{2})", 100, 0, 1);
+   histsData_["cov_xx_highpt"] = new TH1D("cov_xx_highpt_Data", "Cov_{xx} High-p_{T} Jets", 100, 0, 500);
+   histsData_["cov_xx_pjet"] = new TH1D("cov_xx_pjet_Data", "Cov_{xx} Pseudojet", 100, 0, 500);
+   histsData_["cov_xx_ratio"] = new TH1D("cov_xx_ratio_Data", "Cov_{xx} High-p_{T}/Total", 100, 0, 1 );
 
    // profile histograms
    profsData_["psig_nvert"] = new TH2D("psig_nvert_Data",
@@ -513,6 +508,8 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
          "Response = |<u_{#parallel}>|/q_{T} vs. q_{T};q_{T} (GeV);Response", 25, 0, 100, 100, -100, 100);
    profsData_["pET_nvert"] = new TH2D("pET_nvert_Data",
          "MET vs. N Vertices;N Vertices;<MET>", 30, 0, 30, 100, 0, 100);
+   profsData_["cov_par_perp"] = new TH2D("cov_par_perp_Data",
+         "Perpendicular vs. Parallel Resolutions (wrt qt);par #sigma^{2};perp #sigma^{2}", 100, 0, 500, 100, 0, 500);
 
    // clone data hists for MC
    for(map<string,TH1*>::const_iterator it = histsData_.begin();
@@ -593,11 +590,16 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
          hists_["det"]->Fill( ev->det, ev->weight );
          hists_["pchi2"]->Fill( TMath::Prob(ev->sig,2), ev->weight );
 
+         hists_["cov_xx_highpt"]->Fill( ev->cov_xx_highpt, ev->weight );
+         hists_["cov_xx_pjet"]->Fill( ev->cov_xx_pjet, ev->weight );
+         hists_["cov_xx_ratio"]->Fill( ev->cov_xx_highpt/ev->cov_xx, ev->weight );
+
          // profiles
          profs_["psig_nvert"]->Fill( ev->nvertices, ev->sig, ev->weight );
          profs_["psig_qt"]->Fill( ev->qt, ev->sig, ev->weight );
          profs_["presp_qt"]->Fill( ev->qt, -(ev->ut_par)/(ev->qt), ev->weight );
          profs_["pET_nvert"]->Fill( ev->nvertices, ev->met, ev->weight );
+         profs_["cov_par_perp"]->Fill( ev->cov_par, ev->cov_perp, ev->weight );
       }
    }
 
@@ -697,6 +699,10 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
       cout << pname << ": " << histData->GetCorrelationFactor() << ", "
          << histMC->GetCorrelationFactor() << endl;
    }
+   TCanvas *canvas = new TCanvas( "cov_par_perp_2D", "cov_par_perp_2D", 800, 800 );
+   canvas->cd();
+   profsData_["cov_par_perp"]->Draw("colz");
+   canvas->Write();
 
    TF1 *pchi2_left = new TF1("pchi2_left","pol1",0.0,0.03);
    histsData_["pchi2"]->Fit("pchi2_left","QR");
@@ -708,4 +714,7 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
 
    cout << "\nP(CHI2) SLOPES: " << pchi2slope_left << " L, " << pchi2slope_right << " R" << endl;
    cout << endl;
+
+   psig_nvert_corr = profsData_["psig_nvert"]->GetCorrelationFactor();
+   psig_qt_corr = profsData_["psig_qt"]->GetCorrelationFactor();
 }

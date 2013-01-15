@@ -84,9 +84,6 @@ int main(int argc, char* argv[]){
          "Zmumu_data_DoubleMu_Run2011B_19Nov2011_v1_20121221.root",
          eventvec_data, numevents/2, false);
    
-   // pile-up reweighting
-   fitter.GetPUWeights( eventvec_data, eventvec_MC );
-
    cout << "\n  MC EVENTS: " << eventvec_MC.size() << endl;
    cout << "DATA EVENTS: " << eventvec_data.size() << endl;
 

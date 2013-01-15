@@ -22,6 +22,12 @@ struct event {
    double cov_xy;
    double cov_yy;
 
+   double cov_xx_highpt;
+   double cov_xx_pjet;
+
+   double cov_par;
+   double cov_perp;
+
    double qt;
    double ut;
    double ut_par;
@@ -61,7 +67,6 @@ class Fitter{
 
       void ReadNtuple(const char[], vector<event>&, const int, const bool);
       void MatchMCjets(vector<event>&);
-      void GetPUWeights(vector<event>&, vector<event>&);
       void RunMinimizer(vector<event>&);
       void FindSignificance(const double*, vector<event>&);
       void PlotsDataMC(vector<event>&, vector<event>&, const char[]);
