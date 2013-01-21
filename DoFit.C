@@ -10,6 +10,58 @@
 #include <unistd.h>
 using namespace std;
 
+
+//code to perform met response corrections
+
+
+TH2D* make_resp_plot( vector<event>& eventref_MC ) {
+
+	TH2D* presp_qt = new TH2D("presp_qt_Data",
+			"Response = |<u_{#parallel}>|/q_{T} vs. q_{T};q_{T} (GeV);Response", 25, 0, 100, 100, -100, 100);
+
+	for( vector<event>::iterator ev = eventref_MC.begin(); ev < eventref_MC.end(); ev++ ){
+		presp_qt->Fill( ev->qt, -(ev->ut_par)/(ev->qt), ev->weight );
+	}
+
+	return presp_qt;
+}
+
+void correct_pt( vector<event>& event_source, vector<event>& event_dest, TF1* func ) {
+
+	for( vector<event>::iterator ev = event_source.begin(); ev < event_source.end(); ev++ ){
+
+		event* evtemp=new event(*ev);
+		double pt_mult=func->eval(ev->qt)/ev->ut_perp;
+
+		// high pt jets
+		evtemp->jet_ptUncor*=pt_mult;
+		evtemp->jet_ptL123*=pt_mult;
+		evtemp->jet_ptT1*=pt_mult;
+
+		// pseudojet
+		evtemp->pjet_vectpt*=pt_mult;
+		evtemp->pjet_scalpt*=pt_mult;
+
+		event_dest.push_back(*evtemp);
+	}
+}
+
+
+void met_resp( vector<event>& event_source ) {
+
+	TH2D* presp_qt= make_resp_plot(event_source);
+	TF1* func=new TF1("func","[0]+[1]*exp([2]*x)");
+	presp_qt->Fit(func);
+
+	vector<event> event_corr;
+	correct_pt(event_source, event_corr, func);
+
+	TH2D* presp_qt_corr=make_resp_plot(event_corr);
+
+}
+
+
+
 int main(int argc, char* argv[]){
 
    // setup fit results tree
@@ -71,37 +123,65 @@ int main(int argc, char* argv[]){
    // ######################### BEGIN FIT #########################
    //
 
+   bool use_data=false;
+
+
    // fill eventvecs
    fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Zmumu/"
          "Zmumu_MC_DYJettoLL_TuneZ2_M-50_7TeV_madgraph_tauola_20121221.root",
          eventvec_MC, numevents, true);
    fitter.MatchMCjets( eventvec_MC );
 
-   fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Zmumu/"
+   //don't use data
+   /*fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Zmumu/"
          "Zmumu_data_DoubleMu_Run2011A_08Nov2011_v1_20121221.root",
          eventvec_data, numevents/2, false);
    fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Zmumu/"
          "Zmumu_data_DoubleMu_Run2011B_19Nov2011_v1_20121221.root",
-         eventvec_data, numevents/2, false);
+         eventvec_data, numevents/2, false);*/
    
    cout << "\n  MC EVENTS: " << eventvec_MC.size() << endl;
-   cout << "DATA EVENTS: " << eventvec_data.size() << endl;
+   /*
+    * cout << "DATA EVENTS: " << eventvec_data.size() << endl;
+    */
 
    // minimize
    cout << "\n ############################ " << endl;
    cout << " ###########  MC  ########### " << endl;
    cout << " ############################ \n" << endl;
    fitter.RunMinimizer( eventvec_MC );
-   cout << "\n ############################ " << endl;
+
+   /*cout << "\n ############################ " << endl;
    cout << " ########### Data ########### " << endl;
    cout << " ############################ \n" << endl;
    fitter.RunMinimizer( eventvec_data );
 
-   fitter.PlotsDataMC( eventvec_data, eventvec_MC, "results/plotsDataMC.root" );
+   fitter.PlotsDataMC( eventvec_data, eventvec_MC, "results/plotsDataMC.root" );*/
 
    //
    // ######################### END FIT #########################
    //
+
+
+   //
+   // ######################### MET RESPONSE CORRECTIONS #########################
+   //
+
+   TH2D* presp_qt= make_resp_plot(eventvec_MC);
+   TF1* func=new TF1("func","[0]+[1]*exp([2]*x)");
+   presp_qt->Fit(func);
+
+   vector<event> eventvec_corr;
+   correct_pt(eventvec_MC, eventvec_corr, func);
+
+   TH2D* presp_qt_corr=make_resp_plot(eventvec_corr);
+
+   fitter.RunMinimizer( eventvec_corr );
+
+   //
+   // ######################### END MET RESPONSE CORRECTIONS #########################
+   //
+
 
    // fill tree with fit results
    fitStatus = fitter.gMinuit->Status();
