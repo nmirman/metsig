@@ -326,7 +326,7 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
          double dph=0;
 
          // resolutions for two jet categories
-         if( ev->jet_ptL123[i] > jetbinpt ){
+         if( true || ev->jet_ptL123[i] > jetbinpt ){ //dummy true
 
             int index=-1;
             if(feta<0.5) index=0;
