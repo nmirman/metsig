@@ -70,7 +70,7 @@ const double Fitter::sigmaPhi[10][5]={{926.978, 2.52747, 0.0304001, -926.224, -1
    {    259.189,   0.00132792,    -0.311411,  -258.647,            0}};
 
 void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, const int numevents,
-      const bool isMC){
+      const bool isMC, const bool do_resp_correction ){
    cout << "---> ReadNtuple" << endl;
 
    int v_size;
@@ -233,7 +233,54 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
 
    } // event loop
 
+   if(do_resp_correction) {
+	   cout << " -----> met response correction" << endl;
+	   double xtemp[20]={0};
+	   FindSignificance(xtemp,eventref_temp);
+	   ResponseCorrection(eventref_temp, isMC);
+   }
+
    delete file;
+}
+
+void Fitter::ResponseCorrection(vector<event>& eventvec, const bool isMC ) {
+
+	vector<event>* eventref=&eventvec;
+	TProfile* presp_qt = new TProfile ("presp_qt_temp",
+			"Response = |<u_{#parallel}>|/q_{T} vs. q_{T};q_{T} (GeV);Response", 25, 0, 100);
+
+	for( vector<event>::iterator ev = eventref->begin(); ev < eventref->end(); ev++ ){
+		presp_qt->Fill( ev->qt, -(ev->ut_par)/(ev->qt), ev->weight );
+	}
+
+	TF1* func=new TF1("response curve fit","[0]+[1]*exp([2]*x)");
+	func->SetParName(0,"Offset");
+	func->SetParName(1,"Scale");
+	func->SetParName(2,"Power");
+
+	func->SetParameter(0,1);
+	func->SetParameter(1,-0.4);;
+
+	presp_qt->Fit(func,"NOQ");
+
+
+	for( vector<event>::iterator ev = eventvec.begin(); ev < eventvec.end(); ev++ ){
+
+		double pt_mult=abs( 1/func->Eval(ev->qt) );
+		ev->resp_correction=pt_mult;
+
+
+		// high pt jets
+		for(unsigned int i=0; i<ev->jet_ptUncor.size(); i++) {
+			ev->jet_ptUncor[i] *= pt_mult;
+			ev->jet_ptL123[i] *= pt_mult;
+			ev->jet_ptT1[i] *= pt_mult;
+		}
+
+		// pseudojet
+		ev->pjet_vectpt*=pt_mult;
+		ev->pjet_scalpt*=pt_mult;
+	}
 }
 
 void Fitter::RunMinimizer(vector<event>& eventref_temp){
