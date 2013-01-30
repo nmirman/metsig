@@ -1,6 +1,7 @@
 #include "TH1.h"
 #include "TH2.h"
 #include "TF1.h"
+#include "TF2.h"
 #include "TMath.h"
 #include "TTree.h"
 #include "TFile.h"
@@ -19,6 +20,9 @@
 
 #include "Math/Functor.h"
 #include "Minuit2/Minuit2Minimizer.h"
+
+#include "Math/GSLRndmEngines.h"
+#include "Math/Random.h"
 
 #include "METSigFit.h"
 using namespace std;
@@ -228,6 +232,11 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
          }
       }
 
+      // met smearing
+      evtemp.met_varx = 0.0;
+      evtemp.met_vary = 0.0;
+      evtemp.met_rho = 0.0;
+
       // fill event vector
       eventref_temp.push_back( evtemp );
 
@@ -301,6 +310,11 @@ double Fitter::Min2LL(const double *x){
 
 void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
 
+   //TRandom3 *rand = new TRandom3( 1+10E6 );
+   //ROOT::Math::GSLRandomEngine *random = new ROOT::Math::GSLRandomEngine();
+   ROOT::Math::Random<ROOT::Math::GSLRngMT> GSLr;
+
+   int count = 0;
    // event loop
    for( vector<event>::iterator ev = eventref_temp.begin(); ev < eventref_temp.end(); ev++){
 
@@ -355,10 +369,10 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       }
 
       // muons -- assume zero resolutions
-      met_x -= cos(ev->muon_phi[0])*(ev->muon_pt[0]);
-      met_y -= sin(ev->muon_phi[0])*(ev->muon_pt[0]);
-      met_x -= cos(ev->muon_phi[1])*(ev->muon_pt[1]);
-      met_y -= sin(ev->muon_phi[1])*(ev->muon_pt[1]);
+      for(int i=0; i < ev->muon_pt.size(); i++){
+         met_x -= cos(ev->muon_phi[i])*(ev->muon_pt[i]);
+         met_y -= sin(ev->muon_phi[i])*(ev->muon_pt[i]);
+      }
 
       // unclustered energy -- parameterize by scalar sum of ET
       double c = cos(ev->pjet_phi);
@@ -380,6 +394,24 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       double ncov_xy = -cov_xy / det;
       double ncov_yy = cov_xx / det;
 
+
+      // smear MC MET
+      double smear_x = 0;
+      double smear_y = 0;
+      double sigma_x = 0;
+      double sigma_y = 0;
+      if( ev->met_varx >= 0.0 and ev->met_vary >= 0.0 and fabs(ev->met_rho) <= 1.0 ){
+
+         sigma_x = sqrt(ev->met_varx);
+         sigma_y = sqrt(ev->met_vary);
+
+         GSLr.Gaussian2D( sigma_x, sigma_y, ev->met_rho, smear_x, smear_y );
+         met_x += smear_x;
+         met_y += smear_y;
+
+      }
+      count++;
+
       double sig = met_x*met_x*ncov_xx + 2*met_x*met_y*ncov_xy + met_y*met_y*ncov_yy;
 
       ev->met = sqrt( met_x*met_x + met_y*met_y );
@@ -394,10 +426,11 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       ev->cov_xx_pjet = cov_xx_pjet;
 
       // fill qt, ut
-      double qt_x = ev->muon_pt[0]*cos(ev->muon_phi[0])
-         + ev->muon_pt[1]*cos(ev->muon_phi[1]);
-      double qt_y = ev->muon_pt[0]*sin(ev->muon_phi[0])
-         + ev->muon_pt[1]*sin(ev->muon_phi[1]);
+      double qt_x=0, qt_y=0;
+      for(int i=0; i < ev->muon_pt.size(); i++){
+         qt_x += ev->muon_pt[i]*cos(ev->muon_phi[i]);
+         qt_y += ev->muon_pt[i]*sin(ev->muon_phi[i]);
+      }
       double qt = sqrt( qt_x*qt_x + qt_y*qt_y );
 
       double ut_x = -met_x - qt_x;
@@ -461,6 +494,14 @@ void Fitter::MatchMCjets(vector<event>& eventref_temp){
 
 }
 
+void Fitter::PJetReweight(vector<event>& eventref_temp, const double *weight){
+   
+   for( vector<event>::iterator ev = eventref_temp.begin(); ev < eventref_temp.end(); ev++){
+      ev->pjet_scalpt *= weight[ev->nvertices];
+   }
+
+}
+
 void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_MC, 
       const char* filename){
 
@@ -478,7 +519,7 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
    histsData_["jet1_pt"] = new TH1D("jet1_pt_Data", "Jet 1 p_{T}", 100, 0, 200);
    histsData_["jet_eta" ] = new TH1D("jet_eta_Data", "Jet #eta, p_{T} > 30 GeV", 100, -5, 5);
    histsData_["pjet_size"  ] = new TH1D("pjet_size_Data", "N jets", 100, 0, 500);
-   histsData_["pjet_scalpt"] = new TH1D("pjet_scalpt_Data", "Pseudojet Scalar p_{T}", 100, 0, 500);
+   histsData_["pjet_scalpt"] = new TH1D("pjet_scalpt_Data", "Pseudojet Scalar p_{T}", 200, 0, 2000);
    histsData_["pjet_vectpt"] = new TH1D("pjet_vectpt_Data", "Pseudojet Scalar p_{T}", 100, 0, 200);
    histsData_["qt"] = new TH1D("qt_Data", "q_{T}", 100, 0, 200);
    histsData_["ut_par"] = new TH1D("ut_par_Data", "|u_{T}|_{#parallel}", 100, 0, 100);
@@ -493,6 +534,9 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
    histsData_["cov_xx_highpt"] = new TH1D("cov_xx_highpt_Data", "Cov_{xx} High-p_{T} Jets", 100, 0, 500);
    histsData_["cov_xx_pjet"] = new TH1D("cov_xx_pjet_Data", "Cov_{xx} Pseudojet", 100, 0, 500);
    histsData_["cov_xx_ratio"] = new TH1D("cov_xx_ratio_Data", "Cov_{xx} High-p_{T}/Total", 100, 0, 1 );
+   histsData_["met_varx"] = new TH1D("met_varx_Data","#sigma_{x}^{2} for MET smearing",100,-10,30);
+   histsData_["met_vary"] = new TH1D("met_vary_Data","#sigma_{y}^{2} for MET smearing",100,-10,30);
+   histsData_["met_rho"] = new TH1D("met_rho_Data", "#rho for MET smearing", 100, -10, 10);
 
    // profile histograms
    profsData_["psig_nvert"] = new TH2D("psig_nvert_Data",
@@ -504,7 +548,14 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
    profsData_["pET_nvert"] = new TH2D("pET_nvert_Data",
          "MET vs. N Vertices;N Vertices;<MET>", 30, 0, 30, 100, 0, 100);
    profsData_["cov_par_perp"] = new TH2D("cov_par_perp_Data",
-         "Perpendicular vs. Parallel Resolutions (wrt qt);par #sigma^{2};perp #sigma^{2}", 100, 0, 500, 100, 0, 500);
+         "Perpendicular vs. Parallel Resolutions (wrt qt);par #sigma^{2};perp #sigma^{2}",
+         100, 0, 500, 100, 0, 500);
+   profsData_["pjet_scalpt_nvert"] = new TH2D("pjet_scalpt_nvert_Data",
+         "Pseudojet Scalar p_{T} vs. N Vertices", 30, 0, 30, 200, 0, 2000);
+   profsData_["jet_pt_nvert"] = new TH2D("jet_pt_nvert_Data",
+         "Jet p_{T} vs. N Vertices", 30, 0, 30, 100, 0, 200);
+   profsData_["njets_nvert"] = new TH2D("njets_nvert_Data",
+         "N jets vs. N Vertices", 30, 0, 30, 100, 0, 100);
 
    // clone data hists for MC
    for(map<string,TH1*>::const_iterator it = histsData_.begin();
@@ -589,12 +640,23 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
          hists_["cov_xx_pjet"]->Fill( ev->cov_xx_pjet, ev->weight );
          hists_["cov_xx_ratio"]->Fill( ev->cov_xx_highpt/ev->cov_xx, ev->weight );
 
+         hists_["met_varx"]->Fill( ev->met_varx, ev->weight );
+         hists_["met_vary"]->Fill( ev->met_vary, ev->weight );
+         hists_["met_rho"]->Fill( ev->met_rho, ev->weight );
+
          // profiles
          profs_["psig_nvert"]->Fill( ev->nvertices, ev->sig, ev->weight );
          profs_["psig_qt"]->Fill( ev->qt, ev->sig, ev->weight );
          profs_["presp_qt"]->Fill( ev->qt, -(ev->ut_par)/(ev->qt), ev->weight );
          profs_["pET_nvert"]->Fill( ev->nvertices, ev->met, ev->weight );
          profs_["cov_par_perp"]->Fill( ev->cov_par, ev->cov_perp, ev->weight );
+         profs_["pjet_scalpt_nvert"]->Fill( ev->nvertices, ev->pjet_scalpt, ev->weight );
+
+         profs_["njets_nvert"]->Fill( ev->nvertices, ev->jet_ptL123.size(), ev->weight );
+         for( int j=0; j < int(ev->jet_ptL123.size()); j++){
+            profs_["jet_pt_nvert"]->Fill( ev->nvertices, ev->jet_ptL123[j], ev->weight );
+         }
+
       }
    }
 
@@ -627,7 +689,8 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
 
       histMC->SetLineColor(38);
       histMC->SetFillColor(38);
-      histMC->Scale( double(eventref_data.size()) / eventref_MC.size() );
+      //histMC->Scale( double(eventref_data.size()) / eventref_MC.size() );
+      histMC->Scale( histData->Integral("width") / histMC->Integral("width") );
       histData->SetLineColor(1);
       histData->SetMarkerStyle(20);
 
@@ -655,6 +718,8 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
       hresid->GetYaxis()->CenterTitle();
       hresid->GetYaxis()->SetTitleSize(0.1);
       hresid->GetYaxis()->SetTitleOffset(0.4);
+      hresid->SetMaximum( min(hresid->GetMaximum(),10.0) );
+      hresid->SetMinimum( max(hresid->GetMinimum(),-10.0) );
       hresid->Draw("EP");
 
       TF1 *func = new TF1("func","[0]",-10E6,10E6);
@@ -707,9 +772,16 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
    histsData_["pchi2"]->Fit("pchi2_right","QR");
    pchi2slope_right = pchi2_right->GetParameter(1);
 
-   cout << "\nP(CHI2) SLOPES: " << pchi2slope_left << " L, " << pchi2slope_right << " R" << endl;
-   cout << endl;
+   cout << "\nP(CHI2) SLOPES: " << pchi2slope_left << " L, " << pchi2slope_right << " R\n" << endl;
 
    psig_nvert_corr = profsData_["psig_nvert"]->GetCorrelationFactor();
    psig_qt_corr = profsData_["psig_qt"]->GetCorrelationFactor();
+
+   cout << "PJet Reweighting: " << endl;
+   TProfile *profData = (TProfile*)profsData_["pjet_scalpt_nvert"]->ProfileX();
+   TProfile *profMC = (TProfile*)profsMC_["pjet_scalpt_nvert"]->ProfileX();
+   for( int i=0; i <= profData->GetNbinsX(); i++ ){
+      if( profMC->GetBinContent(i) != 0 )
+         cout << i-1 << " " << profData->GetBinContent(i)/profMC->GetBinContent(i) << endl;
+   }
 }

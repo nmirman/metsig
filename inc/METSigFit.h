@@ -24,6 +24,8 @@ struct event {
 
    double cov_xx_highpt;
    double cov_xx_pjet;
+   double cov_dtt;
+   double cov_dff;
 
    double cov_par;
    double cov_perp;
@@ -57,6 +59,11 @@ struct event {
    vector<double> genjet_phi;
    vector<double> genjet_eta;
 
+   // MC MET smearing
+   double met_varx;
+   double met_vary;
+   double met_rho;
+
 };
 
 class Fitter{
@@ -70,6 +77,7 @@ class Fitter{
       void RunMinimizer(vector<event>&);
       void FindSignificance(const double*, vector<event>&);
       void PlotsDataMC(vector<event>&, vector<event>&, const char[]);
+      void PJetReweight(vector<event>&, const double*);
 
       double jetbinpt, jetcorrpt;
       double psig_nvert_corr, psig_qt_corr, pchi2slope_left, pchi2slope_right;
