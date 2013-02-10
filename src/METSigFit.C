@@ -647,6 +647,7 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
 
    // draw hists and write to file
    TFile *file = new TFile(filename,"RECREATE");
+   TDirectory* th2=file->mkdir("2D Hists");
    file->cd();
 
    for(map<string,TH1*>::const_iterator it = histsData_.begin();
@@ -720,8 +721,21 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
       string pname = it->first;
       TH2 *histData = (TH2*)it->second;
       TH2 *histMC = (TH2*)profsMC_[pname];
+
+      th2->cd();
+      histData->Write();
+      histMC->Write();
+      file->cd();
+
+      //preserve y-axis labels after converting to profile
+      const char* labelData=histData->GetYaxis()->GetTitle();
+      const char* labelMC=histMC->GetYaxis()->GetTitle();
+
       TProfile *profData = (TProfile*)histData->ProfileX();
       TProfile *profMC = (TProfile*)histMC->ProfileX();
+
+      profData->GetYaxis()->SetTitle(labelData);
+      profMC->GetYaxis()->SetTitle(labelMC);
 
       TCanvas *canvas  = new TCanvas( (char*)pname.c_str(), (char*)pname.c_str(), 800, 800 );
       canvas->cd();
