@@ -51,7 +51,7 @@ int main(int argc, char* argv[]){
    fitter.FindSignificance(parMC, eventvec_sigmaMC);
    fitter.FindSignificance(parData, eventvec_sigmaData);
 
-   for( int i=0; i < eventvec_MC.size(); i++ ){
+   for( int i=0; i < int(eventvec_MC.size()); i++ ){
      eventvec_MC[i].met_varx = eventvec_sigmaData[i].cov_xx - eventvec_sigmaMC[i].cov_xx;
      eventvec_MC[i].met_vary = eventvec_sigmaData[i].cov_yy - eventvec_sigmaMC[i].cov_yy;
      eventvec_MC[i].met_rho = (eventvec_sigmaData[i].cov_xy - eventvec_sigmaMC[i].cov_xy)

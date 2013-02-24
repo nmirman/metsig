@@ -357,8 +357,7 @@ double Fitter::Min2LL(const double *x){
 
 void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
 
-   //TRandom3 *rand = new TRandom3( 1+10E6 );
-   //ROOT::Math::GSLRandomEngine *random = new ROOT::Math::GSLRandomEngine();
+   // random number engine for MET-smearing
    ROOT::Math::Random<ROOT::Math::GSLRngMT> GSLr;
 
    int count = 0;
@@ -416,7 +415,7 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       }
 
       // muons -- assume zero resolutions
-      for(int i=0; i < ev->muon_pt.size(); i++){
+      for(int i=0; i < int(ev->muon_pt.size()); i++){
          met_x -= cos(ev->muon_phi[i])*(ev->muon_pt[i]);
          met_y -= sin(ev->muon_phi[i])*(ev->muon_pt[i]);
       }
@@ -474,7 +473,7 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
 
       // fill qt, ut
       double qt_x=0, qt_y=0;
-      for(int i=0; i < ev->muon_pt.size(); i++){
+      for(int i=0; i < int(ev->muon_pt.size()); i++){
          qt_x += ev->muon_pt[i]*cos(ev->muon_phi[i]);
          qt_y += ev->muon_pt[i]*sin(ev->muon_phi[i]);
       }
@@ -838,11 +837,4 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
    psig_nvert_corr = profsData_["psig_nvert"]->GetCorrelationFactor();
    psig_qt_corr = profsData_["psig_qt"]->GetCorrelationFactor();
 
-   cout << "PJet Reweighting: " << endl;
-   TProfile *profData = (TProfile*)profsData_["pjet_scalpt_nvert"]->ProfileX();
-   TProfile *profMC = (TProfile*)profsMC_["pjet_scalpt_nvert"]->ProfileX();
-   for( int i=0; i <= profData->GetNbinsX(); i++ ){
-      if( profMC->GetBinContent(i) != 0 )
-         cout << i-1 << " " << profData->GetBinContent(i)/profMC->GetBinContent(i) << endl;
-   }
 }
