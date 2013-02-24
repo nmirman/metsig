@@ -1,6 +1,9 @@
 #include "METSigFit.h"
 
 #include "TH1.h"
+#include "TH2.h"
+#include "TProfile.h"
+#include "TF1.h"
 #include "TCanvas.h"
 #include "TFile.h"
 #include "TTree.h"
@@ -9,6 +12,9 @@
 #include <iostream>
 #include <unistd.h>
 using namespace std;
+
+
+
 
 int main(int argc, char* argv[]){
 
@@ -38,11 +44,12 @@ int main(int argc, char* argv[]){
    Fitter fitter;
    vector<event> eventvec_MC;
    vector<event> eventvec_data;
+   bool do_resp_correction=false;
 
    // option flags
    char c;
    int numevents = -1;
-   while( (c = getopt(argc, argv, "n:j:h")) != -1 ) {
+   while( (c = getopt(argc, argv, "n:j:hsco")) != -1 ) {
       switch(c)
       {
          case 'n' :
@@ -62,6 +69,18 @@ int main(int argc, char* argv[]){
             return -1;
             break;
 
+         case 's' : //"short"
+        	 numevents = 100000;
+        	 break;
+
+         case 'c' : //"correct"
+        	 do_resp_correction=true;
+        	 break;
+
+         case 'o' : //"original"
+        	 do_resp_correction=false;
+        	 break;
+
          default :
             continue;
       }
@@ -71,27 +90,32 @@ int main(int argc, char* argv[]){
    // ######################### BEGIN FIT #########################
    //
 
+
+
    // fill eventvecs
-   fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Zmumu/"
-         "Zmumu_MC_DYJettoLL_TuneZ2_M-50_7TeV_madgraph_tauola_20121221.root",
-         eventvec_MC, numevents, true);
-   fitter.MatchMCjets( eventvec_MC );
 
    fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Zmumu/"
-         "Zmumu_data_DoubleMu_Run2011A_08Nov2011_v1_20121221.root",
-         eventvec_data, numevents/2, false);
+		   "Zmumu_MC_DYJettoLL_TuneZ2_M-50_7TeV_madgraph_tauola_20121221.root",
+		   eventvec_MC, numevents, true, do_resp_correction);
+   fitter.MatchMCjets( eventvec_MC );
+
+
    fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Zmumu/"
-         "Zmumu_data_DoubleMu_Run2011B_19Nov2011_v1_20121221.root",
-         eventvec_data, numevents/2, false);
-   
+		   "Zmumu_data_DoubleMu_Run2011A_08Nov2011_v1_20121221.root",
+		   eventvec_data, numevents/2, false, false);
+   fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Zmumu/"
+		   "Zmumu_data_DoubleMu_Run2011B_19Nov2011_v1_20121221.root",
+		   eventvec_data, numevents/2, false, do_resp_correction);
+
    cout << "\n  MC EVENTS: " << eventvec_MC.size() << endl;
    cout << "DATA EVENTS: " << eventvec_data.size() << endl;
 
-   // minimize
    cout << "\n ############################ " << endl;
    cout << " ###########  MC  ########### " << endl;
    cout << " ############################ \n" << endl;
    fitter.RunMinimizer( eventvec_MC );
+
+
    cout << "\n ############################ " << endl;
    cout << " ########### Data ########### " << endl;
    cout << " ############################ \n" << endl;
@@ -102,6 +126,7 @@ int main(int argc, char* argv[]){
    //
    // ######################### END FIT #########################
    //
+
 
    // fill tree with fit results
    fitStatus = fitter.gMinuit->Status();

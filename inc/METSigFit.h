@@ -35,6 +35,8 @@ struct event {
    double ut_par;
    double ut_perp;
 
+   double resp_correction;
+
    vector<double> muon_pt;
    vector<double> muon_phi;
    vector<TLorentzVector> muon_4vect;
@@ -72,12 +74,13 @@ class Fitter{
       Fitter();
       ~Fitter();
 
-      void ReadNtuple(const char[], vector<event>&, const int, const bool);
+      void ReadNtuple(const char[], vector<event>&, const int, const bool, const bool=false);
       void MatchMCjets(vector<event>&);
       void RunMinimizer(vector<event>&);
       void FindSignificance(const double*, vector<event>&);
       void PlotsDataMC(vector<event>&, vector<event>&, const char[]);
       void PJetReweight(vector<event>&, const double*);
+      void ResponseCorrection(vector<event>&, const bool=false);
 
       double jetbinpt, jetcorrpt;
       double psig_nvert_corr, psig_qt_corr, pchi2slope_left, pchi2slope_right;
