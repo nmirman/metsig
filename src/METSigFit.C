@@ -12,6 +12,8 @@
 #include "TVector2.h"
 #include "TRandom3.h"
 #include "TProfile.h"
+#include "TString.h"
+#include "TLegend.h"
 
 #include <cmath>
 #include <iostream>
@@ -707,6 +709,9 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
    }
 
    // draw hists and write to file
+   gROOT->ProcessLineSync(".L tdrstyle.C");
+   gROOT->ProcessLineSync("setTDRStyle()");
+
    TFile *file = new TFile(filename,"RECREATE");
    TDirectory* th2=file->mkdir("2D Hists");
    file->cd();
@@ -721,14 +726,18 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
       bool log_axis = (hname != "jet_eta") and (hname != "pchi2");
 
       TCanvas *canvas  = new TCanvas( (char*)hname.c_str(), (char*)hname.c_str(), 800, 800 );
+      canvas->SetFillColor(0);
       TPad *pad1 = new TPad("pad1","pad1",0,0.33,1,1);
       TPad *pad2 = new TPad("pad2","pad2",0,0,1,0.33);
-      pad1->SetBottomMargin(0.00001);
-      pad1->SetBorderMode(0);
+      pad1->SetTopMargin(0.1);
+      pad1->SetBottomMargin(0.01);
+      pad1->SetRightMargin(0.1);
+      pad1->SetFillColor(0);
       if( log_axis ) pad1->SetLogy();
-      pad2->SetTopMargin(0.00001);
-      pad2->SetBottomMargin(0.1);
-      pad2->SetBorderMode(0);
+      pad2->SetTopMargin(0.01);
+      pad2->SetBottomMargin(0.3);
+      pad2->SetRightMargin(0.1);
+      pad2->SetFillColor(0);
       pad1->Draw();
       pad2->Draw();
 
@@ -736,43 +745,58 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
 
       histMC->SetLineColor(38);
       histMC->SetFillColor(38);
-      //histMC->Scale( double(eventref_data.size()) / eventref_MC.size() );
       histMC->Scale( histData->Integral("width") / histMC->Integral("width") );
       histData->SetLineColor(1);
       histData->SetMarkerStyle(20);
 
       histMC->SetMaximum( 1.1*max(histMC->GetMaximum(), histData->GetMaximum()) );
-      histMC->GetYaxis()->SetLabelFont(63);
-      histMC->GetYaxis()->SetLabelSize(16);
+      histMC->SetLabelSize(0.0);
+      histMC->GetXaxis()->SetTitleSize(0.00);
+      histMC->GetYaxis()->SetLabelSize(0.07);
+      histMC->GetYaxis()->SetTitleSize(0.08);
+      histMC->GetYaxis()->SetTitleOffset(0.76);
+      histMC->GetXaxis()->SetLabelFont(42);
+      histMC->GetYaxis()->SetLabelFont(42);
+      histMC->GetXaxis()->SetTitleFont(42);
+      histMC->GetYaxis()->SetTitleFont(42);
 
       histMC->Draw();
       histData->Draw("EP same");
 
+      TLegend *leg = new TLegend(0.605528,0.655866,0.866834,0.816333);
+      leg->AddEntry(histData, "data");
+      leg->AddEntry(histMC, "Z #rightarrow #mu #mu");
+      leg->SetFillStyle(0);
+      leg->SetBorderSize(0);
+      leg->Draw("same");
+
       pad2->cd();
 
-      TH1D *hresid = (TH1D*)histData->Clone("hresid");
-      hresid->Sumw2();
-      hresid->Add( histMC, -1.0 );
-      hresid->Divide( histMC );
+      TH1D *hratio = (TH1D*)histData->Clone("hratio");
+      hratio->Sumw2();
+      hratio->Divide( histMC );
+      hratio->SetTitle(";"+TString(histData->GetXaxis()->GetTitle())+";Data/MC");
+      hratio->SetStats(0);
 
-      hresid->GetXaxis()->SetLabelFont(63);
-      hresid->GetXaxis()->SetLabelSize(16);
-      hresid->GetYaxis()->SetLabelFont(63);
-      hresid->GetYaxis()->SetLabelSize(16);
-      hresid->SetTitle(0);
-      hresid->SetStats(0);
-      hresid->GetYaxis()->SetTitle("#frac{Data - MC}{MC}");
-      hresid->GetYaxis()->CenterTitle();
-      hresid->GetYaxis()->SetTitleSize(0.1);
-      hresid->GetYaxis()->SetTitleOffset(0.4);
-      hresid->SetMaximum( min(hresid->GetMaximum(),10.0) );
-      hresid->SetMinimum( max(hresid->GetMinimum(),-10.0) );
-      hresid->Draw("EP");
+      hratio->GetXaxis()->SetTitleSize(0.14);
+      hratio->GetXaxis()->SetLabelSize(0.14);
+      hratio->GetYaxis()->SetLabelSize(0.11);
+      hratio->GetYaxis()->SetTitleSize(0.14);
+      hratio->GetYaxis()->SetTitleOffset(0.28);
+      hratio->GetXaxis()->SetLabelFont(42);
+      hratio->GetYaxis()->SetLabelFont(42);
+      hratio->GetXaxis()->SetTitleFont(42);
+      hratio->GetYaxis()->SetTitleFont(42);
+      hratio->SetMaximum( min(hratio->GetMaximum(),2.2) );
+      hratio->SetMinimum( max(hratio->GetMinimum(),0.0) );
+      hratio->GetYaxis()->SetNdivisions(5);
+      hratio->Draw("EP");
 
       TF1 *func = new TF1("func","[0]",-10E6,10E6);
-      func->SetParameter(0,0.0);
+      func->SetParameter(0,1.0);
       func->SetLineWidth(1);
       func->SetLineStyle(7);
+      func->SetLineColor(1);
       func->Draw("same");
 
       canvas->cd();
@@ -811,8 +835,20 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
       profMC->SetMaximum( 1.1*max(profMC->GetMaximum(), profData->GetMaximum()) );
       profMC->SetMinimum( 0.8*min(profMC->GetMinimum(), profData->GetMinimum()) );
 
+      profMC->GetXaxis()->SetLabelFont(42);
+      profMC->GetXaxis()->SetLabelSize(0.05);
+      profMC->GetXaxis()->SetTitleFont(42);
+      profMC->GetXaxis()->SetTitleSize(0.06);
+
       profMC->Draw("HIST");
       profData->Draw("EP same");
+
+      TLegend *leg = new TLegend(0.605528,0.655866,0.866834,0.816333);
+      leg->AddEntry(profData, "data");
+      leg->AddEntry(profMC, "Z #rightarrow #mu #mu");
+      leg->SetFillStyle(0);
+      leg->SetBorderSize(0);
+      leg->Draw("same");
 
       canvas->Write();
 
