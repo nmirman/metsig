@@ -168,9 +168,12 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       countev++;
 
       int pjet_size_temp = 0;
-      double pjet_scalpt_temp = 0;
-      double pjet_px_temp = 0;
-      double pjet_py_temp = 0;
+      double pjet_scalptL123_temp = 0;
+      double pjet_pxL123_temp = 0;
+      double pjet_pyL123_temp = 0;
+      double pjet_scalptT1_temp = 0;
+      double pjet_pxT1_temp = 0;
+      double pjet_pyT1_temp = 0;
 
       event evtemp;
 
@@ -191,6 +194,8 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
 
          double jet_ptL123_temp = (pfj_pt[i]*pfj_l1l2l3[i] > jetcorrpt)
             ? pfj_pt[i]*pfj_l1l2l3[i] : pfj_pt[i];
+         double jet_ptT1_temp = (pfj_pt[i]*pfj_l1l2l3[i] > jetcorrpt)
+            ? pfj_pt[i]*(pfj_l1l2l3[i] + 1 - pfj_l1[i]) : pfj_pt[i];
 
          if( jet_ptL123_temp > jetbinpt ){
             // clustered jets
@@ -199,20 +204,20 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
             evtemp.jet_eta.push_back( pfj_eta[i] );
             evtemp.jet_ptUncor.push_back( pfj_pt[i] );
 
-            if( pfj_pt[i]*pfj_l1l2l3[i] > jetcorrpt ){
-               evtemp.jet_ptL123.push_back( pfj_pt[i]*pfj_l1l2l3[i] );
-               evtemp.jet_ptT1.push_back( pfj_pt[i]*(pfj_l1l2l3[i] + 1 - pfj_l1[i]) );
-            }else{
-               evtemp.jet_ptL123.push_back( pfj_pt[i] );
-               evtemp.jet_ptT1.push_back( pfj_pt[i] );
-            }
+            evtemp.jet_ptL123.push_back( jet_ptL123_temp );
+            evtemp.jet_ptT1.push_back( jet_ptT1_temp );
 
          } else {
             // pseudojet with unclustered energy
 
-            pjet_scalpt_temp += pfj_pt[i];
-            pjet_px_temp += pfj_pt[i]*cos(pfj_phi[i]);
-            pjet_py_temp += pfj_pt[i]*sin(pfj_phi[i]);
+            pjet_scalptL123_temp += jet_ptL123_temp;
+            pjet_pxL123_temp += jet_ptL123_temp*cos(pfj_phi[i]);
+            pjet_pyL123_temp += jet_ptL123_temp*sin(pfj_phi[i]);
+
+            pjet_scalptT1_temp += jet_ptT1_temp;
+            pjet_pxT1_temp += jet_ptT1_temp*cos(pfj_phi[i]);
+            pjet_pyT1_temp += jet_ptT1_temp*sin(pfj_phi[i]);
+
             pjet_size_temp++;
 
          }
@@ -220,9 +225,14 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       } // pfj loop
 
       // pseudojet
-      evtemp.pjet_scalpt = pjet_scalpt_temp;
-      evtemp.pjet_vectpt = sqrt( pjet_px_temp*pjet_px_temp + pjet_py_temp*pjet_py_temp );
-      evtemp.pjet_phi = atan2( pjet_py_temp, pjet_px_temp );
+      evtemp.pjet_phiL123 = atan2( pjet_pyL123_temp, pjet_pxL123_temp );
+      evtemp.pjet_scalptL123 = pjet_scalptL123_temp;
+      evtemp.pjet_vectptL123 = sqrt( pow(pjet_pxL123_temp,2) + pow(pjet_pyL123_temp,2) );
+
+      evtemp.pjet_phiT1 = atan2( pjet_pyT1_temp, pjet_pxT1_temp );
+      evtemp.pjet_scalptT1 = pjet_scalptT1_temp;
+      evtemp.pjet_vectptT1 = sqrt( pow(pjet_pxT1_temp,2) + pow(pjet_pyT1_temp,2) );
+
       evtemp.pjet_size = pjet_size_temp;
 
       // genjets
@@ -289,8 +299,10 @@ void Fitter::ResponseCorrection(vector<event>& eventvec, const bool isMC ) {
 		}
 
 		// pseudojet
-		ev->pjet_vectpt*=pt_mult;
-		ev->pjet_scalpt*=pt_mult;
+		ev->pjet_vectptL123*=pt_mult;
+		ev->pjet_scalptL123*=pt_mult;
+		ev->pjet_vectptT1*=pt_mult;
+		ev->pjet_scalptT1*=pt_mult;
 	}
 }
 
@@ -423,13 +435,13 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       }
 
       // unclustered energy -- parameterize by scalar sum of ET
-      double c = cos(ev->pjet_phi);
-      double s = sin(ev->pjet_phi);
+      double c = cos(ev->pjet_phiT1);
+      double s = sin(ev->pjet_phiT1);
 
-      met_x -= c*(ev->pjet_vectpt);
-      met_y -= s*(ev->pjet_vectpt);
+      met_x -= c*(ev->pjet_vectptT1);
+      met_y -= s*(ev->pjet_vectptT1);
 
-      double ctt = x[5]*x[5] + x[6]*x[6]*(ev->pjet_scalpt) + x[7]*(ev->nvertices);
+      double ctt = x[5]*x[5] + x[6]*x[6]*(ev->pjet_scalptL123) + x[7]*(ev->nvertices);
 
       cov_xx += ctt;
       cov_yy += ctt;
@@ -545,7 +557,7 @@ void Fitter::MatchMCjets(vector<event>& eventref_temp){
 void Fitter::PJetReweight(vector<event>& eventref_temp, const double *weight){
    
    for( vector<event>::iterator ev = eventref_temp.begin(); ev < eventref_temp.end(); ev++){
-      ev->pjet_scalpt *= weight[ev->nvertices];
+      ev->pjet_scalptL123 *= weight[ev->nvertices];
    }
 
 }
@@ -567,8 +579,10 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
    histsData_["jet1_pt"] = new TH1D("jet1_pt_Data", "Jet 1 p_{T}", 100, 0, 200);
    histsData_["jet_eta" ] = new TH1D("jet_eta_Data", "Jet #eta, p_{T} > 30 GeV", 100, -5, 5);
    histsData_["pjet_size"  ] = new TH1D("pjet_size_Data", "N jets", 100, 0, 500);
-   histsData_["pjet_scalpt"] = new TH1D("pjet_scalpt_Data", "Pseudojet Scalar p_{T}", 200, 0, 2000);
-   histsData_["pjet_vectpt"] = new TH1D("pjet_vectpt_Data", "Pseudojet Scalar p_{T}", 100, 0, 200);
+   histsData_["pjet_scalptL123"] = new TH1D("pjet_scalptL123_Data", "Pseudojet Scalar p_{T} (L123-corrected)", 200, 0, 2000);
+   histsData_["pjet_vectptL123"] = new TH1D("pjet_vectptL123_Data", "Pseudojet Scalar p_{T} (L123-corrected)", 100, 0, 200);
+   histsData_["pjet_scalptT1"] = new TH1D("pjet_scalptT1_Data", "Pseudojet Scalar p_{T} (T1-corrected)", 200, 0, 2000);
+   histsData_["pjet_vectptT1"] = new TH1D("pjet_vectptT1_Data", "Pseudojet Scalar p_{T} (T1-corrected)", 100, 0, 200);
    histsData_["qt"] = new TH1D("qt_Data", "q_{T}", 100, 0, 200);
    histsData_["ut_par"] = new TH1D("ut_par_Data", "|u_{T}|_{#parallel}", 100, 0, 100);
    histsData_["nvert"] = new TH1D("nvert_Data", "N Vertices", 100, 0, 100);
@@ -598,7 +612,7 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
    profsData_["cov_par_perp"] = new TH2D("cov_par_perp_Data",
          "Perpendicular vs. Parallel Resolutions (wrt qt);par #sigma^{2};perp #sigma^{2}",
          100, 0, 500, 100, 0, 500);
-   profsData_["pjet_scalpt_nvert"] = new TH2D("pjet_scalpt_nvert_Data",
+   profsData_["pjet_scalptL123_nvert"] = new TH2D("pjet_scalpt_nvert_Data",
          "Pseudojet Scalar p_{T} vs. N Vertices", 30, 0, 30, 200, 0, 2000);
    profsData_["jet_pt_nvert"] = new TH2D("jet_pt_nvert_Data",
          "Jet p_{T} vs. N Vertices", 30, 0, 30, 100, 0, 200);
@@ -666,8 +680,10 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
          }
 
          // pseudojet
-         hists_["pjet_scalpt"]->Fill( ev->pjet_scalpt , ev->weight );
-         hists_["pjet_vectpt"]->Fill( ev->pjet_vectpt , ev->weight );
+         hists_["pjet_scalptL123"]->Fill( ev->pjet_scalptL123 , ev->weight );
+         hists_["pjet_vectptL123"]->Fill( ev->pjet_vectptL123 , ev->weight );
+         hists_["pjet_scalptT1"]->Fill( ev->pjet_scalptT1 , ev->weight );
+         hists_["pjet_vectptT1"]->Fill( ev->pjet_vectptT1 , ev->weight );
          hists_["pjet_size"]->Fill( ev->pjet_size , ev->weight );
 
          // other observables
@@ -698,7 +714,7 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
          profs_["presp_qt"]->Fill( ev->qt, -(ev->ut_par)/(ev->qt), ev->weight );
          profs_["pET_nvert"]->Fill( ev->nvertices, ev->met, ev->weight );
          profs_["cov_par_perp"]->Fill( ev->cov_par, ev->cov_perp, ev->weight );
-         profs_["pjet_scalpt_nvert"]->Fill( ev->nvertices, ev->pjet_scalpt, ev->weight );
+         profs_["pjet_scalptL123_nvert"]->Fill( ev->nvertices, ev->pjet_scalptL123, ev->weight );
 
          profs_["njets_nvert"]->Fill( ev->nvertices, ev->jet_ptL123.size(), ev->weight );
          for( int j=0; j < int(ev->jet_ptL123.size()); j++){

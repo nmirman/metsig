@@ -52,9 +52,12 @@ struct event {
    vector<bool> jet_id;
 
    // pseudojet
-   double pjet_phi;
-   double pjet_vectpt;
-   double pjet_scalpt;
+   double pjet_phiL123;
+   double pjet_vectptL123;
+   double pjet_scalptL123;
+   double pjet_phiT1;
+   double pjet_vectptT1;
+   double pjet_scalptT1;
    double pjet_size;
 
    vector<double> genjet_pt;
