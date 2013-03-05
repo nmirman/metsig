@@ -290,14 +290,6 @@ void Fitter::ResponseCorrection(vector<event>& eventvec, const bool isMC ) {
 		double pt_mult=abs( 1/func->Eval(ev->qt) );
 		ev->resp_correction=pt_mult;
 
-
-		// high pt jets
-		for(unsigned int i=0; i<ev->jet_ptUncor.size(); i++) {
-			ev->jet_ptUncor[i] *= pt_mult;
-			ev->jet_ptL123[i] *= pt_mult;
-			ev->jet_ptT1[i] *= pt_mult;
-		}
-
 		// pseudojet
 		ev->pjet_vectptL123*=pt_mult;
 		ev->pjet_scalptL123*=pt_mult;
