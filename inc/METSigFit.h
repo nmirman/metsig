@@ -12,6 +12,8 @@ using namespace std;
 
 struct event {
 
+   const char *channel;
+
    int nvertices;
    double weight;
 
@@ -47,6 +49,7 @@ struct event {
    vector<double> jet_ptUncor;
    vector<double> jet_ptL123;
    vector<double> jet_ptT1;
+   vector<double> jet_L123Corr;
    vector<int> jet_matchIndex;
    vector<double> jet_matchdR;
    vector<bool> jet_id;
@@ -77,11 +80,12 @@ class Fitter{
       Fitter();
       ~Fitter();
 
-      void ReadNtuple(const char[], vector<event>&, const int, const bool, const bool=false);
+      void ReadNtuple(const char[], vector<event>&, const int, const bool,
+            const char[], const bool=false);
       void MatchMCjets(vector<event>&);
       void RunMinimizer(vector<event>&);
       void FindSignificance(const double*, vector<event>&);
-      void PlotsDataMC(vector<event>&, vector<event>&, const char[]);
+      void PlotsDataMC(vector<event>&, vector<event>&, const char[], bool);
       void PJetReweight(vector<event>&, const double*);
       void ResponseCorrection(vector<event>&, const bool=false);
 

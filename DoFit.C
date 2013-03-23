@@ -45,41 +45,47 @@ int main(int argc, char* argv[]){
    vector<event> eventvec_MC;
    vector<event> eventvec_data;
    bool do_resp_correction=false;
+   bool stackMC=true;
 
    // option flags
    char c;
    int numevents = -1;
-   while( (c = getopt(argc, argv, "n:j:hsco")) != -1 ) {
+   while( (c = getopt(argc, argv, "n:j:hscob")) != -1 ) {
       switch(c)
       {
          case 'n' :
             numevents = atoi(optarg);
+            if( atoi(optarg) != -1 ) stackMC = false;
             break;
 
          case 'j' :
             fitter.jetbinpt = atoi(optarg);
             break;
 
-         case 'h' :
-            cout << "Usage: ./DoFit <flags>\n";
-            cout << "Flags: \n";
-            cout << "\t-n number\t Number of events to fit.  Default at -1.";
-            cout << "\t-j number\t Jet bin pt threshold.  Default at 30 GeV.";
-            cout << "\t-h\t Display this menu.";
-            return -1;
-            break;
-
-         case 's' : //"short"
+         case 's' :
         	 numevents = 100000;
+          stackMC = false;
         	 break;
 
-         case 'c' : //"correct"
+         case 'c' :
         	 do_resp_correction=true;
         	 break;
 
-         case 'o' : //"original"
-        	 do_resp_correction=false;
-        	 break;
+         case 'b' :
+          stackMC = false;
+          break;
+
+         case 'h' :
+            cout << "Usage: ./DoFit <flags>\n";
+            cout << "Flags: \n";
+            cout << "\t-n <number>\t Number of events to fit.  Default at -1.\n";
+            cout << "\t-j <number>\t Jet bin pt threshold.  Default at 30 GeV.\n";
+            cout << "\t-s\t          'Short' run, 100k events.\n";
+            cout << "\t-c\t          Apply response correction.\n";
+            cout << "\t-b\t          Include all MC backgrounds.\n";
+            cout << "\t-h\t          Display this menu.\n";
+            return -1;
+            break;
 
          default :
             continue;
@@ -94,18 +100,32 @@ int main(int argc, char* argv[]){
 
    // fill eventvecs
 
-   fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Zmumu/"
-		   "Zmumu_MC_DYJettoLL_TuneZ2_M-50_7TeV_madgraph_tauola_20121221.root",
-		   eventvec_MC, numevents, true, do_resp_correction);
+   // mc
+   fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130321/DYJetsToLL.root",
+		   eventvec_MC, numevents, true, "DYJetsToLL", do_resp_correction);
+   if( stackMC ){
+      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130321/QCD.root",
+            eventvec_MC, numevents, true, "QCD", do_resp_correction);
+      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130321/TTJets.root",
+            eventvec_MC, numevents, true, "TTJets", do_resp_correction);
+      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130321/Tbar_tW-channel.root",
+            eventvec_MC, numevents, true, "Tbar_tW", do_resp_correction);
+      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130321/T_tW-channel.root",
+            eventvec_MC, numevents, true, "T_tW", do_resp_correction);
+      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130321/WJetsToLNu.root",
+            eventvec_MC, numevents, true, "WJetsToLNu", do_resp_correction);
+      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130321/WW.root",
+            eventvec_MC, numevents, true, "WW", do_resp_correction);
+      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130321/WZ.root",
+            eventvec_MC, numevents, true, "WZ", do_resp_correction);
+      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130321/ZZ.root",
+            eventvec_MC, numevents, true, "ZZ", do_resp_correction);
+   }
    fitter.MatchMCjets( eventvec_MC );
 
-
-   fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Zmumu/"
-		   "Zmumu_data_DoubleMu_Run2011A_08Nov2011_v1_20121221.root",
-		   eventvec_data, numevents/2, false, false);
-   fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Zmumu/"
-		   "Zmumu_data_DoubleMu_Run2011B_19Nov2011_v1_20121221.root",
-		   eventvec_data, numevents/2, false, do_resp_correction);
+   // data
+   fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130321/Data.root",
+         eventvec_data, numevents, false, "Data", false);
 
    cout << "\n  MC EVENTS: " << eventvec_MC.size() << endl;
    cout << "DATA EVENTS: " << eventvec_data.size() << endl;
@@ -121,7 +141,7 @@ int main(int argc, char* argv[]){
    cout << " ############################ \n" << endl;
    fitter.RunMinimizer( eventvec_data );
 
-   fitter.PlotsDataMC( eventvec_data, eventvec_MC, "results/plotsDataMC.root" );
+   fitter.PlotsDataMC( eventvec_data, eventvec_MC, "results/plotsDataMC.root", stackMC);
 
    //
    // ######################### END FIT #########################
@@ -146,7 +166,7 @@ int main(int argc, char* argv[]){
    pchi2slope_right = fitter.pchi2slope_right;
 
    tree->Fill();
-   
+
    // set up output file path
    std::string pathstr;
    char* path = std::getenv("WORKING_DIR");
