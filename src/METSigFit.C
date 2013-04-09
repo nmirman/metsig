@@ -594,16 +594,40 @@ void Fitter::MatchMCjets(vector<event>& eventref_temp){
 
 }
 
-void Fitter::PJetReweight(vector<event>& eventref_temp, const double *weight){
+void Fitter::PJetReweight(vector<event>& eventref_data, vector<event>& eventref_MC){
    
-   for( vector<event>::iterator ev = eventref_temp.begin(); ev < eventref_temp.end(); ev++){
-      ev->pjet_scalptL123 *= weight[ev->nvertices];
+   // compute weighted mean of p-jet scalar pt in each nvertices bin
+   double spt_data [50] = {0};
+   double spt_mc [50] = {0};
+
+   double norm_data [50] = {0};
+   for( vector<event>::iterator ev = eventref_data.begin(); ev < eventref_data.end(); ev++){
+      if( ev->nvertices > 50 ) continue;
+      spt_data[ ev->nvertices-1 ] += ev->weight*ev->pjet_scalptL123;
+      norm_data[ ev->nvertices-1 ] += ev->weight;
+   }
+   double norm_mc [50] = {0};
+   for( vector<event>::iterator ev = eventref_MC.begin(); ev < eventref_MC.end(); ev++){
+      if( ev->nvertices > 50 ) continue;
+      spt_mc[ ev->nvertices-1 ] += ev->weight*ev->pjet_scalptL123;
+      norm_mc[ ev->nvertices-1 ] += ev->weight;
+   }
+
+   for(int i=0; i < 50; i++){
+      if( norm_data[i] != 0 ) spt_data[i] /= norm_data[i];
+      if( norm_mc[i] != 0 ) spt_mc[i] /= norm_mc[i];
+   }
+
+   // reweight p-jet spectrum in MC
+   for( vector<event>::iterator ev = eventref_MC.begin(); ev < eventref_MC.end(); ev++){
+      if( ev->nvertices > 50 ) continue;
+      ev->pjet_scalptL123 *= spt_data[ev->nvertices] / spt_mc[ev->nvertices];
    }
 
 }
 
 void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_MC, 
-      const char* filename, bool stackMC){
+      const char* filename, bool stackMC, const char* stackmode){
 
    // histograms
    map<string, TH1*> histsData_;
@@ -620,10 +644,11 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
    map<string, TH1*> histsMC_wz_;
    map<string, TH1*> histsMC_zz_;
 
-   map<string, TH1*> histsMC_Zmumu_;
+   map<string, TH1*> histsMC_signal_;
    map<string, TH1*> histsMC_top_;
    map<string, TH1*> histsMC_EWK_;
    map<string, TH1*> histsMC_QCD_;
+   map<string, TH1*> histsMC_DY_;
 
    // data hists
    histsData_["muon_pt"] = new TH1D("muon_pt_Data", "Muon p_{T}", 100, 0, 200);
@@ -690,10 +715,11 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
       histsMC_wz_[hname] = (TH1D*)hist->Clone( (hname+"_MC_wz").c_str() );
       histsMC_zz_[hname] = (TH1D*)hist->Clone( (hname+"_MC_zz").c_str() );
 
-      histsMC_Zmumu_[hname] = (TH1D*)hist->Clone( (hname+"_MC_Zmumu").c_str() );
+      histsMC_signal_[hname] = (TH1D*)hist->Clone( (hname+"_MC_signal").c_str() );
       histsMC_top_[hname] = (TH1D*)hist->Clone( (hname+"_MC_top").c_str() );
       histsMC_EWK_[hname] = (TH1D*)hist->Clone( (hname+"_MC_EWK").c_str() );
       histsMC_QCD_[hname] = (TH1D*)hist->Clone( (hname+"_MC_QCD").c_str() );
+      histsMC_DY_[hname] = (TH1D*)hist->Clone( (hname+"_MC_DY").c_str() );
 
    }
    for(map<string,TH2*>::const_iterator it = profsData_.begin();
@@ -729,14 +755,28 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
       for( vector<event>::iterator ev = iter_begin; ev < iter_end; ev++ ){
 
          // MC backgrounds
-         if( i==2 ){
+         if( i==2 and strcmp(stackmode,"Zmumu") == 0 ){
 
-            if( strcmp(ev->channel,"DYJetsToLL") == 0 ) hists_ = histsMC_Zmumu_;
+            if( strcmp(ev->channel,"DYJetsToLL") == 0 ) hists_ = histsMC_signal_;
             else if( strcmp(ev->channel,"TTJets") == 0 ) hists_ = histsMC_top_;
             else if( strcmp(ev->channel,"Tbar_tW") == 0 ) hists_ = histsMC_top_;
             else if( strcmp(ev->channel,"T_tW") == 0 ) hists_ = histsMC_top_;
             else if( strcmp(ev->channel,"QCD") == 0 ) hists_ = histsMC_QCD_;
             else if( strcmp(ev->channel,"WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
+            else if( strcmp(ev->channel,"WW") == 0 ) hists_ = histsMC_EWK_;
+            else if( strcmp(ev->channel,"WZ") == 0 ) hists_ = histsMC_EWK_;
+            else if( strcmp(ev->channel,"ZZ") == 0 ) hists_ = histsMC_EWK_;
+            else cout << "Histogram fill error, channel " << ev->channel << endl;
+
+         }
+         if( i==2 and strcmp(stackmode,"Wenu") == 0 ){
+
+            if( strcmp(ev->channel,"WJetsToLNu") == 0 ) hists_ = histsMC_signal_;
+            else if( strcmp(ev->channel,"DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
+            else if( strcmp(ev->channel,"TTJets") == 0 ) hists_ = histsMC_top_;
+            else if( strcmp(ev->channel,"Tbar_tW") == 0 ) hists_ = histsMC_top_;
+            else if( strcmp(ev->channel,"T_tW") == 0 ) hists_ = histsMC_top_;
+            else if( strcmp(ev->channel,"QCD") == 0 ) hists_ = histsMC_QCD_;
             else if( strcmp(ev->channel,"WW") == 0 ) hists_ = histsMC_EWK_;
             else if( strcmp(ev->channel,"WZ") == 0 ) hists_ = histsMC_EWK_;
             else if( strcmp(ev->channel,"ZZ") == 0 ) hists_ = histsMC_EWK_;
@@ -828,6 +868,7 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
       TH1D *histMC_top = (TH1D*)histsMC_top_[hname];
       TH1D *histMC_EWK = (TH1D*)histsMC_EWK_[hname];
       TH1D *histMC_QCD = (TH1D*)histsMC_QCD_[hname];
+      TH1D *histMC_DY = (TH1D*)histsMC_DY_[hname];
 
       bool log_axis = (hname != "jet_eta") and (hname != "pchi2");
 
@@ -869,7 +910,7 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
       histMC->GetYaxis()->SetTitleFont(42);
 
       histMC->Draw();
-      if( stackMC ){
+      if( stackMC and strcmp(stackmode,"Zmumu") == 0 ){
          histMC_top->SetLineColor(39);
          histMC_top->SetFillColor(39);
          histMC_top->Scale( histData->Integral("width") / histMC->Integral("width") );
@@ -888,16 +929,53 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
          histMC_EWK->Draw("same");
          histMC_QCD->Draw("same");
       }
+      if( stackMC and strcmp(stackmode,"Wenu") == 0 ){
+         histMC_DY->SetLineColor(39);
+         histMC_DY->SetFillColor(39);
+         histMC_DY->Scale( histData->Integral("width") / histMC->Integral("width") );
+         histMC_top->SetLineColor(40);
+         histMC_top->SetFillColor(40);
+         histMC_top->Scale( histData->Integral("width") / histMC->Integral("width") );
+         histMC_EWK->SetLineColor(41);
+         histMC_EWK->SetFillColor(41);
+         histMC_EWK->Scale( histData->Integral("width") / histMC->Integral("width") );
+         histMC_QCD->SetLineColor(42);
+         histMC_QCD->SetFillColor(42);
+         histMC_QCD->Scale( histData->Integral("width") / histMC->Integral("width") );
+
+         histMC_DY->Add( histMC_top );
+         histMC_DY->Add( histMC_EWK );
+         histMC_DY->Add( histMC_QCD );
+         histMC_top->Add( histMC_EWK );
+         histMC_top->Add( histMC_QCD );
+         histMC_EWK->Add( histMC_QCD );
+
+         histMC_DY->Draw("same");
+         histMC_top->Draw("same");
+         histMC_EWK->Draw("same");
+         histMC_QCD->Draw("same");
+      }
 
       histData->Draw("EP same");
 
       TLegend *leg = new TLegend(0.605528,0.655866,0.866834,0.816333);
       leg->AddEntry(histData, "data");
-      leg->AddEntry(histMC, "Z #rightarrow #mu #mu");
-      if( stackMC ){
-         leg->AddEntry(histMC_top, "t #bar{t}");
-         leg->AddEntry(histMC_EWK, "EWK");
-         leg->AddEntry(histMC_QCD, "QCD");
+      if( strcmp(stackmode,"Zmumu") == 0 ){
+         leg->AddEntry(histMC, "Z #rightarrow #mu #mu");
+         if( stackMC ){
+            leg->AddEntry(histMC_top, "t #bar{t}");
+            leg->AddEntry(histMC_EWK, "EWK");
+            leg->AddEntry(histMC_QCD, "QCD");
+         }
+      }
+      if( strcmp(stackmode,"Wenu") == 0 ){
+         leg->AddEntry(histMC, "W #rightarrow #e #nu");
+         if( stackMC ){
+            leg->AddEntry(histMC_DY,  "DY");
+            leg->AddEntry(histMC_top, "t #bar{t}");
+            leg->AddEntry(histMC_EWK, "EWK");
+            leg->AddEntry(histMC_QCD, "QCD");
+         }
       }
       leg->SetFillStyle(0);
       leg->SetBorderSize(0);

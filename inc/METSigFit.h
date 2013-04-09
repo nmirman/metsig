@@ -85,8 +85,8 @@ class Fitter{
       void MatchMCjets(vector<event>&);
       void RunMinimizer(vector<event>&);
       void FindSignificance(const double*, vector<event>&);
-      void PlotsDataMC(vector<event>&, vector<event>&, const char[], bool);
-      void PJetReweight(vector<event>&, const double*);
+      void PlotsDataMC(vector<event>&, vector<event>&, const char[], bool, const char[]);
+      void PJetReweight(vector<event>&, vector<event>&);
       void ResponseCorrection(vector<event>&, const bool=false);
 
       double jetbinpt, jetcorrpt;

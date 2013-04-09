@@ -51,18 +51,15 @@ int main(int argc, char* argv[]){
    cout << "\n  MC EVENTS: " << eventvec_MC.size() << endl;
    cout << "DATA EVENTS: " << eventvec_data.size() << endl;
 
-   double parMC [] =   {1.14210,1.06446,1.10291,1.08131,1.14072,0.000615132,0.606726,-0.905279};
-   double parData [] = {1.30361,1.22821,1.24193,1.25893,1.43332,-0.00024461,0.695474,-2.88705};
+   double parMC [] =   {1.14271,1.05988,1.10172,1.08334,1.13369,0.000138076,0.606791,-0.907264};
+   double parData [] = {1.30118,1.22218,1.24115,1.24444,1.43998,1.89428e-05,0.695186,-2.90158};
 
    vector<event> eventvec_sigmaMC = eventvec_MC;
    vector<event> eventvec_sigmaData = eventvec_MC;
 
    // reweight MC for pseudojet scalar pt
-   double pjet_weights [] = {0.0,1.17948,1.12869,1.10327,1.09697,1.08439,1.07407,1.06587,1.05725,
-      1.04646,1.0377,1.03198,1.02595,1.02087,1.0134,1.01204,1.0073,1.0009,0.997246,0.994572,0.984984,
-      0.98568,0.989608,0.973945,0.999722,1.00649,0.946263,0.912974,1.00385,0.805591};
-   //fitter.PJetReweight( eventvec_MC, pjet_weights );
-   //fitter.PJetReweight( eventvec_sigmaData, pjet_weights );
+   fitter.PJetReweight( eventvec_MC, eventvec_data );
+   fitter.PJetReweight( eventvec_sigmaData, eventvec_data );
 
    fitter.FindSignificance(parMC, eventvec_sigmaMC);
    fitter.FindSignificance(parData, eventvec_sigmaData);
@@ -77,7 +74,7 @@ int main(int argc, char* argv[]){
    fitter.FindSignificance(parData, eventvec_MC);
    fitter.FindSignificance(parData, eventvec_data);
 
-   fitter.PlotsDataMC( eventvec_data, eventvec_MC, "results/plotsDataMC.root", stackMC );
+   fitter.PlotsDataMC( eventvec_data, eventvec_MC, "results/plotsDataMC.root", stackMC, "Zmumu");
 
    return 0;
 }

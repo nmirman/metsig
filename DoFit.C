@@ -141,7 +141,7 @@ int main(int argc, char* argv[]){
    cout << " ############################ \n" << endl;
    fitter.RunMinimizer( eventvec_data );
 
-   fitter.PlotsDataMC( eventvec_data, eventvec_MC, "results/plotsDataMC.root", stackMC);
+   fitter.PlotsDataMC( eventvec_data, eventvec_MC, "results/plotsDataMC.root", stackMC, "Zmumu");
 
    //
    // ######################### END FIT #########################
