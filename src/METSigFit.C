@@ -191,13 +191,12 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    if( maxevents > 0 ){
       numevents = (maxevents < tree->GetEntries()) ? maxevents : tree->GetEntries();
    }else{
-      numevents = tree->GetEntries()/10;
+      numevents = tree->GetEntries();
    }
    for( int ev=0; ev<numevents; ev++){
 
       tree->GetEntry(ev);
       if( ev % 100000 == 0 and ev > 0) cout << "    -----> getting entry " << ev << endl;
-      //if( ev % 5 != 0 ) continue;
 
       int pjet_size_temp = 0;
       double pjet_scalptL123_temp = 0;
@@ -242,8 +241,9 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
 
       if( isMC ){
 
-         if( strcmp(channel,"DYJetsToLL") == 0 ) evtemp.weight *= (5.0/3)*xsec_dyjetstoll/nevts_dyjetstoll;
-         else if( strcmp(channel,"DYJetsToLL_M10To50") == 0 ) evtemp.weight *= xsec_dyjetstoll_m10to50/nevts_dyjetstoll_m10to50;
+         if( strcmp(channel,"DYJetsToLL") == 0 ) evtemp.weight *= xsec_dyjetstoll/nevts_dyjetstoll;
+         else if( strcmp(channel,"DYJetsToLL_M10To50") == 0 )
+            evtemp.weight *= xsec_dyjetstoll_m10to50/nevts_dyjetstoll_m10to50;
          else if( strcmp(channel,"TTJets") == 0 ) evtemp.weight *= xsec_ttjets/nevts_ttjets;
          else if( strcmp(channel,"QCD") == 0 ) evtemp.weight *= xsec_qcd/nevts_qcd;
          else if( strcmp(channel,"QCD_EMEnriched") == 0 ) evtemp.weight *= xsec_qcd/nevts_qcd_em;
