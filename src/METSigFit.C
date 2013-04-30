@@ -86,6 +86,7 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    float pfj_pt[1000];
    float pfj_phi[1000];
    float pfj_eta[1000];
+   bool pfj_passPUid[1000];
 
    int mu_size=0;
    float mu_pt[100];
@@ -106,6 +107,15 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    float mu_dr03EcalRecHitSumEt[100];
    float mu_dr03HcalTowerSumEt[100];
 
+   int elec_size=0;
+   float elec_pt[100];
+   float elec_px[100];
+   float elec_py[100];
+   float elec_pz[100];
+   float elec_e[100];
+   float elec_phi[100];
+   float elec_eta[100];
+
    float pfj_l1[1000];
    float pfj_l1l2l3[1000];
 
@@ -115,6 +125,10 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    float genj_pt[1000];
    float genj_phi[1000];
    float genj_eta[1000];
+   float genj_energy[1000];
+   float genj_emEnergy[1000];
+   float genj_hadEnergy[1000];
+   float genj_invEnergy[1000];
 
    TFile *file = new TFile(filename);
    TTree *tree = (TTree*)file->Get("events");
@@ -125,6 +139,7 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    tree->SetBranchAddress("pfj_pt", pfj_pt);
    tree->SetBranchAddress("pfj_phi", pfj_phi);
    tree->SetBranchAddress("pfj_eta", pfj_eta);
+   tree->SetBranchAddress("pfj_puid_passloose", pfj_passPUid);
 
    tree->SetBranchAddress("mu_size", &mu_size);
    tree->SetBranchAddress("mu_pt", mu_pt);
@@ -146,6 +161,15 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    tree->SetBranchAddress("mu_dr03EcalRecHitSumEt", &mu_dr03EcalRecHitSumEt);
    tree->SetBranchAddress("mu_dr03HcalTowerSumEt", &mu_dr03HcalTowerSumEt);
 
+   tree->SetBranchAddress("elec_size", &elec_size);
+   tree->SetBranchAddress("elec_pt", elec_pt);
+   tree->SetBranchAddress("elec_px", elec_px);
+   tree->SetBranchAddress("elec_py", elec_py);
+   tree->SetBranchAddress("elec_pz", elec_pz);
+   tree->SetBranchAddress("elec_e", elec_e);
+   tree->SetBranchAddress("elec_phi", elec_phi);
+   tree->SetBranchAddress("elec_eta", elec_eta);
+
    tree->SetBranchAddress("pfj_l1", pfj_l1);
    tree->SetBranchAddress("pfj_l1l2l3", pfj_l1l2l3);
 
@@ -155,6 +179,10 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       tree->SetBranchAddress("genj_pt", genj_pt);
       tree->SetBranchAddress("genj_phi", genj_phi);
       tree->SetBranchAddress("genj_eta", genj_eta);
+      tree->SetBranchAddress("genj_energy", genj_energy);
+      tree->SetBranchAddress("genj_emEnergy", genj_emEnergy);
+      tree->SetBranchAddress("genj_hadEnergy", genj_hadEnergy);
+      tree->SetBranchAddress("genj_invEnergy", genj_invEnergy);
    }
 
    cout << " -----> fill event vector" << endl;
@@ -163,12 +191,13 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    if( maxevents > 0 ){
       numevents = (maxevents < tree->GetEntries()) ? maxevents : tree->GetEntries();
    }else{
-      numevents = tree->GetEntries();
+      numevents = tree->GetEntries()/10;
    }
    for( int ev=0; ev<numevents; ev++){
 
       tree->GetEntry(ev);
       if( ev % 100000 == 0 and ev > 0) cout << "    -----> getting entry " << ev << endl;
+      //if( ev % 5 != 0 ) continue;
 
       int pjet_size_temp = 0;
       double pjet_scalptL123_temp = 0;
@@ -177,6 +206,7 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       double pjet_scalptT1_temp = 0;
       double pjet_pxT1_temp = 0;
       double pjet_pyT1_temp = 0;
+      double pjet_PUptL123_temp = 0;
 
       event evtemp;
 
@@ -186,32 +216,37 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       // MC cross-sections (pb)
       // obtained at https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat8TeV
       // and AN-12-333 on MET in Zmumu channel (8 TeV).
-      double xsec_dyjetstoll  = 3351.97;
-      double xsec_ttjets      = 234;
-      double xsec_qcd         = 134700.0;
-      double xsec_ww          = 54.838;
-      double xsec_wz          = 33.21;
-      double xsec_zz          = 8.059;
-      double xsec_tbar_tw     = 11.1;
-      double xsec_t_tw        = 11.1;
-      double xsec_wjetstolnu  = 37509.0;
+      double xsec_dyjetstoll           = 3351.97;
+      double xsec_dyjetstoll_m10to50   = 860.5;
+      double xsec_ttjets               = 234;
+      double xsec_qcd                  = 134700.0;
+      double xsec_ww                   = 54.838;
+      double xsec_wz                   = 33.21;
+      double xsec_zz                   = 8.059;
+      double xsec_tbar_tw              = 11.1;
+      double xsec_t_tw                 = 11.1;
+      double xsec_wjetstolnu           = 37509.0;
 
       // MC sample size (events), obtained from DAS.
-      int nevts_dyjetstoll    = 30459503;
-      int nevts_ttjets        = 6923750;
-      int nevts_qcd           = 7529312;
-      int nevts_ww            = 10000431;
-      int nevts_wz            = 10000283;
-      int nevts_zz            = 9799908;
-      int nevts_tbar_tw       = 493460;
-      int nevts_t_tw          = 497658;
-      int nevts_wjetstolnu    = 57709905;
+      int nevts_dyjetstoll          = 30459503;
+      int nevts_dyjetstoll_m10to50  = 7132223;
+      int nevts_ttjets              = 6923750;
+      int nevts_qcd                 = 7529312;
+      int nevts_qcd_em              = 35040695;
+      int nevts_ww                  = 10000431;
+      int nevts_wz                  = 10000283;
+      int nevts_zz                  = 9799908;
+      int nevts_tbar_tw             = 493460;
+      int nevts_t_tw                = 497658;
+      int nevts_wjetstolnu          = 57709905;
 
       if( isMC ){
 
-         if( strcmp(channel,"DYJetsToLL") == 0 ) evtemp.weight *= xsec_dyjetstoll/nevts_dyjetstoll;
+         if( strcmp(channel,"DYJetsToLL") == 0 ) evtemp.weight *= (5.0/3)*xsec_dyjetstoll/nevts_dyjetstoll;
+         else if( strcmp(channel,"DYJetsToLL_M10To50") == 0 ) evtemp.weight *= xsec_dyjetstoll_m10to50/nevts_dyjetstoll_m10to50;
          else if( strcmp(channel,"TTJets") == 0 ) evtemp.weight *= xsec_ttjets/nevts_ttjets;
          else if( strcmp(channel,"QCD") == 0 ) evtemp.weight *= xsec_qcd/nevts_qcd;
+         else if( strcmp(channel,"QCD_EMEnriched") == 0 ) evtemp.weight *= xsec_qcd/nevts_qcd_em;
          else if( strcmp(channel,"WW") == 0 ) evtemp.weight *= xsec_ww/nevts_ww;
          else if( strcmp(channel,"WZ") == 0 ) evtemp.weight *= xsec_wz/nevts_wz;
          else if( strcmp(channel,"ZZ") == 0 ) evtemp.weight *= xsec_zz/nevts_zz;
@@ -234,6 +269,14 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
          evtemp.muon_pt.push_back( mu_pt[i] );
          evtemp.muon_phi.push_back( mu_phi[i] );
          evtemp.muon_4vect.push_back( ptemp );
+      }
+
+      // electrons
+      for( int i=0; i < elec_size; i++){
+         TLorentzVector ptemp( elec_px[i], elec_py[i], elec_pz[i], elec_e[i] );
+         evtemp.electron_pt.push_back( elec_pt[i] );
+         evtemp.electron_phi.push_back( elec_phi[i] );
+         evtemp.electron_4vect.push_back( ptemp );
       }
 
       // jets
@@ -266,6 +309,10 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
             pjet_pxT1_temp += jet_ptT1_temp*cos(pfj_phi[i]);
             pjet_pyT1_temp += jet_ptT1_temp*sin(pfj_phi[i]);
 
+            if( !pfj_passPUid[i] ){
+               pjet_PUptL123_temp += jet_ptL123_temp;
+            }
+            
             pjet_size_temp++;
 
          }
@@ -281,6 +328,8 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       evtemp.pjet_scalptT1 = pjet_scalptT1_temp;
       evtemp.pjet_vectptT1 = sqrt( pow(pjet_pxT1_temp,2) + pow(pjet_pyT1_temp,2) );
 
+      evtemp.pjet_PUptL123 = pjet_PUptL123_temp;
+
       evtemp.pjet_size = pjet_size_temp;
 
       // genjets
@@ -289,6 +338,10 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
             evtemp.genjet_pt.push_back( genj_pt[i] );
             evtemp.genjet_phi.push_back( genj_phi[i] );
             evtemp.genjet_eta.push_back( genj_eta[i] );
+            evtemp.genjet_energy.push_back( genj_energy[i] );
+            evtemp.genjet_emEnergy.push_back( genj_emEnergy[i] );
+            evtemp.genjet_hadEnergy.push_back( genj_hadEnergy[i] );
+            evtemp.genjet_invEnergy.push_back( genj_invEnergy[i] );
          }
       }
 
@@ -363,7 +416,8 @@ void Fitter::RunMinimizer(vector<event>& eventref_temp){
    gMinuit->SetVariable(4, "a5", 1.0, 0.05);
    gMinuit->SetVariable(5, "N1", 0.0, 0.05);
    gMinuit->SetVariable(6, "S1", 0.5, 0.05);
-   gMinuit->SetVariable(7, "P1", 0.0, 0.10);
+   //gMinuit->SetVariable(7, "P1", 0.0, 0.10);
+   gMinuit->SetFixedVariable(7, "P1", 0.0);
 
    // set event vector and minimize
    cout << " -----> minimize, first pass" << endl;
@@ -472,6 +526,15 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       for(int i=0; i < int(ev->muon_pt.size()); i++){
          met_x -= cos(ev->muon_phi[i])*(ev->muon_pt[i]);
          met_y -= sin(ev->muon_phi[i])*(ev->muon_pt[i]);
+      }
+
+      // electrons -- assume zero resolutions
+      for(int i=0; i < int(ev->electron_pt.size()); i++){
+         met_x -= cos(ev->electron_phi[i])*(ev->electron_pt[i]);
+         met_y -= sin(ev->electron_phi[i])*(ev->electron_pt[i]);
+
+         cov_xx += pow(0.01*ev->electron_pt[i],2);
+         cov_yy += pow(0.01*ev->electron_pt[i],2);
       }
 
       // unclustered energy -- parameterize by scalar sum of ET
@@ -621,7 +684,7 @@ void Fitter::PJetReweight(vector<event>& eventref_data, vector<event>& eventref_
    // reweight p-jet spectrum in MC
    for( vector<event>::iterator ev = eventref_MC.begin(); ev < eventref_MC.end(); ev++){
       if( ev->nvertices > 50 ) continue;
-      ev->pjet_scalptL123 *= spt_data[ev->nvertices] / spt_mc[ev->nvertices];
+      ev->pjet_scalptL123 *= spt_data[ev->nvertices-1] / spt_mc[ev->nvertices-1];
    }
 
 }
@@ -773,10 +836,12 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
 
             if( strcmp(ev->channel,"WJetsToLNu") == 0 ) hists_ = histsMC_signal_;
             else if( strcmp(ev->channel,"DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
+            else if( strcmp(ev->channel,"DYJetsToLL_M10To50") == 0 ) hists_ = histsMC_DY_;
             else if( strcmp(ev->channel,"TTJets") == 0 ) hists_ = histsMC_top_;
             else if( strcmp(ev->channel,"Tbar_tW") == 0 ) hists_ = histsMC_top_;
             else if( strcmp(ev->channel,"T_tW") == 0 ) hists_ = histsMC_top_;
             else if( strcmp(ev->channel,"QCD") == 0 ) hists_ = histsMC_QCD_;
+            else if( strcmp(ev->channel,"QCD_EMEnriched") == 0 ) hists_ = histsMC_QCD_;
             else if( strcmp(ev->channel,"WW") == 0 ) hists_ = histsMC_EWK_;
             else if( strcmp(ev->channel,"WZ") == 0 ) hists_ = histsMC_EWK_;
             else if( strcmp(ev->channel,"ZZ") == 0 ) hists_ = histsMC_EWK_;
@@ -788,8 +853,10 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
          for( int j=0; j < int(ev->muon_pt.size()); j++){
             hists_["muon_pt"]->Fill( ev->muon_pt[j] , ev->weight);
          }
-         hists_["muon_invmass"]->Fill( ((ev->muon_4vect[0])+(ev->muon_4vect[1])).M(), 
-               ev->weight );
+         if( ev->muon_4vect.size() > 1 ){
+            hists_["muon_invmass"]->Fill( ((ev->muon_4vect[0])+(ev->muon_4vect[1])).M(), 
+                  ev->weight );
+         }
 
          // jets
          hists_["njets"]->Fill( ev->jet_ptL123.size(), ev->weight );
@@ -936,24 +1003,24 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
          histMC_top->SetLineColor(40);
          histMC_top->SetFillColor(40);
          histMC_top->Scale( histData->Integral("width") / histMC->Integral("width") );
-         histMC_EWK->SetLineColor(41);
-         histMC_EWK->SetFillColor(41);
-         histMC_EWK->Scale( histData->Integral("width") / histMC->Integral("width") );
-         histMC_QCD->SetLineColor(42);
-         histMC_QCD->SetFillColor(42);
+         histMC_QCD->SetLineColor(41);
+         histMC_QCD->SetFillColor(41);
          histMC_QCD->Scale( histData->Integral("width") / histMC->Integral("width") );
+         histMC_EWK->SetLineColor(42);
+         histMC_EWK->SetFillColor(42);
+         histMC_EWK->Scale( histData->Integral("width") / histMC->Integral("width") );
 
          histMC_DY->Add( histMC_top );
          histMC_DY->Add( histMC_EWK );
          histMC_DY->Add( histMC_QCD );
          histMC_top->Add( histMC_EWK );
          histMC_top->Add( histMC_QCD );
-         histMC_EWK->Add( histMC_QCD );
+         histMC_QCD->Add( histMC_EWK );
 
          histMC_DY->Draw("same");
          histMC_top->Draw("same");
-         histMC_EWK->Draw("same");
          histMC_QCD->Draw("same");
+         histMC_EWK->Draw("same");
       }
 
       histData->Draw("EP same");
@@ -969,7 +1036,7 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
          }
       }
       if( strcmp(stackmode,"Wenu") == 0 ){
-         leg->AddEntry(histMC, "W #rightarrow #e #nu");
+         leg->AddEntry(histMC, "W #rightarrow e #nu");
          if( stackMC ){
             leg->AddEntry(histMC_DY,  "DY");
             leg->AddEntry(histMC_top, "t #bar{t}");
@@ -1056,7 +1123,7 @@ void Fitter::PlotsDataMC(vector<event>& eventref_data, vector<event>& eventref_M
 
       TLegend *leg = new TLegend(0.605528,0.655866,0.866834,0.816333);
       leg->AddEntry(profData, "data");
-      leg->AddEntry(profMC, "Z #rightarrow #mu #mu");
+      leg->AddEntry(profMC, "MC");
       leg->SetFillStyle(0);
       leg->SetBorderSize(0);
       leg->Draw("same");

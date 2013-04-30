@@ -43,6 +43,10 @@ struct event {
    vector<double> muon_phi;
    vector<TLorentzVector> muon_4vect;
 
+   vector<double> electron_pt;
+   vector<double> electron_phi;
+   vector<TLorentzVector> electron_4vect;
+
    // high pt jets
    vector<double> jet_phi;
    vector<double> jet_eta;
@@ -61,11 +65,16 @@ struct event {
    double pjet_phiT1;
    double pjet_vectptT1;
    double pjet_scalptT1;
+   double pjet_PUptL123;
    double pjet_size;
 
    vector<double> genjet_pt;
    vector<double> genjet_phi;
    vector<double> genjet_eta;
+   vector<double> genjet_energy;
+   vector<double> genjet_emEnergy;
+   vector<double> genjet_hadEnergy;
+   vector<double> genjet_invEnergy;
 
    // MC MET smearing
    double met_varx;
