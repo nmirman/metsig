@@ -19,6 +19,7 @@ struct event {
 
    double met;
    double sig;
+   double sig_init;
    double det;
    double cov_xx;
    double cov_xy;
@@ -98,6 +99,7 @@ class Fitter{
       void PJetReweight(vector<event>&, vector<event>&);
       void ResponseCorrection(vector<event>&, const bool=false);
 
+      bool significance_cut;
       double jetbinpt, jetcorrpt;
       double psig_nvert_corr, psig_qt_corr, pchi2slope_left, pchi2slope_right;
 

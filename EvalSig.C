@@ -23,36 +23,36 @@ int main(int argc, char* argv[]){
 
    // fill eventvecs
    
-   fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130321/DYJetsToLL.root",
+   fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/DYJetsToLL.root",
 		   eventvec_MC, numevents, true, "DYJetsToLL", do_resp_correction);
    if( stackMC ){
-      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130321/QCD.root",
+      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/QCD.root",
             eventvec_MC, numevents, true, "QCD", do_resp_correction);
-      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130321/TTJets.root",
+      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/TTJets.root",
             eventvec_MC, numevents, true, "TTJets", do_resp_correction);
-      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130321/Tbar_tW-channel.root",
+      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/Tbar_tW-channel.root",
             eventvec_MC, numevents, true, "Tbar_tW", do_resp_correction);
-      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130321/T_tW-channel.root",
+      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/T_tW-channel.root",
             eventvec_MC, numevents, true, "T_tW", do_resp_correction);
-      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130321/WJetsToLNu.root",
+      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/WJetsToLNu.root",
             eventvec_MC, numevents, true, "WJetsToLNu", do_resp_correction);
-      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130321/WW.root",
+      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/WW.root",
             eventvec_MC, numevents, true, "WW", do_resp_correction);
-      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130321/WZ.root",
+      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/WZ.root",
             eventvec_MC, numevents, true, "WZ", do_resp_correction);
-      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130321/ZZ.root",
+      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/ZZ.root",
             eventvec_MC, numevents, true, "ZZ", do_resp_correction);
    }
    fitter.MatchMCjets( eventvec_MC );
 
-   fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130321/Data.root",
+   fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130427/Data.root",
          eventvec_data, numevents, false, "Data", false);
 
    cout << "\n  MC EVENTS: " << eventvec_MC.size() << endl;
    cout << "DATA EVENTS: " << eventvec_data.size() << endl;
 
-   double parMC [] =   {1.14271,1.05988,1.10172,1.08334,1.13369,0.000138076,0.606791,-0.907264};
-   double parData [] = {1.30118,1.22218,1.24115,1.24444,1.43998,1.89428e-05,0.695186,-2.90158};
+   double parMC [] =   {1.12660,1.09322,1.10951,1.17178,1.12164,0.0,0.585145};
+   double parData [] = {1.39669,1.32037,1.32047,1.38161,1.51508,0.0,0.639158};
 
    vector<event> eventvec_sigmaMC = eventvec_MC;
    vector<event> eventvec_sigmaData = eventvec_MC;

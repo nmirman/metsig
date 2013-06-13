@@ -39,8 +39,11 @@ Fitter::Fitter(){
    fFunc = 0;
 
    // jet pt bounds
-   jetbinpt = 30.0;
+   jetbinpt = 20.0;
    jetcorrpt = 10.0;
+
+   // significance cut for minimization
+   significance_cut = false;
 
 }
 
@@ -407,7 +410,7 @@ void Fitter::RunMinimizer(vector<event>& eventref_temp){
    gMinuit->SetStrategy(0);
    gMinuit->SetPrintLevel(2);
 
-   fFunc = new ROOT::Math::Functor ( this, &Fitter::Min2LL, 8 );
+   fFunc = new ROOT::Math::Functor ( this, &Fitter::Min2LL, 7 );
    gMinuit->SetFunction( *fFunc );
    gMinuit->SetVariable(0, "a1", 1.0, 0.05);
    gMinuit->SetVariable(1, "a2", 1.0, 0.05);
@@ -416,31 +419,25 @@ void Fitter::RunMinimizer(vector<event>& eventref_temp){
    gMinuit->SetVariable(4, "a5", 1.0, 0.05);
    gMinuit->SetVariable(5, "N1", 0.0, 0.05);
    gMinuit->SetVariable(6, "S1", 0.5, 0.05);
-   //gMinuit->SetVariable(7, "P1", 0.0, 0.10);
-   gMinuit->SetFixedVariable(7, "P1", 0.0);
 
    // set event vector and minimize
    cout << " -----> minimize, first pass" << endl;
    eventvecPnt = &eventref_temp;
    gMinuit->Minimize();
 
-   // new event vector with core of significance
-   cout << " -----> build core sig vector" << endl;
-   vector<event> eventvec_coretemp;
+   // significance for cut
    for( vector<event>::iterator ev = eventvecPnt->begin(); ev < eventvecPnt->end(); ev++){
-
-      if( ev->sig < 9 ){
-         eventvec_coretemp.push_back( *ev );
-      }
-
+      ev->sig_init = ev->sig;
    }
 
    // minimize core sig
    cout << " -----> minimize, core sig" << endl;
-   eventvecPnt = &eventvec_coretemp;
+   significance_cut = true;
    gMinuit->SetStrategy(1);
    gMinuit->Minimize();
    gMinuit->Hesse();
+
+   significance_cut = false;
 
    // load best-fit significance values
    cout << " -----> fill event vec with best-fit significance" << endl;
@@ -457,7 +454,9 @@ double Fitter::Min2LL(const double *x){
    // event loop
    double m2ll = 0;
    for( vector<event>::iterator ev = eventvecPnt->begin(); ev < eventvecPnt->end(); ev++){
-      m2ll += ev->weight*(ev->sig + log(ev->det));
+      if( !(significance_cut and ev->sig_init > 9) ){
+         m2ll += ev->weight*(ev->sig + log(ev->det));
+      }
    }
 
    return m2ll;
@@ -532,9 +531,6 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       for(int i=0; i < int(ev->electron_pt.size()); i++){
          met_x -= cos(ev->electron_phi[i])*(ev->electron_pt[i]);
          met_y -= sin(ev->electron_phi[i])*(ev->electron_pt[i]);
-
-         cov_xx += pow(0.01*ev->electron_pt[i],2);
-         cov_yy += pow(0.01*ev->electron_pt[i],2);
       }
 
       // unclustered energy -- parameterize by scalar sum of ET
@@ -544,7 +540,7 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       met_x -= c*(ev->pjet_vectptT1);
       met_y -= s*(ev->pjet_vectptT1);
 
-      double ctt = x[5]*x[5] + x[6]*x[6]*(ev->pjet_scalptL123) + x[7]*(ev->nvertices);
+      double ctt = x[5]*x[5] + x[6]*x[6]*(ev->pjet_scalptL123);
 
       cov_xx += ctt;
       cov_yy += ctt;
