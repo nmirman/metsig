@@ -3,6 +3,9 @@
 
 #include <vector>
 #include <cmath>
+#include <map>
+#include <TH1.h>
+#include <TH2.h>
 
 #include "TMath.h"
 #include "TLorentzVector.h"
@@ -95,7 +98,8 @@ class Fitter{
       void MatchMCjets(vector<event>&);
       void RunMinimizer(vector<event>&);
       void FindSignificance(const double*, vector<event>&);
-      void PlotsDataMC(vector<event>&, vector<event>&, const char[], bool, const char[]);
+      void FillHists(vector<event>&, const char[]);
+      void PrintHists( const char*, const char* );
       void PJetReweight(vector<event>&, vector<event>&);
       void ResponseCorrection(vector<event>&, const bool=false);
 
@@ -125,6 +129,19 @@ class Fitter{
          double p4 = sigmaPhi[ieta][4];
          return (sqrt((p0*p0/x/x+(p1*p1/x))+p2*p2)+(p3/x))   + ((p4/x)/sqrt(x));
       }
+
+      // histograms
+      map<string, TH1*> histsData_;
+      map<string, TH1*> histsMC_;
+      map<string, TH2*> profsData_;
+      map<string, TH2*> profsMC_;
+
+      map<string, TH1*> histsMC_signal_;
+      map<string, TH1*> histsMC_top_;
+      map<string, TH1*> histsMC_EWK_;
+      map<string, TH1*> histsMC_QCD_;
+      map<string, TH1*> histsMC_gamma_;
+      map<string, TH1*> histsMC_DY_;
 
    private:
       double Min2LL(const double*);

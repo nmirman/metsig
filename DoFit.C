@@ -62,7 +62,7 @@ int main(int argc, char* argv[]){
             break;
 
          case 's' :
-        	 numevents = 100000;
+        	 numevents = 10;
           stackMC = false;
         	 break;
 
@@ -77,9 +77,9 @@ int main(int argc, char* argv[]){
          case 'h' :
             cout << "Usage: ./DoFit <flags>\n";
             cout << "Flags: \n";
-            cout << "\t-n <number>\t Number of events to fit.  Default at -1.\n";
-            cout << "\t-j <number>\t Jet bin pt threshold.  Default at 30 GeV.\n";
-            cout << "\t-s\t          'Short' run, 100k events.\n";
+            cout << "\t-n <number>\t Fraction of events to fit.  Default at -1.\n";
+            cout << "\t-j <number>\t Jet bin pt threshold.  Default at 20 GeV.\n";
+            cout << "\t-s\t          'Short' run, 10\% of events.\n";
             cout << "\t-c\t          Apply response correction.\n";
             cout << "\t-b\t          Include all MC backgrounds.\n";
             cout << "\t-h\t          Display this menu.\n";
@@ -140,7 +140,9 @@ int main(int argc, char* argv[]){
    cout << " ############################ \n" << endl;
    fitter.RunMinimizer( eventvec_data );
 
-   fitter.PlotsDataMC( eventvec_data, eventvec_MC, "results/plotsDataMC.root", stackMC, "Zmumu");
+   fitter.FillHists( eventvec_data, "Zmumu" );
+   fitter.FillHists( eventvec_MC, "Zmumu" );
+   fitter.PrintHists( "results/plotsDataMC.root", "Zmumu" );
 
    //
    // ######################### END FIT #########################
