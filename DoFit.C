@@ -21,7 +21,7 @@ int main(int argc, char* argv[]){
    // setup fit results tree
    double jetbinpt=0, psig_nvert_corr=0, psig_qt_corr=0,
           pchi2slope_left=0, pchi2slope_right=0,
-          a1=0, a2=0, a3=0, a4=0, a5=0, N1=0, S1=0, P1=0;
+          a1=0, a2=0, a3=0, a4=0, a5=0, N1=0, S1=0;
    int fitStatus=-1;
 
    TTree *tree = new TTree("FitResults", "FitResults");
@@ -38,7 +38,6 @@ int main(int argc, char* argv[]){
    tree->Branch("a5", &a5);
    tree->Branch("N1", &N1);
    tree->Branch("S1", &S1);
-   tree->Branch("P1", &P1);
 
    // declarations
    Fitter fitter;
@@ -159,7 +158,6 @@ int main(int argc, char* argv[]){
    a5 = par[4];
    N1 = par[5];
    S1 = par[6];
-   P1 = par[7];
    psig_nvert_corr = fitter.psig_nvert_corr;
    psig_qt_corr = fitter.psig_qt_corr;
    pchi2slope_left = fitter.pchi2slope_left;
