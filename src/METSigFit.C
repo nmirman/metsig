@@ -150,7 +150,7 @@ const double Fitter::sigmaPhi[10][5]={{926.978, 2.52747, 0.0304001, -926.224, -1
    {   0.765787, -3.90638e-06, -4.70224e-08,   0.11831,      -1.4675},
    {    259.189,   0.00132792,    -0.311411,  -258.647,            0}};
 
-void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, const int fracevents,
+void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, const double fracevents,
       const bool isMC, const char* channel, const bool do_resp_correction ){
    cout << "---> ReadNtuple " << channel << endl;
 
@@ -1114,7 +1114,7 @@ void Fitter::PrintHists( const char* filename, const char* stackmode ){
       TH1D *hratio = (TH1D*)histData->Clone("hratio");
       hratio->Sumw2();
       hratio->Divide( histMC );
-      hratio->SetTitle(";"+TString(histData->GetXaxis()->GetTitle())+";Data/MC");
+      hratio->SetTitle(";"+TString(histData->GetXaxis()->GetTitle()));
       hratio->SetStats(0);
 
       hratio->GetXaxis()->SetTitleSize(0.14);

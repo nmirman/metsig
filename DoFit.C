@@ -14,8 +14,6 @@
 using namespace std;
 
 
-
-
 int main(int argc, char* argv[]){
 
    // setup fit results tree
@@ -44,17 +42,15 @@ int main(int argc, char* argv[]){
    vector<event> eventvec_MC;
    vector<event> eventvec_data;
    bool do_resp_correction=false;
-   bool stackMC=true;
 
    // option flags
    char c;
-   int numevents = -1;
+   double numevents = -1;
    while( (c = getopt(argc, argv, "n:j:hscob")) != -1 ) {
       switch(c)
       {
          case 'n' :
             numevents = atoi(optarg);
-            if( atoi(optarg) != -1 ) stackMC = false;
             break;
 
          case 'j' :
@@ -62,17 +58,12 @@ int main(int argc, char* argv[]){
             break;
 
          case 's' :
-        	 numevents = 10;
-          stackMC = false;
-        	 break;
+            numevents = 0.1;
+            break;
 
          case 'c' :
-        	 do_resp_correction=true;
-        	 break;
-
-         case 'b' :
-          stackMC = false;
-          break;
+            do_resp_correction=true;
+            break;
 
          case 'h' :
             cout << "Usage: ./DoFit <flags>\n";
@@ -81,7 +72,6 @@ int main(int argc, char* argv[]){
             cout << "\t-j <number>\t Jet bin pt threshold.  Default at 20 GeV.\n";
             cout << "\t-s\t          'Short' run, 10\% of events.\n";
             cout << "\t-c\t          Apply response correction.\n";
-            cout << "\t-b\t          Include all MC backgrounds.\n";
             cout << "\t-h\t          Display this menu.\n";
             return -1;
             break;
@@ -101,8 +91,8 @@ int main(int argc, char* argv[]){
 
    // mc
    fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/DYJetsToLL.root",
-		   eventvec_MC, numevents, true, "DYJetsToLL", do_resp_correction);
-   if( stackMC ){
+         eventvec_MC, numevents, true, "DYJetsToLL", do_resp_correction);
+
       fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/QCD.root",
             eventvec_MC, numevents, true, "QCD", do_resp_correction);
       fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/TTJets.root",
@@ -119,7 +109,7 @@ int main(int argc, char* argv[]){
             eventvec_MC, numevents, true, "WZ", do_resp_correction);
       fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/ZZ.root",
             eventvec_MC, numevents, true, "ZZ", do_resp_correction);
-   }
+
    fitter.MatchMCjets( eventvec_MC );
 
    // data

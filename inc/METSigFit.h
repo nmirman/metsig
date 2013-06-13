@@ -93,7 +93,7 @@ class Fitter{
       Fitter();
       ~Fitter();
 
-      void ReadNtuple(const char[], vector<event>&, const int, const bool,
+      void ReadNtuple(const char[], vector<event>&, const double, const bool,
             const char[], const bool=false);
       void MatchMCjets(vector<event>&);
       void RunMinimizer(vector<event>&);
