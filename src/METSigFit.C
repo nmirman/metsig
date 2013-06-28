@@ -164,7 +164,6 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    float pfj_pt[1000];
    float pfj_phi[1000];
    float pfj_eta[1000];
-   bool pfj_passPUid[1000];
 
    int mu_size=0;
    float mu_pt[100];
@@ -251,8 +250,8 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    tree->SetBranchAddress("pfj_l1l2l3", pfj_l1l2l3);
 
    if(isMC){
-      //tree->SetBranchAddress("gi_xsec", &gi_xsec);
-      //tree->SetBranchAddress("gi_eff", &gi_eff);
+      tree->SetBranchAddress("gi_xsec", &gi_xsec);
+      tree->SetBranchAddress("gi_eff", &gi_eff);
       tree->SetBranchAddress("puMyWeight", &puMyWeight);
       tree->SetBranchAddress("genj_size", &genj_size);
       tree->SetBranchAddress("genj_pt", genj_pt);
@@ -267,6 +266,7 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    cout << " -----> fill event vector" << endl;
 
    int numevents = fracevents*tree->GetEntries();
+   eventref_temp.reserve( numevents );
    for( int ev=0; ev<numevents; ev++){
 
       tree->GetEntry(ev);
@@ -790,6 +790,7 @@ void Fitter::PJetReweight(vector<event>& eventref_data, vector<event>& eventref_
 }
 
 void Fitter::FillHists(vector<event>& eventref, const char* stackmode){
+   if( eventref.size() == 0 ) return;
 
    vector<event>::iterator iter_begin = eventref.begin();
    vector<event>::iterator iter_end = eventref.end();

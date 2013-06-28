@@ -70,7 +70,7 @@ int main(int argc, char* argv[]){
             cout << "Flags: \n";
             cout << "\t-n <number>\t Fraction of events to fit.  Default at -1.\n";
             cout << "\t-j <number>\t Jet bin pt threshold.  Default at 20 GeV.\n";
-            cout << "\t-s\t          'Short' run, 10\% of events.\n";
+            cout << "\t-s\t          'Short' run, 10%% of events.\n";
             cout << "\t-c\t          Apply response correction.\n";
             cout << "\t-h\t          Display this menu.\n";
             return -1;
