@@ -251,8 +251,8 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    tree->SetBranchAddress("pfj_l1l2l3", pfj_l1l2l3);
 
    if(isMC){
-      tree->SetBranchAddress("gi_xsec", &gi_xsec);
-      tree->SetBranchAddress("gi_eff", &gi_eff);
+      //tree->SetBranchAddress("gi_xsec", &gi_xsec);
+      //tree->SetBranchAddress("gi_eff", &gi_eff);
       tree->SetBranchAddress("puMyWeight", &puMyWeight);
       tree->SetBranchAddress("genj_size", &genj_size);
       tree->SetBranchAddress("genj_pt", genj_pt);

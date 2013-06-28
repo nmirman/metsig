@@ -19,49 +19,112 @@ struct Dataset {
 
 int main(int argc, char* argv[]){
 
-   int numevents = -1;
-   bool stackMC = true;
-   bool do_resp_correction = false;
-
    // declarations
    Fitter fitter;
    vector<Dataset> datasets;
+
+   // option flags
+   char c;
+   double numevents = 1;
+   bool do_resp_correction = false;
+   char* channel = "Zmumu";
+
+   while( (c = getopt(argc, argv, "n:j:p:hscob")) != -1 ) {
+      switch(c)
+      {
+         case 'n' :
+            numevents = atoi(optarg);
+            break;
+
+         case 'j' :
+            fitter.jetbinpt = atoi(optarg);
+            break;
+
+         case 's' :
+            numevents = 0.1;
+            break;
+
+         case 'c' :
+            do_resp_correction=true;
+            break;
+
+         case 'p':
+            channel = optarg;
+            break;
+
+         case 'h' :
+            cout << "Usage: ./DoFit <flags>\n";
+            cout << "Flags: \n";
+            cout << "\t-n <number>\t Fraction of events to fit.  Default at -1.\n";
+            cout << "\t-j <number>\t Jet bin pt threshold.  Default at 20 GeV.\n";
+            cout << "\t-s\t          'Short' run, 10%% of events.\n";
+            cout << "\t-c\t          Apply response correction.\n";
+            cout << "\t-p <string>\t Physics channel: Zmumu or Wenu.\n";
+            cout << "\t-h\t          Display this menu.\n";
+            return -1;
+            break;
+
+         default :
+            continue;
+      }
+   }
+
 
    //
    // get all ntuples
    //
 
    // data
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Run2012A-13Jul2012.root", "Data", false) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Run2012A-recover-06Aug2012.root", "Data", false) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Run2012B-13Jul2012.root", "Data", false) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Run2012C-24Aug2012.root", "Data", false) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Run2012C-EcalRecover_11Dec2012.root", "Data", false) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Run2012C-PromptReco-v2.root", "Data", false) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Run2012D-PromptReco-v1.root", "Data", false) );
+   if( strcmp(channel,"Wenu") == 0 ){
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Run2012A-13Jul2012.root", "Data", false) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Run2012A-recover-06Aug2012.root", "Data", false) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Run2012B-13Jul2012.root", "Data", false) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Run2012C-24Aug2012.root", "Data", false) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Run2012C-EcalRecover_11Dec2012.root", "Data", false) );
+      //datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Run2012C-PromptReco-v2.root", "Data", false) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Run2012D-PromptReco-v1.root", "Data", false) );
 
-   // mc
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/DYJetsToLL_M-50.root", "DYJetsToLL", true) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/DYJetsToLL_M-10To50.root", "DYJetsToLL_M10To50", true) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/QCD_EMEnriched_20_30.root", "QCD_EMEnriched_20_30", true) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/QCD_EMEnriched_30_80.root", "QCD_EMEnriched_30_80", true) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/QCD_EMEnriched_80_170.root", "QCD_EMEnriched_80_170", true) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/QCD_BCtoE_20_30.root", "QCD_BCtoE_20_30", true) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/QCD_BCtoE_30_80.root", "QCD_BCtoE_30_80", true) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/QCD_BCtoE_80_170.root", "QCD_BCtoE_80_170", true) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Gamma_0_15.root", "Gamma_0_15", true) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Gamma_15_30.root", "Gamma_15_30", true) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Gamma_30_50.root", "Gamma_30_50", true) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Gamma_50_80.root", "Gamma_50_80", true) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Gamma_80_120.root", "Gamma_80_120", true) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Gamma_120_170.root", "Gamma_120_170", true) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/TTJets.root", "TTJets", true) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Tbar_tW-channel.root", "Tbar_tW", true) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/T_tW-channel.root", "T_tW", true) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/WJetsToLNu.root", "WJetsToLNu", true) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/WW.root", "WW", true) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/WZ.root", "WZ", true) );
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/ZZ.root", "ZZ", true) );
+      // mc
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/DYJetsToLL_M-50.root", "DYJetsToLL", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/DYJetsToLL_M-10To50.root", "DYJetsToLL_M10To50", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/QCD_EMEnriched_20_30.root", "QCD_EMEnriched_20_30", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/QCD_EMEnriched_30_80.root", "QCD_EMEnriched_30_80", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/QCD_EMEnriched_80_170.root", "QCD_EMEnriched_80_170", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/QCD_BCtoE_20_30.root", "QCD_BCtoE_20_30", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/QCD_BCtoE_30_80.root", "QCD_BCtoE_30_80", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/QCD_BCtoE_80_170.root", "QCD_BCtoE_80_170", true) );
+      //datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Gamma_0_15.root", "Gamma_0_15", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Gamma_15_30.root", "Gamma_15_30", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Gamma_30_50.root", "Gamma_30_50", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Gamma_50_80.root", "Gamma_50_80", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Gamma_80_120.root", "Gamma_80_120", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Gamma_120_170.root", "Gamma_120_170", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/TTJets.root", "TTJets", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/Tbar_tW-channel.root", "Tbar_tW", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/T_tW-channel.root", "T_tW", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/WJetsToLNu.root", "WJetsToLNu", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/WW.root", "WW", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/WZ.root", "WZ", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130504/ZZ.root", "ZZ", true) );
+   }
+   else if( strcmp(channel,"Zmumu") == 0 ){
+
+      // data
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130427/Data.root", "Data", false));
+
+      // mc
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/DYJetsToLL.root", "DYJetsToLL", true));
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/QCD.root", "QCD", true));
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/TTJets.root", "TTJets", true));
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/Tbar_tW-channel.root", "Tbar_tW", true));
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/T_tW-channel.root", "T_tW", true));
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/WJetsToLNu.root", "WJetsToLNu", true));
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/WW.root", "WW", true));
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/WZ.root", "WZ", true));
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/ZZ.root", "ZZ", true));
+
+   }
+   else{ cout << "Unknown physics channel.  Use option 'p' to input channel name." << endl; }
 
    //
    // loop through datasets, fill histograms
@@ -96,11 +159,11 @@ int main(int argc, char* argv[]){
       fitter.FindSignificance(parData, eventvec);
 
       // fill histograms
-      fitter.FillHists(eventvec, "Wenu"); 
+      fitter.FillHists(eventvec, channel); 
    }
 
    // combine all channels, print histograms
-   fitter.PrintHists("results/plotsDataMC.root", "Wenu");
+   fitter.PrintHists("results/plotsDataMC.root", channel);
 
    return 0;
 }
