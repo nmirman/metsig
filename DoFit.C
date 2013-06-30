@@ -13,6 +13,12 @@
 #include <unistd.h>
 using namespace std;
 
+struct Dataset {
+   const char* filename;
+   const char* channel;
+   bool isMC;
+   Dataset( const char* f, const char* c, bool i) : filename(f), channel(c), isMC(i) {}
+};
 
 int main(int argc, char* argv[]){
 
@@ -39,22 +45,21 @@ int main(int argc, char* argv[]){
 
    // declarations
    Fitter fitter;
-   vector<event> eventvec_MC;
-   vector<event> eventvec_data;
-   bool do_resp_correction=false;
+   vector<Dataset> datasets;
 
    // option flags
    char c;
-   double numevents = -1;
+   double numevents = 1;
+   bool do_resp_correction=false;
    while( (c = getopt(argc, argv, "n:j:hscob")) != -1 ) {
       switch(c)
       {
          case 'n' :
-            numevents = atoi(optarg);
+            numevents = atof(optarg);
             break;
 
          case 'j' :
-            fitter.jetbinpt = atoi(optarg);
+            fitter.jetbinpt = atof(optarg);
             break;
 
          case 's' :
@@ -85,53 +90,65 @@ int main(int argc, char* argv[]){
    // ######################### BEGIN FIT #########################
    //
 
-
-
-   // fill eventvecs
-
-   // mc
-   fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/DYJetsToLL.root",
-         eventvec_MC, numevents, true, "DYJetsToLL", do_resp_correction);
-
-      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/QCD.root",
-            eventvec_MC, numevents, true, "QCD", do_resp_correction);
-      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/TTJets.root",
-            eventvec_MC, numevents, true, "TTJets", do_resp_correction);
-      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/Tbar_tW-channel.root",
-            eventvec_MC, numevents, true, "Tbar_tW", do_resp_correction);
-      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/T_tW-channel.root",
-            eventvec_MC, numevents, true, "T_tW", do_resp_correction);
-      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/WJetsToLNu.root",
-            eventvec_MC, numevents, true, "WJetsToLNu", do_resp_correction);
-      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/WW.root",
-            eventvec_MC, numevents, true, "WW", do_resp_correction);
-      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/WZ.root",
-            eventvec_MC, numevents, true, "WZ", do_resp_correction);
-      fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130501/ZZ.root",
-            eventvec_MC, numevents, true, "ZZ", do_resp_correction);
-
-   fitter.MatchMCjets( eventvec_MC );
+   //
+   // get all ntuples
+   //
 
    // data
-   fitter.ReadNtuple( "/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130427/Data.root",
-         eventvec_data, numevents, false, "Data", false);
+   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/Run2012A-22Jan2013.root", "Data", false));
+   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/Run2012B-22Jan2013.root", "Data", false));
+   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/Run2012C-22Jan2013.root", "Data", false));
+   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/Run2012D-22Jan2013.root", "Data", false));
 
-   cout << "\n  MC EVENTS: " << eventvec_MC.size() << endl;
-   cout << "DATA EVENTS: " << eventvec_data.size() << endl;
+   // mc
+   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/DYJetsToLL.root", "DYJetsToLL", true));
+   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/QCD.root", "QCD", true));
+   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/TTJets.root", "TTJets", true));
+   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/Tbar_tW-channel.root", "Tbar_tW", true));
+   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/T_tW-channel.root", "T_tW", true));
+   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/WJetsToLNu.root", "WJetsToLNu", true));
+   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/WW.root", "WW", true));
+   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/WZ.root", "WZ", true));
+   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/ZZ.root", "ZZ", true));
 
-   cout << "\n ############################ " << endl;
-   cout << " ###########  MC  ########### " << endl;
-   cout << " ############################ \n" << endl;
-   fitter.RunMinimizer( eventvec_MC );
 
+   //
+   // loop through data and mc, run fit, fill histograms
+   //
+   for(int i=0; i < 2; i++){
 
-   cout << "\n ############################ " << endl;
-   cout << " ########### Data ########### " << endl;
-   cout << " ############################ \n" << endl;
-   fitter.RunMinimizer( eventvec_data );
+      if(i==0){
+         cout << "\n ############################ " << endl;
+         cout << " ########### Data ########### " << endl;
+         cout << " ############################ \n" << endl;
 
-   fitter.FillHists( eventvec_data, "Zmumu" );
-   fitter.FillHists( eventvec_MC, "Zmumu" );
+      } else if(i==1){
+         cout << "\n ############################ " << endl;
+         cout << " ###########  MC  ########### " << endl;
+         cout << " ############################ \n" << endl;
+      }
+
+      vector<event> eventvec;
+
+      // read ntuples
+      for( vector<Dataset>::iterator data = datasets.begin(); data != datasets.end(); data++ ){
+         if( i==0 and data->isMC ) continue;
+         if( i==1 and !(data->isMC) ) continue;
+
+         fitter.ReadNtuple( data->filename, eventvec, numevents,
+               data->isMC, data->channel, do_resp_correction );
+      }
+
+      cout << "\nDATASET SIZE: " << eventvec.size() << " EVENTS\n" << endl;
+
+      // run fit
+      fitter.RunMinimizer( eventvec );
+
+      // fill histograms
+      fitter.FillHists( eventvec, "Zmumu" ); 
+
+   }
+   // print histograms
    fitter.PrintHists( "results/plotsDataMC.root", "Zmumu" );
 
    //
