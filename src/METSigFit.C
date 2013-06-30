@@ -510,7 +510,7 @@ void Fitter::RunMinimizer(vector<event>& eventref_temp){
    cout << "---> RunMinimizer" << endl;
 
    gMinuit = new ROOT::Minuit2::Minuit2Minimizer ( ROOT::Minuit2::kMigrad );
-   gMinuit->SetTolerance(0.01);
+   gMinuit->SetTolerance(1.0);
    gMinuit->SetStrategy(0);
    gMinuit->SetPrintLevel(2);
 
