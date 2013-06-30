@@ -207,7 +207,9 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    float genj_hadEnergy[1000];
    float genj_invEnergy[1000];
 
-   TFile *file = new TFile(filename);
+   TFile *file = TFile::Open(filename);
+   if( !file ){ return; }
+
    TTree *tree = (TTree*)file->Get("events");
    tree->SetBranchAddress("v_size", &v_size);
    tree->SetBranchAddress("met_pt", &met_et);
@@ -292,7 +294,6 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       double xsec_dyjetstoll           = 3351.97;
       double xsec_dyjetstoll_m10to50   = 860.5;
       double xsec_ttjets               = 234;
-      double xsec_qcd                  = 134700.0;
       double xsec_ww                   = 54.838;
       double xsec_wz                   = 33.21;
       double xsec_zz                   = 8.059;
@@ -304,19 +305,25 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       int nevts_dyjetstoll          = 30459503;
       int nevts_dyjetstoll_m10to50  = 7132223;
       int nevts_ttjets              = 6923750;
-      int nevts_qcd                 = 7529312;
       int nevts_qcd_em_20_30        = 35040695;
       int nevts_qcd_em_30_80        = 33088888;
       int nevts_qcd_em_80_170       = 34542763;
+      int nevts_qcd_em_170_250      = 31697066;
+      int nevts_qcd_em_250_350      = 34611322;
+      int nevts_qcd_em_350          = 34080562;
       int nevts_qcd_bc_20_30        = 1740229;
       int nevts_qcd_bc_30_80        = 2048152;
       int nevts_qcd_bc_80_170       = 1945525;
+      int nevts_qcd_bc_170_250      = 1948112;
+      int nevts_qcd_bc_250_350      = 2026521;
       int nevts_gamma_0_15          = 2000488;
       int nevts_gamma_15_30         = 1970745;
       int nevts_gamma_30_50         = 1993325;
       int nevts_gamma_50_80         = 1995062;
       int nevts_gamma_80_120        = 1992627;
       int nevts_gamma_120_170       = 2000043;
+      int nevts_gamma_170_300       = 2000069;
+      int nevts_gamma_300_470       = 2000130;
       int nevts_ww                  = 10000431;
       int nevts_wz                  = 10000283;
       int nevts_zz                  = 9799908;
@@ -332,19 +339,28 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
          else if( strcmp(channel,"DYJetsToLL_M10To50") == 0 )
             evtemp.weight *= xsec_dyjetstoll_m10to50/nevts_dyjetstoll_m10to50;
          else if( strcmp(channel,"TTJets") == 0 ) evtemp.weight *= xsec_ttjets/nevts_ttjets;
-         else if( strcmp(channel,"QCD") == 0 ) evtemp.weight *= xsec_qcd/nevts_qcd;
          else if( strcmp(channel,"QCD_EMEnriched_20_30") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_em_20_30;
          else if( strcmp(channel,"QCD_EMEnriched_30_80") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_em_30_80;
          else if( strcmp(channel,"QCD_EMEnriched_80_170") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_em_80_170;
+         else if( strcmp(channel,"QCD_EMEnriched_170_250") == 0 )
+            evtemp.weight *= scale*xsec/nevts_qcd_em_170_250;
+         else if( strcmp(channel,"QCD_EMEnriched_250_350") == 0 )
+            evtemp.weight *= scale*xsec/nevts_qcd_em_250_350;
+         else if( strcmp(channel,"QCD_EMEnriched_350") == 0 )
+            evtemp.weight *= scale*xsec/nevts_qcd_em_350;
          else if( strcmp(channel,"QCD_BCtoE_20_30") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_bc_20_30;
          else if( strcmp(channel,"QCD_BCtoE_30_80") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_bc_30_80;
          else if( strcmp(channel,"QCD_BCtoE_80_170") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_bc_80_170;
+         else if( strcmp(channel,"QCD_BCtoE_170_250") == 0 )
+            evtemp.weight *= scale*xsec/nevts_qcd_bc_170_250;
+         else if( strcmp(channel,"QCD_BCtoE_250_350") == 0 )
+            evtemp.weight *= scale*xsec/nevts_qcd_bc_250_350;
          else if( strcmp(channel,"Gamma_0_15") == 0 )
             evtemp.weight *= scale*gi_xsec/nevts_gamma_0_15;
          else if( strcmp(channel,"Gamma_15_30") == 0 )
@@ -357,6 +373,10 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
             evtemp.weight *= scale*gi_xsec/nevts_gamma_80_120;
          else if( strcmp(channel,"Gamma_120_170") == 0 )
             evtemp.weight *= scale*gi_xsec/nevts_gamma_120_170;
+         else if( strcmp(channel,"Gamma_170_300") == 0 )
+            evtemp.weight *= scale*gi_xsec/nevts_gamma_170_300;
+         else if( strcmp(channel,"Gamma_300_470") == 0 )
+            evtemp.weight *= scale*gi_xsec/nevts_gamma_300_470;
 
          else if( strcmp(channel,"WW") == 0 ) evtemp.weight *= xsec_ww/nevts_ww;
          else if( strcmp(channel,"WZ") == 0 ) evtemp.weight *= xsec_wz/nevts_wz;
@@ -469,7 +489,6 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
 	   ResponseCorrection(eventref_temp, isMC);
    }
 
-   delete file;
 }
 
 void Fitter::ResponseCorrection(vector<event>& eventvec, const bool isMC ) {
@@ -510,7 +529,7 @@ void Fitter::RunMinimizer(vector<event>& eventref_temp){
    cout << "---> RunMinimizer" << endl;
 
    gMinuit = new ROOT::Minuit2::Minuit2Minimizer ( ROOT::Minuit2::kMigrad );
-   gMinuit->SetTolerance(1.0);
+   gMinuit->SetTolerance(10.0);
    gMinuit->SetStrategy(0);
    gMinuit->SetPrintLevel(2);
 
@@ -809,7 +828,6 @@ void Fitter::FillHists(vector<event>& eventref, const char* stackmode){
          else if( strcmp(iter_begin->channel,"TTJets") == 0 ) hists_ = histsMC_top_;
          else if( strcmp(iter_begin->channel,"Tbar_tW") == 0 ) hists_ = histsMC_top_;
          else if( strcmp(iter_begin->channel,"T_tW") == 0 ) hists_ = histsMC_top_;
-         else if( strcmp(iter_begin->channel,"QCD") == 0 ) hists_ = histsMC_QCD_;
          else if( strcmp(iter_begin->channel,"WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
          else if( strcmp(iter_begin->channel,"WW") == 0 ) hists_ = histsMC_EWK_;
          else if( strcmp(iter_begin->channel,"WZ") == 0 ) hists_ = histsMC_EWK_;
@@ -825,19 +843,25 @@ void Fitter::FillHists(vector<event>& eventref, const char* stackmode){
          else if( strcmp(iter_begin->channel,"TTJets") == 0 ) hists_ = histsMC_top_;
          else if( strcmp(iter_begin->channel,"Tbar_tW") == 0 ) hists_ = histsMC_top_;
          else if( strcmp(iter_begin->channel,"T_tW") == 0 ) hists_ = histsMC_top_;
-         else if( strcmp(iter_begin->channel,"QCD") == 0 ) hists_ = histsMC_QCD_;
          else if( strcmp(iter_begin->channel,"QCD_EMEnriched_20_30") == 0 ) hists_ = histsMC_QCD_;
          else if( strcmp(iter_begin->channel,"QCD_EMEnriched_30_80") == 0 ) hists_ = histsMC_QCD_;
          else if( strcmp(iter_begin->channel,"QCD_EMEnriched_80_170") == 0 ) hists_ = histsMC_QCD_;
+         else if( strcmp(iter_begin->channel,"QCD_EMEnriched_170_250") == 0 ) hists_ = histsMC_QCD_;
+         else if( strcmp(iter_begin->channel,"QCD_EMEnriched_250_350") == 0 ) hists_ = histsMC_QCD_;
+         else if( strcmp(iter_begin->channel,"QCD_EMEnriched_350") == 0 ) hists_ = histsMC_QCD_;
          else if( strcmp(iter_begin->channel,"QCD_BCtoE_20_30") == 0 ) hists_ = histsMC_QCD_;
          else if( strcmp(iter_begin->channel,"QCD_BCtoE_30_80") == 0 ) hists_ = histsMC_QCD_;
          else if( strcmp(iter_begin->channel,"QCD_BCtoE_80_170") == 0 ) hists_ = histsMC_QCD_;
+         else if( strcmp(iter_begin->channel,"QCD_BCtoE_170_250") == 0 ) hists_ = histsMC_QCD_;
+         else if( strcmp(iter_begin->channel,"QCD_BCtoE_250_350") == 0 ) hists_ = histsMC_QCD_;
          else if( strcmp(iter_begin->channel,"Gamma_0_15") == 0 ) hists_ = histsMC_gamma_;
          else if( strcmp(iter_begin->channel,"Gamma_15_30") == 0 ) hists_ = histsMC_gamma_;
          else if( strcmp(iter_begin->channel,"Gamma_30_50") == 0 ) hists_ = histsMC_gamma_;
          else if( strcmp(iter_begin->channel,"Gamma_50_80") == 0 )  hists_ = histsMC_gamma_;
          else if( strcmp(iter_begin->channel,"Gamma_80_120") == 0 ) hists_ = histsMC_gamma_;
          else if( strcmp(iter_begin->channel,"Gamma_120_170") == 0 ) hists_ = histsMC_gamma_;  
+         else if( strcmp(iter_begin->channel,"Gamma_170_300") == 0 ) hists_ = histsMC_gamma_;  
+         else if( strcmp(iter_begin->channel,"Gamma_300_470") == 0 ) hists_ = histsMC_gamma_;  
          else if( strcmp(iter_begin->channel,"WW") == 0 ) hists_ = histsMC_EWK_;
          else if( strcmp(iter_begin->channel,"WZ") == 0 ) hists_ = histsMC_EWK_;
          else if( strcmp(iter_begin->channel,"ZZ") == 0 ) hists_ = histsMC_EWK_;
@@ -1047,16 +1071,11 @@ void Fitter::PrintHists( const char* filename, const char* stackmode ){
          histMC_top->SetFillColor(39);
          histMC_EWK->SetLineColor(40);
          histMC_EWK->SetFillColor(40);
-         histMC_QCD->SetLineColor(41);
-         histMC_QCD->SetFillColor(41);
 
          histMC_top->Add( histMC_EWK );
-         histMC_top->Add( histMC_QCD );
-         histMC_EWK->Add( histMC_QCD );
 
          histMC_top->Draw("same");
          histMC_EWK->Draw("same");
-         histMC_QCD->Draw("same");
       }
       if( strcmp(stackmode,"Wenu") == 0 ){
          histMC_QCD->SetLineColor(39);
@@ -1096,7 +1115,6 @@ void Fitter::PrintHists( const char* filename, const char* stackmode ){
          leg->AddEntry(histMC, "Z #rightarrow #mu #mu");
          leg->AddEntry(histMC_top, "t #bar{t}");
          leg->AddEntry(histMC_EWK, "EWK");
-         leg->AddEntry(histMC_QCD, "QCD");
       }
       if( strcmp(stackmode,"Wenu") == 0 ){
          leg->AddEntry(histMC, "W #rightarrow e #nu");

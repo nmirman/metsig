@@ -82,13 +82,10 @@ int main(int argc, char* argv[]){
 
    // data
    if( strcmp(channel,"Wenu") == 0 ){
-      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012A-13Jul2012.root", "Data", false) );
-      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012A-recover-06Aug2012.root", "Data", false) );
-      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012B-13Jul2012.root", "Data", false) );
-      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012C-24Aug2012.root", "Data", false) );
-      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012C-EcalRecover_11Dec2012.root", "Data", false) );
-      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012C-PromptReco-v2.root", "Data", false) );
-      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012D-PromptReco-v1.root", "Data", false) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012A-22Jan2013.root", "Data", false));
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012B-22Jan2013.root", "Data", false));
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012C-22Jan2013.root", "Data", false));
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012D-22Jan2013.root", "Data", false));
 
       // mc
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/DYJetsToLL_M-50.root", "DYJetsToLL", true) );
@@ -96,15 +93,22 @@ int main(int argc, char* argv[]){
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/QCD_EMEnriched_20_30.root", "QCD_EMEnriched_20_30", true) );
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/QCD_EMEnriched_30_80.root", "QCD_EMEnriched_30_80", true) );
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/QCD_EMEnriched_80_170.root", "QCD_EMEnriched_80_170", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/QCD_EMEnriched_170_250.root", "QCD_EMEnriched_170_250", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/QCD_EMEnriched_250_350.root", "QCD_EMEnriched_250_350", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/QCD_EMEnriched_350.root", "QCD_EMEnriched_350", true) );
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/QCD_BCtoE_20_30.root", "QCD_BCtoE_20_30", true) );
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/QCD_BCtoE_30_80.root", "QCD_BCtoE_30_80", true) );
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/QCD_BCtoE_80_170.root", "QCD_BCtoE_80_170", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/QCD_BCtoE_170_250.root", "QCD_BCtoE_170_250", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/QCD_BCtoE_250_350.root", "QCD_BCtoE_250_350", true) );
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Gamma_0_15.root", "Gamma_0_15", true) );
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Gamma_15_30.root", "Gamma_15_30", true) );
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Gamma_30_50.root", "Gamma_30_50", true) );
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Gamma_50_80.root", "Gamma_50_80", true) );
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Gamma_80_120.root", "Gamma_80_120", true) );
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Gamma_120_170.root", "Gamma_120_170", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Gamma_170_300.root", "Gamma_170_300", true) );
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Gamma_300_470.root", "Gamma_300_470", true) );
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/TTJets.root", "TTJets", true) );
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Tbar_tW-channel.root", "Tbar_tW", true) );
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/T_tW-channel.root", "T_tW", true) );
@@ -121,11 +125,8 @@ int main(int argc, char* argv[]){
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/Run2012C-22Jan2013.root", "Data", false));
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/Run2012D-22Jan2013.root", "Data", false));
 
-      //datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130427/Data.root", "Data", false));
-
       // mc
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/DYJetsToLL.root", "DYJetsToLL", true));
-      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/QCD.root", "QCD", true));
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/TTJets.root", "TTJets", true));
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/Tbar_tW-channel.root", "Tbar_tW", true));
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/T_tW-channel.root", "T_tW", true));
@@ -140,8 +141,10 @@ int main(int argc, char* argv[]){
    //
    // loop through datasets, fill histograms
    //
-   double parMC [] =   {1.12660,1.09322,1.10951,1.17178,1.12164,0.0,0.585145};
-   double parData [] = {1.39669,1.32037,1.32047,1.38161,1.51508,0.0,0.639158};
+   //double parMC [] =   {1.12660,1.09322,1.10951,1.17178,1.12164,0.0,0.585145};
+   //double parData [] = {1.39669,1.32037,1.32047,1.38161,1.51508,0.0,0.639158};
+   double parData [] =   {1.29446,1.24207,1.26686,1.34076,1.49548,0.0,0.6117};
+   double parMC   [] =   {1.11659,1.06256,1.09741,1.11931,1.17266,0.0,0.569454};
 
    for( vector<Dataset>::iterator data = datasets.begin(); data != datasets.end(); data++ ){
 
