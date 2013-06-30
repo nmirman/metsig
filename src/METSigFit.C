@@ -64,7 +64,7 @@ Fitter::Fitter(){
    histsData_["cov_xy"] = new TH1D("cov_xy_Data", "Cov_{xy}", 100, -150, 150);
    histsData_["cov_yy"] = new TH1D("cov_yy_Data", "Cov_{yy}", 100, 0, 500);
    histsData_["met"] = new TH1D("met_Data", "Missing E_{T}", 100, 0, 100);
-   histsData_["sig"] = new TH1D("sig_Data", "Significance", 100, 0, 200);
+   histsData_["sig"] = new TH1D("sig_Data", "Significance", 100, 0, 100);
    histsData_["det"] = new TH1D("det_Data", "Determinant", 100, 0, 100000);
    histsData_["pchi2"] = new TH1D("pchi2_Data", "P(#chi^{2})", 100, 0, 1);
    histsData_["cov_xx_highpt"] = new TH1D("cov_xx_highpt_Data", "Cov_{xx} High-p_{T} Jets", 100, 0, 500);
