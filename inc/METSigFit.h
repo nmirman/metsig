@@ -94,7 +94,7 @@ class Fitter{
       ~Fitter();
 
       void ReadNtuple(const char[], vector<event>&, const double, const bool,
-            const char[], const bool=false);
+            const char[], const bool=false, const int=0, const int=0);
       void MatchMCjets(vector<event>&);
       void RunMinimizer(vector<event>&);
       void FindSignificance(const double*, vector<event>&);

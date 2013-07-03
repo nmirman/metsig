@@ -151,7 +151,8 @@ const double Fitter::sigmaPhi[10][5]={{926.978, 2.52747, 0.0304001, -926.224, -1
    {    259.189,   0.00132792,    -0.311411,  -258.647,            0}};
 
 void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, const double fracevents,
-      const bool isMC, const char* channel, const bool do_resp_correction ){
+      const bool isMC, const char* channel, const bool do_resp_correction, 
+      const int start_evt_num, const int end_evt_num ){
    cout << "---> ReadNtuple " << channel << endl;
 
    float gi_xsec=0;
@@ -267,9 +268,18 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
 
    cout << " -----> fill event vector" << endl;
 
-   int numevents = fracevents*tree->GetEntries();
+   int numevents = (end_evt_num == 0) ? fracevents*tree->GetEntries(): end_evt_num-start_evt_num;
+   int start_evt=0, end_evt=0;
+   if( end_evt_num == 0 ){
+      start_evt = 0;
+      end_evt = numevents;
+   }else{
+      start_evt = start_evt_num;
+      end_evt = end_evt_num;
+   }
    eventref_temp.reserve( numevents );
-   for( int ev=0; ev<numevents; ev++){
+
+   for( int ev=start_evt; ev<end_evt; ev++){
 
       tree->GetEntry(ev);
       if( ev % 100000 == 0 and ev > 0) cout << "    -----> getting entry " << ev << endl;
@@ -489,6 +499,7 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
 	   ResponseCorrection(eventref_temp, isMC);
    }
 
+   return;
 }
 
 void Fitter::ResponseCorrection(vector<event>& eventvec, const bool isMC ) {

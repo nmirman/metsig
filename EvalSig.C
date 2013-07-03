@@ -14,6 +14,7 @@ struct Dataset {
    const char* filename;
    const char* channel;
    bool isMC;
+   int size;
    Dataset( const char* f, const char* c, bool i) : filename(f), channel(c), isMC(i) {}
 };
 
@@ -25,7 +26,7 @@ int main(int argc, char* argv[]){
 
    // option flags
    char c;
-   double numevents = 1;
+   double fracevents = 1;
    bool do_resp_correction = false;
    char* channel = "Zmumu";
    bool smear_met = true;
@@ -34,7 +35,7 @@ int main(int argc, char* argv[]){
       switch(c)
       {
          case 'n' :
-            numevents = atof(optarg);
+            fracevents = atof(optarg);
             break;
 
          case 'j' :
@@ -42,7 +43,7 @@ int main(int argc, char* argv[]){
             break;
 
          case 's' :
-            numevents = 0.1;
+            fracevents = 0.1;
             break;
 
          case 'c' :
@@ -84,8 +85,12 @@ int main(int argc, char* argv[]){
    if( strcmp(channel,"Wenu") == 0 ){
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012A-22Jan2013.root", "Data", false));
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012B-22Jan2013.root", "Data", false));
-      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012C-22Jan2013.root", "Data", false));
+      //datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012C-22Jan2013.root", "Data", false));
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012D-22Jan2013.root", "Data", false));
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012C-part1-22Jan2013.root", "Data", false));
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012C-part2-22Jan2013.root", "Data", false));
+      //datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012D-part1-22Jan2013.root", "Data", false));
+      //datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012D-part2-22Jan2013.root", "Data", false));
 
       // mc
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/DYJetsToLL_M-50.root", "DYJetsToLL", true) );
@@ -138,6 +143,20 @@ int main(int argc, char* argv[]){
    }
    else{ cout << "Unknown physics channel.  Use option 'p' to input channel name." << endl; }
 
+   // get number of events in datasets
+   cout << "Getting number of events in datasets." << endl;
+   for( vector<Dataset>::iterator data = datasets.begin(); data != datasets.end(); data++ ){
+      TFile *file = TFile::Open(data->filename);
+      if( !file ){
+         data->size = 0;
+         continue;
+      }
+      TTree *tree = (TTree*)file->Get("events");
+      data->size = tree->GetEntries();
+      cout << data->filename << ": " << data->size << " events." << endl;
+   }
+   cout << endl;
+
    //
    // loop through datasets, fill histograms
    //
@@ -148,36 +167,49 @@ int main(int argc, char* argv[]){
 
    for( vector<Dataset>::iterator data = datasets.begin(); data != datasets.end(); data++ ){
 
-      vector<event> eventvec;
-      fitter.ReadNtuple( data->filename, eventvec, numevents,
-            data->isMC, data->channel, do_resp_correction );
+      int section_size = 2000000;
+      int num_events = fracevents*data->size;
+      int num_sections = 1 + ((num_events-1)/section_size);
+      cout << "Opening dataset " << data->filename << endl;
+      cout << "Divide into " << num_sections << " sections..." << endl;
 
-      vector<event> eventvec_sigmaMC;
-      vector<event> eventvec_sigmaData;
+      for(int isec=0; isec < num_sections; isec++){
+         int start = isec*section_size;
+         int end = (isec == num_sections-1) ? num_events : start + section_size;
+         cout << "Begin section [" << start << ", " << end << "]" << endl;
 
-      // met smearing for mc datasets
-      if( data->isMC and smear_met ){
-         eventvec_sigmaMC = eventvec;
-         //eventvec_sigmaData = eventvec;
-         fitter.FindSignificance(parMC, eventvec_sigmaMC);
-         fitter.FindSignificance(parData, eventvec/*_sigmaData*/);
-         for( int i=0; i < int(eventvec.size()); i++ ){
-            eventvec[i].met_varx = eventvec/*_sigmaData*/[i].cov_xx - eventvec_sigmaMC[i].cov_xx;
-            eventvec[i].met_vary = eventvec/*_sigmaData*/[i].cov_yy - eventvec_sigmaMC[i].cov_yy;
-            eventvec[i].met_rho = (eventvec/*_sigmaData*/[i].cov_xy - eventvec_sigmaMC[i].cov_xy)
-               / sqrt(eventvec[i].met_varx * eventvec[i].met_vary);
+         vector<event> eventvec;
+         fitter.ReadNtuple( data->filename, eventvec, 1,
+               data->isMC, data->channel, do_resp_correction, start, end );
+
+         vector<event> eventvec_sigmaMC;
+         vector<event> eventvec_sigmaData;
+
+         // met smearing for mc datasets
+         if( data->isMC and smear_met ){
+            eventvec_sigmaMC = eventvec;
+            //eventvec_sigmaData = eventvec;
+            fitter.FindSignificance(parMC, eventvec_sigmaMC);
+            fitter.FindSignificance(parData, eventvec/*_sigmaData*/);
+            for( int i=0; i < int(eventvec.size()); i++ ){
+               eventvec[i].met_varx = eventvec/*_sigmaData*/[i].cov_xx - eventvec_sigmaMC[i].cov_xx;
+               eventvec[i].met_vary = eventvec/*_sigmaData*/[i].cov_yy - eventvec_sigmaMC[i].cov_yy;
+               eventvec[i].met_rho = (eventvec/*_sigmaData*/[i].cov_xy - eventvec_sigmaMC[i].cov_xy)
+                  / sqrt(eventvec[i].met_varx * eventvec[i].met_vary);
+            }
          }
+
+         // compute significance
+         if( !(data->isMC) or smear_met ){
+            fitter.FindSignificance(parData, eventvec);
+         }else{
+            fitter.FindSignificance(parMC, eventvec);
+         }
+
+         // fill histograms
+         fitter.FillHists(eventvec, channel); 
       }
 
-      // compute significance
-      if( !(data->isMC) or smear_met ){
-         fitter.FindSignificance(parData, eventvec);
-      }else{
-         fitter.FindSignificance(parMC, eventvec);
-      }
-
-      // fill histograms
-      fitter.FillHists(eventvec, channel); 
    }
 
    // combine all channels, print histograms
