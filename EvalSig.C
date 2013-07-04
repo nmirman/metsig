@@ -30,6 +30,7 @@ int main(int argc, char* argv[]){
    bool do_resp_correction = false;
    char* channel = "Zmumu";
    bool smear_met = true;
+   char* fileout = "results/plotsDataMC.root";
 
    while( (c = getopt(argc, argv, "n:j:p:hscobm")) != -1 ) {
       switch(c)
@@ -58,6 +59,10 @@ int main(int argc, char* argv[]){
             smear_met = false;
             break;
 
+         case 'f':
+            fileout = optarg;
+            break;
+
          case 'h' :
             cout << "Usage: ./EvalSig <flags>\n";
             cout << "Flags: \n";
@@ -66,6 +71,7 @@ int main(int argc, char* argv[]){
             cout << "\t-s\t          'Short' run, 10%% of events.\n";
             cout << "\t-c\t          Apply response correction.\n";
             cout << "\t-p <string>\t  Physics channel: Zmumu or Wenu.\n";
+            cout << "\t-f <string>\t  Filename for Data/MC plots.\n";
             cout << "\t-m\t          Turn off MET smearing.\n";
             cout << "\t-h\t          Display this menu.\n";
             return -1;

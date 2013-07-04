@@ -65,8 +65,10 @@ Fitter::Fitter(){
    histsData_["cov_yy"] = new TH1D("cov_yy_Data", "Cov_{yy}", 100, 0, 500);
    histsData_["met"] = new TH1D("met_Data", "Missing E_{T}", 100, 0, 100);
    histsData_["sig"] = new TH1D("sig_Data", "Significance", 100, 0, 100);
+   histsData_["sig_zoom"] = new TH1D("sig_zoom_Data", "Significance", 100, 0, 10);
    histsData_["det"] = new TH1D("det_Data", "Determinant", 100, 0, 100000);
    histsData_["pchi2"] = new TH1D("pchi2_Data", "P(#chi^{2})", 100, 0, 1);
+   histsData_["logpchi2"] = new TH1D("logpchi2_Data", "log(P(#chi^{2}))", 100, -100, 0);
    histsData_["cov_xx_highpt"] = new TH1D("cov_xx_highpt_Data", "Cov_{xx} High-p_{T} Jets", 100, 0, 500);
    histsData_["cov_xx_pjet"] = new TH1D("cov_xx_pjet_Data", "Cov_{xx} Pseudojet", 100, 0, 500);
    histsData_["cov_xx_ratio"] = new TH1D("cov_xx_ratio_Data", "Cov_{xx} High-p_{T}/Total", 100, 0, 1 );
@@ -81,7 +83,7 @@ Fitter::Fitter(){
          "Significance vs. q_{T};q_{T} (GeV);<S_{E}>", 15, 0, 100, 100, 0, 50);
    profsData_["presp_qt"] = new TH2D("presp_qt_Data",
          "Response = |<u_{#parallel}>|/q_{T} vs. q_{T};q_{T} (GeV);Response", 25, 0, 100, 100, -100, 100);
-   profsData_["pET_nvert"] = new TH2D("pET_nvert_Data",
+   profsData_["pMET_nvert"] = new TH2D("pMET_nvert_Data",
          "MET vs. N Vertices;N Vertices;<MET>", 30, 0, 30, 100, 0, 100);
    profsData_["cov_par_perp"] = new TH2D("cov_par_perp_Data",
          "Perpendicular vs. Parallel Resolutions (wrt qt);par #sigma^{2};perp #sigma^{2}",
@@ -92,6 +94,8 @@ Fitter::Fitter(){
          "Jet p_{T} vs. N Vertices", 30, 0, 30, 100, 0, 200);
    profsData_["njets_nvert"] = new TH2D("njets_nvert_Data",
          "N jets vs. N Vertices", 30, 0, 30, 100, 0, 100);
+   profsData_["sig_met"] = new TH2D("sig_met_Data",
+         "MET Significance vs. MET", 100, 0, 100, 100, 0, 100);
 
    // clone data hists for MC
    for(map<string,TH1*>::const_iterator it = histsData_.begin();
@@ -922,8 +926,10 @@ void Fitter::FillHists(vector<event>& eventref, const char* stackmode){
       hists_["cov_yy"]->Fill( ev->cov_yy, ev->weight );
       hists_["met"]->Fill( ev->met, ev->weight );
       hists_["sig"]->Fill( ev->sig, ev->weight );
+      hists_["sig_zoom"]->Fill( ev->sig, ev->weight );
       hists_["det"]->Fill( ev->det, ev->weight );
       hists_["pchi2"]->Fill( TMath::Prob(ev->sig,2), ev->weight );
+      hists_["logpchi2"]->Fill( TMath::Log(TMath::Prob(ev->sig,2)), ev->weight );
 
       hists_["cov_xx_highpt"]->Fill( ev->cov_xx_highpt, ev->weight );
       hists_["cov_xx_pjet"]->Fill( ev->cov_xx_pjet, ev->weight );
@@ -945,6 +951,8 @@ void Fitter::FillHists(vector<event>& eventref, const char* stackmode){
       for( int j=0; j < int(ev->jet_ptL123.size()); j++){
          profs_["jet_pt_nvert"]->Fill( ev->nvertices, ev->jet_ptL123[j], ev->weight );
       }
+
+      profs_["sig_met"]->Fill( ev->met, ev->sig, ev->weight );
 
    }
 
