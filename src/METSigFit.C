@@ -65,10 +65,10 @@ Fitter::Fitter(){
    histsData_["cov_yy"] = new TH1D("cov_yy_Data", "Cov_{yy}", 100, 0, 500);
    histsData_["met"] = new TH1D("met_Data", "Missing E_{T}", 100, 0, 100);
    histsData_["sig"] = new TH1D("sig_Data", "Significance", 100, 0, 100);
-   histsData_["sig_zoom"] = new TH1D("sig_zoom_Data", "Significance", 100, 0, 10);
+   histsData_["sig_zoom"] = new TH1D("sig_zoom_Data", "Significance", 100, 0, 15);
    histsData_["det"] = new TH1D("det_Data", "Determinant", 100, 0, 100000);
    histsData_["pchi2"] = new TH1D("pchi2_Data", "P(#chi^{2})", 100, 0, 1);
-   histsData_["logpchi2"] = new TH1D("logpchi2_Data", "log(P(#chi^{2}))", 100, -100, 0);
+   histsData_["logpchi2"] = new TH1D("logpchi2_Data", "log(P(#chi^{2}))", 100, -50, 0);
    histsData_["cov_xx_highpt"] = new TH1D("cov_xx_highpt_Data", "Cov_{xx} High-p_{T} Jets", 100, 0, 500);
    histsData_["cov_xx_pjet"] = new TH1D("cov_xx_pjet_Data", "Cov_{xx} Pseudojet", 100, 0, 500);
    histsData_["cov_xx_ratio"] = new TH1D("cov_xx_ratio_Data", "Cov_{xx} High-p_{T}/Total", 100, 0, 1 );
@@ -95,7 +95,7 @@ Fitter::Fitter(){
    profsData_["njets_nvert"] = new TH2D("njets_nvert_Data",
          "N jets vs. N Vertices", 30, 0, 30, 100, 0, 100);
    profsData_["sig_met"] = new TH2D("sig_met_Data",
-         "MET Significance vs. MET", 100, 0, 100, 100, 0, 100);
+         "Significance vs. MET", 500, 0, 100, 500, 0, 30);
 
    // clone data hists for MC
    for(map<string,TH1*>::const_iterator it = histsData_.begin();
@@ -943,7 +943,7 @@ void Fitter::FillHists(vector<event>& eventref, const char* stackmode){
       profs_["psig_nvert"]->Fill( ev->nvertices, ev->sig, ev->weight );
       profs_["psig_qt"]->Fill( ev->qt, ev->sig, ev->weight );
       profs_["presp_qt"]->Fill( ev->qt, -(ev->ut_par)/(ev->qt), ev->weight );
-      profs_["pET_nvert"]->Fill( ev->nvertices, ev->met, ev->weight );
+      profs_["pMET_nvert"]->Fill( ev->nvertices, ev->met, ev->weight );
       profs_["cov_par_perp"]->Fill( ev->cov_par, ev->cov_perp, ev->weight );
       profs_["pjet_scalptL123_nvert"]->Fill( ev->nvertices, ev->pjet_scalptL123, ev->weight );
 
@@ -1236,6 +1236,11 @@ void Fitter::PrintHists( const char* filename, const char* stackmode ){
    canvas->cd();
    profsData_["cov_par_perp"]->Draw("colz");
    canvas->Write();
+
+   TCanvas *canvas2 = new TCanvas( "sig_met_2D", "sig_met_2D", 800, 800 );
+   canvas2->cd();
+   profsData_["sig_met"]->Draw("colz");
+   canvas2->Write();
 
    TF1 *pchi2_left = new TF1("pchi2_left","pol1",0.0,0.03);
    histsData_["pchi2"]->Fit("pchi2_left","QR");

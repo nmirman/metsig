@@ -32,7 +32,7 @@ int main(int argc, char* argv[]){
    bool smear_met = true;
    char* fileout = "results/plotsDataMC.root";
 
-   while( (c = getopt(argc, argv, "n:j:p:hscobm")) != -1 ) {
+   while( (c = getopt(argc, argv, "n:j:p:f:hscobm")) != -1 ) {
       switch(c)
       {
          case 'n' :
@@ -91,12 +91,10 @@ int main(int argc, char* argv[]){
    if( strcmp(channel,"Wenu") == 0 ){
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012A-22Jan2013.root", "Data", false));
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012B-22Jan2013.root", "Data", false));
-      //datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012C-22Jan2013.root", "Data", false));
-      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012D-22Jan2013.root", "Data", false));
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012C-part1-22Jan2013.root", "Data", false));
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012C-part2-22Jan2013.root", "Data", false));
-      //datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012D-part1-22Jan2013.root", "Data", false));
-      //datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012D-part2-22Jan2013.root", "Data", false));
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012D-part1-22Jan2013.root", "Data", false));
+      datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/Run2012D-part2-22Jan2013.root", "Data", false));
 
       // mc
       datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Wenu/20130626/DYJetsToLL_M-50.root", "DYJetsToLL", true) );
@@ -194,13 +192,13 @@ int main(int argc, char* argv[]){
          // met smearing for mc datasets
          if( data->isMC and smear_met ){
             eventvec_sigmaMC = eventvec;
-            //eventvec_sigmaData = eventvec;
+
             fitter.FindSignificance(parMC, eventvec_sigmaMC);
-            fitter.FindSignificance(parData, eventvec/*_sigmaData*/);
+            fitter.FindSignificance(parData, eventvec);
             for( int i=0; i < int(eventvec.size()); i++ ){
-               eventvec[i].met_varx = eventvec/*_sigmaData*/[i].cov_xx - eventvec_sigmaMC[i].cov_xx;
-               eventvec[i].met_vary = eventvec/*_sigmaData*/[i].cov_yy - eventvec_sigmaMC[i].cov_yy;
-               eventvec[i].met_rho = (eventvec/*_sigmaData*/[i].cov_xy - eventvec_sigmaMC[i].cov_xy)
+               eventvec[i].met_varx = eventvec[i].cov_xx - eventvec_sigmaMC[i].cov_xx;
+               eventvec[i].met_vary = eventvec[i].cov_yy - eventvec_sigmaMC[i].cov_yy;
+               eventvec[i].met_rho = (eventvec[i].cov_xy - eventvec_sigmaMC[i].cov_xy)
                   / sqrt(eventvec[i].met_varx * eventvec[i].met_vary);
             }
          }
@@ -219,7 +217,7 @@ int main(int argc, char* argv[]){
    }
 
    // combine all channels, print histograms
-   fitter.PrintHists("results/plotsDataMC.root", channel);
+   fitter.PrintHists(fileout, channel);
 
    return 0;
 }
