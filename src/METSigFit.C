@@ -14,6 +14,9 @@
 #include "TProfile.h"
 #include "TString.h"
 #include "TLegend.h"
+#include "TMatrixD.h"
+#include "TMatrixD.h"
+#include "TMatrixDEigen.h"
 
 #include <cmath>
 #include <iostream>
@@ -57,6 +60,7 @@ Fitter::Fitter(){
    histsData_["pjet_vectptL123"] = new TH1D("pjet_vectptL123_Data", "Pseudojet Scalar p_{T} (L123-corrected)", 100, 0, 200);
    histsData_["pjet_scalptT1"] = new TH1D("pjet_scalptT1_Data", "Pseudojet Scalar p_{T} (T1-corrected)", 200, 0, 2000);
    histsData_["pjet_vectptT1"] = new TH1D("pjet_vectptT1_Data", "Pseudojet Scalar p_{T} (T1-corrected)", 100, 0, 200);
+   histsData_["pjet_phi"] = new TH1D("pjet_phi_Data", "Pseudojet Phi", 100, -3.5, 3.5);
    histsData_["qt"] = new TH1D("qt_Data", "q_{T}", 100, 0, 200);
    histsData_["ut_par"] = new TH1D("ut_par_Data", "|u_{T}|_{#parallel}", 100, 0, 100);
    histsData_["nvert"] = new TH1D("nvert_Data", "N Vertices", 100, 0, 100);
@@ -64,8 +68,9 @@ Fitter::Fitter(){
    histsData_["cov_xy"] = new TH1D("cov_xy_Data", "Cov_{xy}", 100, -150, 150);
    histsData_["cov_yy"] = new TH1D("cov_yy_Data", "Cov_{yy}", 100, 0, 500);
    histsData_["met"] = new TH1D("met_Data", "Missing E_{T}", 100, 0, 100);
-   histsData_["sig"] = new TH1D("sig_Data", "Significance", 100, 0, 100);
+   histsData_["sig"] = new TH1D("sig_Data", "Significance", 100, 0, 500);
    histsData_["sig_zoom"] = new TH1D("sig_zoom_Data", "Significance", 100, 0, 15);
+   histsData_["sig_old"] = new TH1D("sig_old_Data", "Old Significance", 100, 0, 500);
    histsData_["det"] = new TH1D("det_Data", "Determinant", 100, 0, 100000);
    histsData_["pchi2"] = new TH1D("pchi2_Data", "P(#chi^{2})", 100, 0, 1);
    histsData_["logpchi2"] = new TH1D("logpchi2_Data", "log(P(#chi^{2}))", 100, -50, 0);
@@ -75,6 +80,12 @@ Fitter::Fitter(){
    histsData_["met_varx"] = new TH1D("met_varx_Data","#sigma_{x}^{2} for MET smearing",100,-10,30);
    histsData_["met_vary"] = new TH1D("met_vary_Data","#sigma_{y}^{2} for MET smearing",100,-10,30);
    histsData_["met_rho"] = new TH1D("met_rho_Data", "#rho for MET smearing", 100, -10, 10);
+   histsData_["pjet_axesratio"] = new TH1D("pjet_axesratio_Data",
+         "Pseudo-jet Ratio of Major/Semi-Major Axes", 100, 0, 1);
+   histsData_["pjet_tiltangle"] = new TH1D("pjet_tiltangle_Data", "Tilt Angle of Pseudo-jet",
+         100, -2, 2);
+   histsData_["pjet_tiltangle_rel"] = new TH1D("pjet_tiltangle_rel_Data",
+      "Tilt Angle of Pseudo-jet relative to Pseudo-jet Momentum", 100, -2, 2);
 
    // profile histograms
    profsData_["psig_nvert"] = new TH2D("psig_nvert_Data",
@@ -164,6 +175,7 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
 
    int v_size;
    float met_et;
+   float metsig2011;
 
    int pfj_size=0;
    float pfj_pt[1000];
@@ -218,6 +230,7 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    TTree *tree = (TTree*)file->Get("events");
    tree->SetBranchAddress("v_size", &v_size);
    tree->SetBranchAddress("met_pt", &met_et);
+   tree->SetBranchAddress("met_sig", &metsig2011);
 
    tree->SetBranchAddress("pfj_size", &pfj_size);
    tree->SetBranchAddress("pfj_pt", pfj_pt);
@@ -296,6 +309,9 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       double pjet_pxT1_temp = 0;
       double pjet_pyT1_temp = 0;
       double pjet_PUptL123_temp = 0;
+      double pjet_pxpx_temp = 0;
+      double pjet_pypy_temp = 0;
+      double pjet_pxpy_temp = 0;
 
       event evtemp;
 
@@ -408,6 +424,9 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       // vertices
       evtemp.nvertices = v_size;
 
+      // old metsig
+      evtemp.metsig2011 = metsig2011;
+
       // muons
       for( int i=0; i < mu_size; i++){
          TLorentzVector ptemp( mu_px[i], mu_py[i], mu_pz[i], mu_e[i] );
@@ -456,6 +475,10 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
 
             pjet_size_temp++;
 
+            pjet_pxpx_temp += pow(jet_ptL123_temp*cos(pfj_phi[i]),2);
+            pjet_pypy_temp += pow(jet_ptL123_temp*sin(pfj_phi[i]),2);
+            pjet_pxpy_temp += pow(jet_ptL123_temp,2)*cos(pfj_phi[i])*sin(pfj_phi[i]);
+
          }
 
       } // pfj loop
@@ -472,6 +495,10 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       evtemp.pjet_PUptL123 = pjet_PUptL123_temp;
 
       evtemp.pjet_size = pjet_size_temp;
+      
+      evtemp.pjet_pxpx = pjet_pxpx_temp;
+      evtemp.pjet_pypy = pjet_pypy_temp;
+      evtemp.pjet_pxpy = pjet_pxpy_temp;
 
       // genjets
       if(isMC){
@@ -748,6 +775,36 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
 
       ev->cov_par = cov_par;
       ev->cov_perp = cov_perp;
+
+      // pseudo-jet properties
+      TMatrixD PJetCov(2,2);
+      PJetCov(0,0) = ev->pjet_pxpx;
+      PJetCov(0,1) = ev->pjet_pxpy;
+      PJetCov(1,0) = ev->pjet_pxpy;
+      PJetCov(1,1) = ev->pjet_pypy;
+      
+      TMatrixDEigen PJetEigen(PJetCov);
+
+      TVectorD pjet_eigenvalues = (TVectorD)PJetEigen.GetEigenValues();
+      TMatrixD pjet_eigenvectors = (TMatrixD)PJetEigen.GetEigenVectors();
+
+      int imajor = 0;
+      if( pjet_eigenvalues[1] > pjet_eigenvalues[0] ) imajor = 1;
+      int isemi = (imajor+1)%2;
+
+      double tiltangle = atan2(pjet_eigenvectors(1,imajor),pjet_eigenvectors(0,imajor));
+      double tiltangle_rel = tiltangle - ev->pjet_phiL123;
+      if( tiltangle > TMath::PiOver2() ) tiltangle -= TMath::Pi();
+      if( tiltangle <= -1.0*TMath::PiOver2() ) tiltangle += TMath::Pi();
+      if( tiltangle_rel > TMath::Pi() ) tiltangle_rel -= TMath::Pi();
+      if( tiltangle_rel <= -1.0*TMath::Pi() ) tiltangle_rel += TMath::Pi();
+      if( tiltangle_rel > TMath::PiOver2() ) tiltangle_rel -= TMath::Pi();
+      if( tiltangle_rel <= -1.0*TMath::PiOver2() ) tiltangle_rel += TMath::Pi();
+
+      ev->pjet_shape_axesratio = pjet_eigenvalues(isemi)/pjet_eigenvalues(imajor);
+      ev->pjet_shape_tiltangle = tiltangle;
+      ev->pjet_shape_tiltangle_rel = tiltangle_rel;
+
    }
 }
 
@@ -914,6 +971,7 @@ void Fitter::FillHists(vector<event>& eventref, const char* stackmode){
       hists_["pjet_scalptT1"]->Fill( ev->pjet_scalptT1 , ev->weight );
       hists_["pjet_vectptT1"]->Fill( ev->pjet_vectptT1 , ev->weight );
       hists_["pjet_size"]->Fill( ev->pjet_size , ev->weight );
+      hists_["pjet_phi"]->Fill( ev->pjet_phiL123, ev->weight );
 
       // other observables
       hists_["nvert"]->Fill( ev->nvertices , ev->weight );
@@ -927,6 +985,7 @@ void Fitter::FillHists(vector<event>& eventref, const char* stackmode){
       hists_["met"]->Fill( ev->met, ev->weight );
       hists_["sig"]->Fill( ev->sig, ev->weight );
       hists_["sig_zoom"]->Fill( ev->sig, ev->weight );
+      hists_["sig_old"]->Fill( ev->metsig2011, ev->weight );
       hists_["det"]->Fill( ev->det, ev->weight );
       hists_["pchi2"]->Fill( TMath::Prob(ev->sig,2), ev->weight );
       hists_["logpchi2"]->Fill( TMath::Log(TMath::Prob(ev->sig,2)), ev->weight );
@@ -938,6 +997,10 @@ void Fitter::FillHists(vector<event>& eventref, const char* stackmode){
       hists_["met_varx"]->Fill( ev->met_varx, ev->weight );
       hists_["met_vary"]->Fill( ev->met_vary, ev->weight );
       hists_["met_rho"]->Fill( ev->met_rho, ev->weight );
+
+      hists_["pjet_axesratio"]->Fill( ev->pjet_shape_axesratio, ev->weight );
+      hists_["pjet_tiltangle"]->Fill( ev->pjet_shape_tiltangle, ev->weight );
+      hists_["pjet_tiltangle_rel"]->Fill( ev->pjet_shape_tiltangle_rel, ev->weight );
 
       // profiles
       profs_["psig_nvert"]->Fill( ev->nvertices, ev->sig, ev->weight );

@@ -71,6 +71,12 @@ struct event {
    double pjet_scalptT1;
    double pjet_PUptL123;
    double pjet_size;
+   double pjet_pxpx;
+   double pjet_pypy;
+   double pjet_pxpy;
+   double pjet_shape_axesratio;
+   double pjet_shape_tiltangle;
+   double pjet_shape_tiltangle_rel;
 
    vector<double> genjet_pt;
    vector<double> genjet_phi;
@@ -84,6 +90,9 @@ struct event {
    double met_varx;
    double met_vary;
    double met_rho;
+
+   // variables for ROC
+   double metsig2011;
 
 };
 
