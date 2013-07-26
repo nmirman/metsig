@@ -15,7 +15,7 @@ using namespace std;
 
 struct event {
 
-   const char *channel;
+   string channel;
 
    int nvertices;
    double weight;
@@ -103,12 +103,12 @@ class Fitter{
       ~Fitter();
 
       void ReadNtuple(const char[], vector<event>&, const double, const bool,
-            const char[], const bool=false, const int=0, const int=0);
+            string, const bool=false, const int=0, const int=0);
       void MatchMCjets(vector<event>&);
       void RunMinimizer(vector<event>&);
       void FindSignificance(const double*, vector<event>&);
-      void FillHists(vector<event>&, const char[]);
-      void PrintHists( const char*, const char* );
+      void FillHists(vector<event>&, string);
+      void PrintHists( const char*, string );
       void PJetReweight(vector<event>&, vector<event>&);
       void ResponseCorrection(vector<event>&, const bool=false);
 
