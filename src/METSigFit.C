@@ -97,9 +97,6 @@ Fitter::Fitter(){
          "Response = |<u_{#parallel}>|/q_{T} vs. q_{T};q_{T} (GeV);Response", 25, 0, 100, 100, -100, 100);
    profsData_["pMET_nvert"] = new TH2D("pMET_nvert_Data",
          "MET vs. N Vertices;N Vertices;<MET>", 30, 0, 30, 100, 0, 100);
-   profsData_["cov_par_perp"] = new TH2D("cov_par_perp_Data",
-         "Perpendicular vs. Parallel Resolutions (wrt qt);par #sigma^{2};perp #sigma^{2}",
-         100, 0, 500, 100, 0, 500);
    profsData_["pjet_scalptL123_nvert"] = new TH2D("pjet_scalpt_nvert_Data",
          "Pseudojet Scalar p_{T} vs. N Vertices", 30, 0, 30, 200, 0, 2000);
    profsData_["jet_pt_nvert"] = new TH2D("jet_pt_nvert_Data",
@@ -312,7 +309,6 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       double pjet_scalptT1_temp = 0;
       double pjet_pxT1_temp = 0;
       double pjet_pyT1_temp = 0;
-      double pjet_PUptL123_temp = 0;
       double pjet_pxpx_temp = 0;
       double pjet_pypy_temp = 0;
       double pjet_pxpy_temp = 0;
@@ -467,23 +463,22 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       // muons
       for( int i=0; i < mu_size; i++){
          TLorentzVector ptemp( mu_px[i], mu_py[i], mu_pz[i], mu_e[i] );
+         //evtemp.muon_4vect.push_back( ptemp );
          evtemp.muon_pt.push_back( mu_pt[i] );
          evtemp.muon_phi.push_back( mu_phi[i] );
-         evtemp.muon_4vect.push_back( ptemp );
       }
 
       // electrons
       for( int i=0; i < elec_size; i++){
          TLorentzVector ptemp( elec_px[i], elec_py[i], elec_pz[i], elec_e[i] );
+         //evtemp.electron_4vect.push_back( ptemp );
          evtemp.electron_pt.push_back( elec_pt[i] );
          evtemp.electron_phi.push_back( elec_phi[i] );
-         evtemp.electron_4vect.push_back( ptemp );
       }
 
       // jets
       for( int i=0; i < pfj_size; i++){
 
-         evtemp.jet_L123Corr.push_back( pfj_l1l2l3[i] );
          double jet_ptL123_temp = (pfj_pt[i]*pfj_l1l2l3[i] > jetcorrpt)
             ? pfj_pt[i]*pfj_l1l2l3[i] : pfj_pt[i];
          double jet_ptT1_temp = (pfj_pt[i]*pfj_l1l2l3[i] > jetcorrpt)
@@ -529,27 +524,8 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       evtemp.pjet_scalptT1 = pjet_scalptT1_temp;
       evtemp.pjet_vectptT1 = sqrt( pow(pjet_pxT1_temp,2) + pow(pjet_pyT1_temp,2) );
 
-      evtemp.pjet_PUptL123 = pjet_PUptL123_temp;
-
       evtemp.pjet_size = pjet_size_temp;
       
-      evtemp.pjet_pxpx = pjet_pxpx_temp;
-      evtemp.pjet_pypy = pjet_pypy_temp;
-      evtemp.pjet_pxpy = pjet_pxpy_temp;
-
-      // genjets
-      if(isMC){
-         for( int i=0; i < genj_size; i++){
-            evtemp.genjet_pt.push_back( genj_pt[i] );
-            evtemp.genjet_phi.push_back( genj_phi[i] );
-            evtemp.genjet_eta.push_back( genj_eta[i] );
-            evtemp.genjet_energy.push_back( genj_energy[i] );
-            evtemp.genjet_emEnergy.push_back( genj_emEnergy[i] );
-            evtemp.genjet_hadEnergy.push_back( genj_hadEnergy[i] );
-            evtemp.genjet_invEnergy.push_back( genj_invEnergy[i] );
-         }
-      }
-
       // met smearing
       evtemp.met_varx = 0.0;
       evtemp.met_vary = 0.0;
@@ -558,19 +534,20 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       // fill event vector
       eventref_temp.push_back( evtemp );
 
+      cout << "SIZE " << sizeof(evtemp) << endl;
    } // event loop
 
    if(do_resp_correction) {
 	   cout << " -----> met response correction" << endl;
 	   double xtemp[20]={0};
 	   FindSignificance(xtemp,eventref_temp);
-	   ResponseCorrection(eventref_temp, isMC);
+	   ResponseCorrection(eventref_temp);
    }
 
    return;
 }
 
-void Fitter::ResponseCorrection(vector<event>& eventvec, const bool isMC ) {
+void Fitter::ResponseCorrection(vector<event>& eventvec) {
 
 	vector<event>* eventref=&eventvec;
 	TProfile* presp_qt = new TProfile ("presp_qt_temp",
@@ -806,45 +783,9 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       ev->ut_par = ut_par;
       ev->ut_perp = ut_perp;
 
-      // parallel and perpendicular components of covariance matrix
-      double cov_par = (cov_xx*qt_x + cov_yy*qt_y)/qt;
-      double cov_perp = (cov_yy*qt_x - qt_y*cov_xx)/qt;
-
-      ev->cov_par = cov_par;
-      ev->cov_perp = cov_perp;
-
-      // pseudo-jet properties
-      TMatrixD PJetCov(2,2);
-      PJetCov(0,0) = ev->pjet_pxpx;
-      PJetCov(0,1) = ev->pjet_pxpy;
-      PJetCov(1,0) = ev->pjet_pxpy;
-      PJetCov(1,1) = ev->pjet_pypy;
-      
-      TMatrixDEigen PJetEigen(PJetCov);
-
-      TVectorD pjet_eigenvalues = (TVectorD)PJetEigen.GetEigenValues();
-      TMatrixD pjet_eigenvectors = (TMatrixD)PJetEigen.GetEigenVectors();
-
-      int imajor = 0;
-      if( pjet_eigenvalues[1] > pjet_eigenvalues[0] ) imajor = 1;
-      int isemi = (imajor+1)%2;
-
-      double tiltangle = atan2(pjet_eigenvectors(1,imajor),pjet_eigenvectors(0,imajor));
-      double tiltangle_rel = tiltangle - ev->pjet_phiL123;
-      if( tiltangle > TMath::PiOver2() ) tiltangle -= TMath::Pi();
-      if( tiltangle <= -1.0*TMath::PiOver2() ) tiltangle += TMath::Pi();
-      if( tiltangle_rel > TMath::Pi() ) tiltangle_rel -= TMath::Pi();
-      if( tiltangle_rel <= -1.0*TMath::Pi() ) tiltangle_rel += TMath::Pi();
-      if( tiltangle_rel > TMath::PiOver2() ) tiltangle_rel -= TMath::Pi();
-      if( tiltangle_rel <= -1.0*TMath::PiOver2() ) tiltangle_rel += TMath::Pi();
-
-      ev->pjet_shape_axesratio = pjet_eigenvalues(isemi)/pjet_eigenvalues(imajor);
-      ev->pjet_shape_tiltangle = tiltangle;
-      ev->pjet_shape_tiltangle_rel = tiltangle_rel;
-
    }
 }
-
+/*
 void Fitter::MatchMCjets(vector<event>& eventref_temp){
    cout << "---> MatchMCjets" << endl;
 
@@ -884,38 +825,7 @@ void Fitter::MatchMCjets(vector<event>& eventref_temp){
    } // event loop
 
 }
-
-void Fitter::PJetReweight(vector<event>& eventref_data, vector<event>& eventref_MC){
-   
-   // compute weighted mean of p-jet scalar pt in each nvertices bin
-   double spt_data [50] = {0};
-   double spt_mc [50] = {0};
-
-   double norm_data [50] = {0};
-   for( vector<event>::iterator ev = eventref_data.begin(); ev < eventref_data.end(); ev++){
-      if( ev->nvertices > 50 ) continue;
-      spt_data[ ev->nvertices-1 ] += ev->weight*ev->pjet_scalptL123;
-      norm_data[ ev->nvertices-1 ] += ev->weight;
-   }
-   double norm_mc [50] = {0};
-   for( vector<event>::iterator ev = eventref_MC.begin(); ev < eventref_MC.end(); ev++){
-      if( ev->nvertices > 50 ) continue;
-      spt_mc[ ev->nvertices-1 ] += ev->weight*ev->pjet_scalptL123;
-      norm_mc[ ev->nvertices-1 ] += ev->weight;
-   }
-
-   for(int i=0; i < 50; i++){
-      if( norm_data[i] != 0 ) spt_data[i] /= norm_data[i];
-      if( norm_mc[i] != 0 ) spt_mc[i] /= norm_mc[i];
-   }
-
-   // reweight p-jet spectrum in MC
-   for( vector<event>::iterator ev = eventref_MC.begin(); ev < eventref_MC.end(); ev++){
-      if( ev->nvertices > 50 ) continue;
-      ev->pjet_scalptL123 *= spt_data[ev->nvertices-1] / spt_mc[ev->nvertices-1];
-   }
-
-}
+*/
 
 void Fitter::FillHists(vector<event>& eventref, string stackmode){
    if( eventref.size() == 0 ) return;
@@ -990,16 +900,12 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
       for( int j=0; j < int(ev->muon_pt.size()); j++){
          hists_["muon_pt"]->Fill( ev->muon_pt[j] , ev->weight);
       }
-      if( ev->muon_4vect.size() > 1 ){
-         hists_["muon_invmass"]->Fill( ((ev->muon_4vect[0])+(ev->muon_4vect[1])).M(), 
-               ev->weight );
-      }
 
       // jets
       hists_["njets"]->Fill( ev->jet_ptL123.size(), ev->weight );
       for( int j=0; j < int(ev->jet_ptL123.size()); j++){
          hists_["jet_pt"]->Fill( ev->jet_ptL123[j], ev->weight );
-         if( ev->jet_ptL123[j] > 30 and ev->jet_ptUncor[j]*ev->jet_L123Corr[j] > 30 ){
+         if( ev->jet_ptL123[j] > 30 and ev->jet_ptUncor[j] != ev->jet_ptL123[j] ){
             hists_["jet_eta"]->Fill( ev->jet_eta[j], ev->weight );
          }
       }
@@ -1040,16 +946,11 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
       hists_["met_vary"]->Fill( ev->met_vary, ev->weight );
       hists_["met_rho"]->Fill( ev->met_rho, ev->weight );
 
-      hists_["pjet_axesratio"]->Fill( ev->pjet_shape_axesratio, ev->weight );
-      hists_["pjet_tiltangle"]->Fill( ev->pjet_shape_tiltangle, ev->weight );
-      hists_["pjet_tiltangle_rel"]->Fill( ev->pjet_shape_tiltangle_rel, ev->weight );
-
       // profiles
       profs_["psig_nvert"]->Fill( ev->nvertices, ev->sig, ev->weight );
       profs_["psig_qt"]->Fill( ev->qt, ev->sig, ev->weight );
       profs_["presp_qt"]->Fill( ev->qt, -(ev->ut_par)/(ev->qt), ev->weight );
       profs_["pMET_nvert"]->Fill( ev->nvertices, ev->met, ev->weight );
-      profs_["cov_par_perp"]->Fill( ev->cov_par, ev->cov_perp, ev->weight );
       profs_["pjet_scalptL123_nvert"]->Fill( ev->nvertices, ev->pjet_scalptL123, ev->weight );
 
       profs_["njets_nvert"]->Fill( ev->nvertices, ev->jet_ptL123.size(), ev->weight );
@@ -1143,6 +1044,7 @@ void Fitter::PrintHists( const char* filename, /*const char**/string stackmode )
       histMC->Add( histMC_gamma, scaleQCD );
       histMC->Add( histMC_DY );
 
+      histMC->Sumw2();
       histMC->Scale( histnorm );
       histMC_signal->Scale( histnorm );
       histMC_QCD->Scale( histnorm );
@@ -1189,7 +1091,7 @@ void Fitter::PrintHists( const char* filename, /*const char**/string stackmode )
       histMC->GetXaxis()->SetTitleFont(42);
       histMC->GetYaxis()->SetTitleFont(42);
 
-      histMC->Draw();
+      histMC->Draw("HIST");
       if( stackmode.compare("Zmumu") == 0 ){
          histMC_top->SetLineColor(39);
          histMC_top->SetFillColor(39);
@@ -1231,8 +1133,13 @@ void Fitter::PrintHists( const char* filename, /*const char**/string stackmode )
          histMC_EWK->Draw("same");
       }
       if( stackmode.compare("Dijet") == 0 ){
-         histMC->Draw();
+         // nothing happens here
       }
+
+      TH1D *histMCerror = (TH1D*)histMC->Clone("histMCerror");
+      histMCerror->SetFillColor(1);
+      histMCerror->SetFillStyle(3002);
+      histMCerror->Draw("E2 same");
 
       histData->Draw("EP same");
 
@@ -1343,11 +1250,6 @@ void Fitter::PrintHists( const char* filename, /*const char**/string stackmode )
       cout << pname << ": " << histData->GetCorrelationFactor() << ", "
          << histMC->GetCorrelationFactor() << endl;
    }
-   TCanvas *canvas = new TCanvas( "cov_par_perp_2D", "cov_par_perp_2D", 800, 800 );
-   canvas->cd();
-   profsData_["cov_par_perp"]->Draw("colz");
-   canvas->Write();
-
    TCanvas *canvas2 = new TCanvas( "sig_met_2D", "sig_met_2D", 800, 800 );
    canvas2->cd();
    profsData_["sig_met"]->Draw("colz");

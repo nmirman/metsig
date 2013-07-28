@@ -33,34 +33,12 @@ struct event {
    double cov_dtt;
    double cov_dff;
 
-   double cov_par;
-   double cov_perp;
-
    double qt;
    double ut;
    double ut_par;
    double ut_perp;
 
    double resp_correction;
-
-   vector<double> muon_pt;
-   vector<double> muon_phi;
-   vector<TLorentzVector> muon_4vect;
-
-   vector<double> electron_pt;
-   vector<double> electron_phi;
-   vector<TLorentzVector> electron_4vect;
-
-   // high pt jets
-   vector<double> jet_phi;
-   vector<double> jet_eta;
-   vector<double> jet_ptUncor;
-   vector<double> jet_ptL123;
-   vector<double> jet_ptT1;
-   vector<double> jet_L123Corr;
-   vector<int> jet_matchIndex;
-   vector<double> jet_matchdR;
-   vector<bool> jet_id;
 
    // pseudojet
    double pjet_phiL123;
@@ -69,22 +47,7 @@ struct event {
    double pjet_phiT1;
    double pjet_vectptT1;
    double pjet_scalptT1;
-   double pjet_PUptL123;
    double pjet_size;
-   double pjet_pxpx;
-   double pjet_pypy;
-   double pjet_pxpy;
-   double pjet_shape_axesratio;
-   double pjet_shape_tiltangle;
-   double pjet_shape_tiltangle_rel;
-
-   vector<double> genjet_pt;
-   vector<double> genjet_phi;
-   vector<double> genjet_eta;
-   vector<double> genjet_energy;
-   vector<double> genjet_emEnergy;
-   vector<double> genjet_hadEnergy;
-   vector<double> genjet_invEnergy;
 
    // MC MET smearing
    double met_varx;
@@ -94,7 +57,21 @@ struct event {
    // variables for ROC
    double metsig2011;
 
-};
+   // leptons
+   //vector<TLorentzVector> muon_4vect;
+   //vector<TLorentzVector> electron_4vect;
+   vector<double> muon_pt;
+   vector<double> muon_phi;
+   vector<double> electron_pt;
+   vector<double> electron_phi;
+
+   // high pt jets
+   vector<double> jet_phi;
+   vector<double> jet_eta;
+   vector<double> jet_ptUncor;
+   vector<double> jet_ptL123;
+   vector<double> jet_ptT1;
+}; 
 
 class Fitter{
    public:
@@ -104,13 +81,13 @@ class Fitter{
 
       void ReadNtuple(const char[], vector<event>&, const double, const bool,
             string, const bool=false, const int=0, const int=0);
-      void MatchMCjets(vector<event>&);
+      //void MatchMCjets(vector<event>&);
       void RunMinimizer(vector<event>&);
       void FindSignificance(const double*, vector<event>&);
       void FillHists(vector<event>&, string);
       void PrintHists( const char*, string );
       void PJetReweight(vector<event>&, vector<event>&);
-      void ResponseCorrection(vector<event>&, const bool=false);
+      void ResponseCorrection(vector<event>&);
 
       bool significance_cut;
       double jetbinpt, jetcorrpt;

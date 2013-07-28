@@ -84,7 +84,7 @@ int main(int argc, char* argv[]){
             smear_met = false;
             break;
 
-         case 'f':
+         case 'o':
             fileout = optarg;
             break;
 
@@ -108,7 +108,7 @@ int main(int argc, char* argv[]){
             cout << "\t-s\t          'Short' run, 10%% of events.\n";
             cout << "\t-c\t          Apply response correction.\n";
             cout << "\t-p <string>\t  Physics channel: Zmumu or Wenu.\n";
-            cout << "\t-f <string>\t  Filename for Data/MC plots.\n";
+            cout << "\t-o <string>\t  Filename for Data/MC plots.\n";
             cout << "\t-m\t          Turn off MET smearing.\n";
             cout << "\t-r\t          Compute ROC curve.\n";
             cout << "\t-d\t          Do not run on data.\n";
