@@ -181,9 +181,18 @@ int main(int argc, char* argv[]){
       // data
       if( run_data ){
          datasets.push_back( Dataset("Run2012A-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012B-part1-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012B-part2-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012B-part3-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012B-part4-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-part1-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-part2-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-part3-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-part4-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012D-part1-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012D-part2-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012D-part3-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012D-part4-22Jan2013/*.root", "Data", false) );
       }
 
       // mc
@@ -204,9 +213,18 @@ int main(int argc, char* argv[]){
       // data
       if( run_data ){
          datasets.push_back( Dataset("Run2012A-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012B-part1-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012B-part2-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012B-part3-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012B-part4-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-part1-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-part2-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-part3-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-part4-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012D-part1-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012D-part2-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012D-part3-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012D-part4-22Jan2013/*.root", "Data", false) );
       }
 
       // mc
@@ -225,12 +243,94 @@ int main(int argc, char* argv[]){
       }
 
    }
+   else if( channel.compare("Ttbar0lept") == 0 ){
+
+      // data
+      if( run_data ){
+         datasets.push_back( Dataset("Run2012A-22Jan2013/*.root", "Data", false) );
+      }
+
+      // mc
+      if( run_mc ){
+         datasets.push_back( Dataset("TTJets_Hadronic/*.root", "TTJets_Hadronic", true) );
+         datasets.push_back( Dataset("TTJets_FullLept/*.root", "TTJets_FullLept", true) );
+         datasets.push_back( Dataset("TTJets_SemiLept/*.root", "TTJets_SemiLept", true) );
+         datasets.push_back( Dataset("DYJetsToLL/*.root", "DYJetsToLL", true) );
+         datasets.push_back( Dataset("Tbar_tW-channel/*.root", "Tbar_tW", true) );
+         datasets.push_back( Dataset("T_tW-channel/*.root", "T_tW", true) );
+         datasets.push_back( Dataset("WJetsToLNu/*.root", "WJetsToLNu", true) );
+         datasets.push_back( Dataset("QCD_15_30/*.root", "QCD_15_30", true) );
+         datasets.push_back( Dataset("QCD_30_50/*.root", "QCD_30_50", true) );
+         datasets.push_back( Dataset("QCD_50_80/*.root", "QCD_50_80", true) );
+         datasets.push_back( Dataset("QCD_80_120/*.root", "QCD_80_120", true) );
+         datasets.push_back( Dataset("QCD_120_170/*.root", "QCD_120_170", true) );
+         datasets.push_back( Dataset("QCD_170_300/*.root", "QCD_170_300", true) );
+         datasets.push_back( Dataset("QCD_300_470/*.root", "QCD_300_470", true) );
+         datasets.push_back( Dataset("QCD_470_600/*.root", "QCD_470_600", true) );
+         datasets.push_back( Dataset("QCD_600_800/*.root", "QCD_600_800", true) );
+         datasets.push_back( Dataset("QCD_800_1000/*.root", "QCD_800_1000", true) );
+         datasets.push_back( Dataset("QCD_1000_1400/*.root", "QCD_1000_1400", true) );
+      }
+
+   }
+   else if( channel.compare("Ttbar1lept") == 0 ){
+
+      // data
+      if( run_data ){
+         datasets.push_back( Dataset("Run2012A-22Jan2013-SingleMu/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012A-22Jan2013-SingleElectron/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012B-22Jan2013-SingleMu/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012B-22Jan2013-SingleElectron/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-22Jan2013-SingleMu/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-22Jan2013-SingleElectron/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012D-22Jan2013-SingleMu/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012D-22Jan2013-SingleElectron/*.root", "Data", false) );
+      }
+
+      // mc
+      if( run_mc ){
+         datasets.push_back( Dataset("TTJets_FullLept/*.root", "TTJets_FullLept", true) );
+         datasets.push_back( Dataset("TTJets_SemiLept/*.root", "TTJets_SemiLept", true) );
+         datasets.push_back( Dataset("TTJets_Hadronic/*.root", "TTJets_Hadronic", true) );
+         datasets.push_back( Dataset("DYJetsToLL_M-50/*.root", "DYJetsToLL", true) );
+         datasets.push_back( Dataset("DYJetsToLL_M-10To50/*.root", "DYJetsToLL_M10To50", true) );
+         datasets.push_back( Dataset("Tbar_tW-channel/*.root", "Tbar_tW", true) );
+         datasets.push_back( Dataset("T_tW-channel/*.root", "T_tW", true) );
+         datasets.push_back( Dataset("WJetsToLNu/*.root", "WJetsToLNu", true) );
+         datasets.push_back( Dataset("WW/*.root", "WW", true) );
+         datasets.push_back( Dataset("WZ/*.root", "WZ", true) );
+         datasets.push_back( Dataset("ZZ/*.root", "ZZ", true) );
+         datasets.push_back( Dataset("QCD_EMEnriched_20_30/*.root", "QCD_EMEnriched_20_30", true) );
+         datasets.push_back( Dataset("QCD_EMEnriched_30_80/*.root", "QCD_EMEnriched_30_80", true) );
+         datasets.push_back( Dataset("QCD_EMEnriched_80_170/*.root", "QCD_EMEnriched_80_170", true) );
+         datasets.push_back( Dataset("QCD_EMEnriched_170_250/*.root", "QCD_EMEnriched_170_250", true) );
+         datasets.push_back( Dataset("QCD_EMEnriched_250_350/*.root", "QCD_EMEnriched_250_350", true) );
+         datasets.push_back( Dataset("QCD_EMEnriched_350/*.root", "QCD_EMEnriched_350", true) );
+         datasets.push_back( Dataset("QCD_BCtoE_20_30/*.root", "QCD_BCtoE_20_30", true) );
+         datasets.push_back( Dataset("QCD_BCtoE_30_80/*.root", "QCD_BCtoE_30_80", true) );
+         datasets.push_back( Dataset("QCD_BCtoE_80_170/*.root", "QCD_BCtoE_80_170", true) );
+         datasets.push_back( Dataset("QCD_BCtoE_170_250/*.root", "QCD_BCtoE_170_250", true) );
+         datasets.push_back( Dataset("QCD_BCtoE_250_350/*.root", "QCD_BCtoE_250_350", true) );
+         datasets.push_back( Dataset("Gamma_0_15/*.root", "Gamma_0_15", true) );
+         datasets.push_back( Dataset("Gamma_15_30/*.root", "Gamma_15_30", true) );
+         datasets.push_back( Dataset("Gamma_30_50/*.root", "Gamma_30_50", true) );
+         datasets.push_back( Dataset("Gamma_50_80/*.root", "Gamma_50_80", true) );
+         datasets.push_back( Dataset("Gamma_80_120/*.root", "Gamma_80_120", true) );
+         datasets.push_back( Dataset("Gamma_120_170/*.root", "Gamma_120_170", true) );
+         datasets.push_back( Dataset("Gamma_170_300/*.root", "Gamma_170_300", true) );
+         datasets.push_back( Dataset("Gamma_300_470/*.root", "Gamma_300_470", true) );
+      }
+
+   }
    else{ cout << "Unknown physics channel.  Use option 'p' to input channel name." << endl; }
 
    for( vector<Dataset>::iterator data = datasets.begin(); data != datasets.end(); data++ ){
       data->channel = channel;
       data->path = "/mnt/xrootd/user/nmirman/Ntuples/METsig";
       data->date = "20130723";
+      if( (channel.compare("Zmumu") == 0 or (channel.compare("Dijet") == 0) and !(data->isMC)) ){
+         data->date = "20130728";
+      }
    }
 
    // get number of events in datasets
@@ -273,7 +373,7 @@ int main(int argc, char* argv[]){
       int num_events = fracevents*data->size;
       int num_sections = 1 + ((num_events-1)/section_size);
       cout << "Opening dataset " << data->filename << endl;
-      cout << "Divide into " << num_sections << " sections..." << endl;
+      cout << "Divide " << num_events << " events into " << num_sections << " sections..." << endl;
 
       for(int isec=0; isec < num_sections; isec++){
          int start = isec*section_size;
