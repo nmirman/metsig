@@ -1089,14 +1089,11 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
          histMC_temp->Scale( histnorm_temp );
          double chi2_temp = histData_temp->Chi2Test( histMC_temp, "CHI2" );
 
-         cout << "scale = " << s << "chi2_temp = " << chi2_temp;
          if( chi2 < 0 or chi2_temp < chi2 ){
             chi2 = chi2_temp;
             scaleQCD = s;
             histnorm = histnorm_temp;
-            cout << "**";
          }
-         cout << endl;
 
          delete histMC_temp;
       }
@@ -1227,7 +1224,7 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
          histMC_top->Draw("same HIST");
          histMC_EWK->Draw("same HIST");
       }
-      if( stackmode.compare("Ttbar0lept") or stackmode.compare("Ttbar1lept") ){
+      if( stackmode.compare("Ttbar0lept") == 0 or stackmode.compare("Ttbar1lept") == 0 ){
          histMC_QCD->SetLineColor(39);
          histMC_QCD->SetFillColor(39);
          histMC_gamma->SetLineColor(40);
