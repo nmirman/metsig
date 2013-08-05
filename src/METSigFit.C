@@ -49,6 +49,9 @@ Fitter::Fitter(){
    // significance cut for minimization
    significance_cut = false;
 
+   // compute weighted errors
+   TH1::SetDefaultSumw2();
+
    // data hists for plotting
    histsData_["muon_pt"] = new TH1D("muon_pt_Data", "Muon p_{T}", 50, 0, 200);
    histsData_["muon_invmass"] = new TH1D("muon_invmass_Data", "M_{#mu#mu}", 50, 0, 200);
@@ -74,6 +77,7 @@ Fitter::Fitter(){
    histsData_["sig_old"] = new TH1D("sig_old_Data", "Old Significance", 50, 0, 500);
    histsData_["det"] = new TH1D("det_Data", "Determinant", 50, 0, 100000);
    histsData_["pchi2"] = new TH1D("pchi2_Data", "P(#chi^{2})", 50, 0, 1);
+   histsData_["pchi2_old"] = new TH1D("pchi2_old-Data", "P(#chi^{2}) from Old Sig", 50, 0, 1);
    histsData_["logpchi2"] = new TH1D("logpchi2_Data", "log(P(#chi^{2}))", 50, -50, 0);
    histsData_["cov_xx_highpt"] = new TH1D("cov_xx_highpt_Data", "Cov_{xx} High-p_{T} Jets", 50, 0, 500);
    histsData_["cov_xx_pjet"] = new TH1D("cov_xx_pjet_Data", "Cov_{xx} Pseudojet", 50, 0, 500);
@@ -1006,6 +1010,7 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
       hists_["sig_old"]->Fill( ev->metsig2011, ev->weight );
       hists_["det"]->Fill( ev->det, ev->weight );
       hists_["pchi2"]->Fill( TMath::Prob(ev->sig,2), ev->weight );
+      hists_["pchi2_old"]->Fill( TMath::Prob(ev->metsig2011,2), ev->weight );
       hists_["logpchi2"]->Fill( TMath::Log(TMath::Prob(ev->sig,2)), ev->weight );
 
       hists_["cov_xx_highpt"]->Fill( ev->cov_xx_highpt, ev->weight );
@@ -1049,34 +1054,25 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
    //
 
    // initial normalization
-   TH1D *histData_temp = (TH1D*)histsData_["met"];
-   TH1D *histMC_signal_temp = (TH1D*)histsMC_signal_["met"];
-   TH1D *histMC_top_temp = (TH1D*)histsMC_top_["met"];
-   TH1D *histMC_EWK_temp = (TH1D*)histsMC_EWK_["met"];
-   TH1D *histMC_QCD_temp = (TH1D*)histsMC_QCD_["met"];
-   TH1D *histMC_gamma_temp = (TH1D*)histsMC_gamma_["met"];
-   TH1D *histMC_DY_temp = (TH1D*)histsMC_DY_["met"];
-
-   histData_temp->Sumw2();
-   histMC_signal_temp->Sumw2();
-   histMC_top_temp->Sumw2();
-   histMC_EWK_temp->Sumw2();
-   histMC_QCD_temp->Sumw2();
-   histMC_gamma_temp->Sumw2();
-   histMC_DY_temp->Sumw2();
+   TH1D *histData_temp = (TH1D*)histsData_["met"]->Clone("histData_temp");
+   TH1D *histMC_signal_temp = (TH1D*)histsMC_signal_["met"]->Clone("histMC_signal_temp");
+   TH1D *histMC_top_temp = (TH1D*)histsMC_top_["met"]->Clone("histMC_top_temp");
+   TH1D *histMC_EWK_temp = (TH1D*)histsMC_EWK_["met"]->Clone("histMC_EWK_temp");
+   TH1D *histMC_QCD_temp = (TH1D*)histsMC_QCD_["met"]->Clone("histMC_QCD_temp");
+   TH1D *histMC_gamma_temp = (TH1D*)histsMC_gamma_["met"]->Clone("histMC_gamma_temp");
+   TH1D *histMC_DY_temp = (TH1D*)histsMC_DY_["met"]->Clone("histMC_DY_temp");
 
    // rescale QCD & gamma+jets numerically (approximate)
    double chi2 = -1;
    double histnorm = histData_temp->Integral("width") / (histMC_signal_temp->Integral("width")+histMC_top_temp->Integral("width")+histMC_EWK_temp->Integral("width")+histMC_QCD_temp->Integral("width")+histMC_gamma_temp->Integral("width")+histMC_DY_temp->Integral("width"));
    double scaleQCD = 1;
    if( stackmode.compare("Wenu") == 0 or stackmode.compare("Wenu_loose") == 0 
-         or stackmode.compare("Ttbar0lept") or stackmode.compare("Ttbar1lept") ){
+         or stackmode.compare("Ttbar0lept") == 0 or stackmode.compare("Ttbar1lept") == 0 ){
       for(double s = 0; s < 5; s += 0.01){
          TH1D *histMC_temp = new TH1D( "histMC_temp", "histMC_temp",
                histData_temp->GetNbinsX(), histData_temp->GetBinLowEdge(1),
                histData_temp->GetBinLowEdge(histData_temp->GetNbinsX())
                + histData_temp->GetBinWidth(histData_temp->GetNbinsX()) );
-         histMC_temp->Sumw2();
 
          histMC_temp->Add( histMC_signal_temp );
          histMC_temp->Add( histMC_top_temp );
@@ -1117,15 +1113,6 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
       TH1D *histMC_gamma = (TH1D*)histsMC_gamma_[hname];
       TH1D *histMC_DY = (TH1D*)histsMC_DY_[hname];
 
-      histData->Sumw2();
-      histMC->Sumw2();
-      histMC_signal->Sumw2();
-      histMC_top->Sumw2();
-      histMC_EWK->Sumw2();
-      histMC_QCD->Sumw2();
-      histMC_gamma->Sumw2();
-      histMC_DY->Sumw2();
-
       histMC_QCD->Scale( scaleQCD );
       histMC_gamma->Scale( scaleQCD );
 
@@ -1145,7 +1132,7 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
       histMC_top->Scale( histnorm );
       histMC_EWK->Scale( histnorm );
 
-      bool log_axis = (hname != "jet_eta") and (hname != "pchi2");
+      bool log_axis = (hname != "jet_eta") and (hname != "pchi2") and (hname != "pchi2_old");
 
       TCanvas *canvas  = new TCanvas( (char*)hname.c_str(), (char*)hname.c_str(), 800, 800 );
       canvas->SetFillColor(0);
@@ -1297,7 +1284,6 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
       pad2->cd();
 
       TH1D *hratio = (TH1D*)histData->Clone("hratio");
-      hratio->Sumw2();
       hratio->Divide( histMC );
       hratio->SetTitle(";"+TString(histData->GetXaxis()->GetTitle()));
       hratio->SetStats(0);

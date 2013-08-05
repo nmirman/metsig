@@ -132,15 +132,36 @@ int main(int argc, char* argv[]){
       // data
       if( run_data ){
          datasets.push_back( Dataset("Run2012A-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012B-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012C-part1-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012C-part2-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012C-part3-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012C-part4-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012D-part1-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012D-part2-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012D-part3-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012D-part4-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012B-1-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012B-2-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012B-3-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012B-4-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012B-5-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012B-6-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012B-7-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012B-8-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012B-9-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012B-10-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012C-1-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012C-2-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012C-3-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012C-4-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012C-5-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012C-6-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012C-7-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012C-8-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012C-9-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012C-10-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012D-1-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012D-2-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012D-3-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012D-4-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012D-5-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012D-6-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012D-7-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012D-8-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012D-9-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012D-10-22Jan2013/*.root", "Data", false));
       }
 
       // mc
