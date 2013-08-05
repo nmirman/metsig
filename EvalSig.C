@@ -352,6 +352,9 @@ int main(int argc, char* argv[]){
       if( channel.compare("Zmumu") == 0 or ((channel.compare("Dijet") == 0) and !(data->isMC)) ){
          data->date = "20130728";
       }
+      if( channel.compare("Wenu") == 0 and !(data->isMC) ){
+         data->date = "20130802";
+      }
    }
 
    // get number of events in datasets
@@ -466,25 +469,27 @@ int main(int argc, char* argv[]){
       TGraph* gROCmetsig2011 = new TGraph();
       TGraph* gROCmetsig2012 = new TGraph();
 
-      vector<int> met_sigpass(datasets[0].ROCmet.size(),0);
-      vector<int> met_bkgpass(datasets[0].ROCmet.size(),0);
-      vector<int> met_sigtot(datasets[0].ROCmet.size(),0);
-      vector<int> met_bkgtot(datasets[0].ROCmet.size(),0);
+      vector<Dataset>::iterator datatemp = datasets.end() - 1;
+      vector<int> met_sigpass(datatemp->ROCmet.size(),0);
+      vector<int> met_bkgpass(datatemp->ROCmet.size(),0);
+      vector<int> met_sigtot(datatemp->ROCmet.size(),0);
+      vector<int> met_bkgtot(datatemp->ROCmet.size(),0);
 
-      vector<int> metsig2011_sigpass(datasets[0].ROCmetsig2011.size(),0);
-      vector<int> metsig2011_bkgpass(datasets[0].ROCmetsig2011.size(),0);
-      vector<int> metsig2011_sigtot(datasets[0].ROCmetsig2011.size(),0);
-      vector<int> metsig2011_bkgtot(datasets[0].ROCmetsig2011.size(),0);
+      vector<int> metsig2011_sigpass(datatemp->ROCmetsig2011.size(),0);
+      vector<int> metsig2011_bkgpass(datatemp->ROCmetsig2011.size(),0);
+      vector<int> metsig2011_sigtot(datatemp->ROCmetsig2011.size(),0);
+      vector<int> metsig2011_bkgtot(datatemp->ROCmetsig2011.size(),0);
 
-      vector<int> metsig2012_sigpass(datasets[0].ROCmetsig2012.size(),0);
-      vector<int> metsig2012_bkgpass(datasets[0].ROCmetsig2012.size(),0);
-      vector<int> metsig2012_sigtot(datasets[0].ROCmetsig2012.size(),0);
-      vector<int> metsig2012_bkgtot(datasets[0].ROCmetsig2012.size(),0);
+      vector<int> metsig2012_sigpass(datatemp->ROCmetsig2012.size(),0);
+      vector<int> metsig2012_bkgpass(datatemp->ROCmetsig2012.size(),0);
+      vector<int> metsig2012_sigtot(datatemp->ROCmetsig2012.size(),0);
+      vector<int> metsig2012_bkgtot(datatemp->ROCmetsig2012.size(),0);
 
       for( vector<Dataset>::iterator data = datasets.begin(); data != datasets.end(); data++ ){
          if( data->isMC ){
 
-            if( data->channel.compare("WJetsToLNu") == 0 ){
+            if( (data->channel.compare("Wenu") == 0 and data->process.compare("WJetsToLNu") == 0)
+                  or (data->channel.compare("Ttbar1lept") == 0 and data->process.compare("TTJets_SemiLept") == 0) or (data->channel.compare("Ttbar0lept") == 0 and data->process.compare("TTJets_Hadronic") == 0) ){
                for(int i=0; i < int(data->ROCmet.size()); i++){ // met
                   met_sigpass[i] += data->ROCmet[i].pass;
                   met_sigtot[i] += data->ROCmet[i].total;
