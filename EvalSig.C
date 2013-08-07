@@ -387,7 +387,7 @@ int main(int argc, char* argv[]){
       // initialize counters for ROC curve
       if( compute_roc and data->isMC ){
          for(int i=0; i < 100; i++){
-            data->ROCmet.push_back( ROCPoint(i, 0, 0) );
+            data->ROCmet.push_back( ROCPoint(2*i, 0, 0) );
             data->ROCmetsig2011.push_back( ROCPoint(exp(double(i)/5-10), 0, 0) );
             data->ROCmetsig2012.push_back( ROCPoint(exp(double(i)/5-10), 0, 0) );
          }
@@ -441,17 +441,29 @@ int main(int argc, char* argv[]){
                // met
                for( int i = 0; i < int(data->ROCmet.size()); i++ ){
                   data->ROCmet[i].total += 1;
-                  if( ev->met > data->ROCmet[i].cut ) data->ROCmet[i].pass += 1;
+                  if( data->channel.compare("Ttbar1lept") == 0 ){
+                     if( ev->met < data->ROCmet[i].cut ) data->ROCmet[i].pass += 1;
+                  }else{
+                     if( ev->met > data->ROCmet[i].cut ) data->ROCmet[i].pass += 1;
+                  }
                }
                // metsig2011
                for( int i = 0; i < int(data->ROCmetsig2011.size()); i++ ){
                   data->ROCmetsig2011[i].total += 1;
-                  if(ev->metsig2011 > data->ROCmetsig2011[i].cut) data->ROCmetsig2011[i].pass += 1;
+                  if( data->channel.compare("Ttbar1lept") == 0 ){
+                     if(ev->metsig2011 < data->ROCmetsig2011[i].cut) data->ROCmetsig2011[i].pass+=1;
+                  }else{
+                     if(ev->metsig2011 > data->ROCmetsig2011[i].cut) data->ROCmetsig2011[i].pass+=1;
+                  }
                }
                // metsig2012
                for( int i = 0; i < int(data->ROCmetsig2012.size()); i++ ){
                   data->ROCmetsig2012[i].total += 1;
-                  if(ev->sig > data->ROCmetsig2012[i].cut) data->ROCmetsig2012[i].pass += 1;
+                  if( data->channel.compare("Ttbar1lept") == 0 ){
+                     if(ev->sig < data->ROCmetsig2012[i].cut) data->ROCmetsig2012[i].pass += 1;
+                  }else{
+                     if(ev->sig > data->ROCmetsig2012[i].cut) data->ROCmetsig2012[i].pass += 1;
+                  }
                }
             }
          } // ROC curve
