@@ -49,6 +49,9 @@ Fitter::Fitter(){
    // significance cut for minimization
    significance_cut = false;
 
+   // MET type to use in FindSignificance
+   met_type = -1;
+
    // compute weighted errors
    TH1::SetDefaultSumw2();
 
@@ -176,7 +179,9 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    float gi_eff=0;
 
    int v_size;
-   float met_et[5];
+   float met_pt[5];
+   float met_px[5];
+   float met_py[5];
    float metsig2011[5];
 
    int pfj_size=0;
@@ -234,7 +239,9 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    tree->Add( filename );
 
    tree->SetBranchAddress("v_size", &v_size);
-   tree->SetBranchAddress("met_pt", met_et);
+   tree->SetBranchAddress("met_pt", met_pt);
+   tree->SetBranchAddress("met_px", met_px);
+   tree->SetBranchAddress("met_py", met_py);
    tree->SetBranchAddress("met_sig", metsig2011);
 
    tree->SetBranchAddress("pfj_size", &pfj_size);
@@ -478,16 +485,12 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
 
       // muons
       for( int i=0; i < mu_size; i++){
-         TLorentzVector ptemp( mu_px[i], mu_py[i], mu_pz[i], mu_e[i] );
-         //evtemp.muon_4vect.push_back( ptemp );
          evtemp.muon_pt.push_back( mu_pt[i] );
          evtemp.muon_phi.push_back( mu_phi[i] );
       }
 
       // electrons
       for( int i=0; i < elec_size; i++){
-         TLorentzVector ptemp( elec_px[i], elec_py[i], elec_pz[i], elec_e[i] );
-         //evtemp.electron_4vect.push_back( ptemp );
          evtemp.electron_pt.push_back( elec_pt[i] );
          evtemp.electron_phi.push_back( elec_phi[i] );
       }
@@ -541,6 +544,12 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       evtemp.pjet_vectptT1 = sqrt( pow(pjet_pxT1_temp,2) + pow(pjet_pyT1_temp,2) );
 
       evtemp.pjet_size = pjet_size_temp;
+
+      // met
+      for(int i=0; i < 5; i++){
+         evtemp.pfmet_px[i] = met_px[i];
+         evtemp.pfmet_py[i] = met_py[i];
+      }
       
       // met smearing
       evtemp.met_varx = 0.0;
@@ -747,6 +756,10 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       double ncov_xy = -cov_xy / det;
       double ncov_yy = cov_xx / det;
 
+      if( met_type != -1 ){
+         met_x = ev->pfmet_px[met_type];
+         met_y = ev->pfmet_py[met_type];
+      }
 
       // smear MC MET
       double smear_x = 0;

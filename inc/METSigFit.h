@@ -57,9 +57,11 @@ struct event {
    // variables for ROC
    double metsig2011;
 
+   // pfmet
+   float pfmet_px [5];
+   float pfmet_py [5];
+
    // leptons
-   //vector<TLorentzVector> muon_4vect;
-   //vector<TLorentzVector> electron_4vect;
    vector<double> muon_pt;
    vector<double> muon_phi;
    vector<double> electron_pt;
@@ -92,6 +94,7 @@ class Fitter{
       bool significance_cut;
       double jetbinpt, jetcorrpt;
       double psig_nvert_corr, psig_qt_corr, pchi2slope_left, pchi2slope_right;
+      int met_type;
 
       ROOT::Minuit2::Minuit2Minimizer* gMinuit;
 

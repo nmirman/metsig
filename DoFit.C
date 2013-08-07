@@ -14,10 +14,17 @@
 using namespace std;
 
 struct Dataset {
-   const char* filename;
-   const char* channel;
+   // dataset info
+   string path;
+   string date;
+   string channel;
+   string filename;
+   string process;
    bool isMC;
-   Dataset( const char* f, const char* c, bool i) : filename(f), channel(c), isMC(i) {}
+   int size;
+
+   // constructor
+   Dataset( string f, string p, bool i) : filename(f), process(p), isMC(i) {}
 };
 
 int main(int argc, char* argv[]){
@@ -51,6 +58,7 @@ int main(int argc, char* argv[]){
    char c;
    double numevents = 1;
    bool do_resp_correction=false;
+   int met_type = -1;
    while( (c = getopt(argc, argv, "n:j:hscob")) != -1 ) {
       switch(c)
       {
@@ -70,11 +78,16 @@ int main(int argc, char* argv[]){
             do_resp_correction=true;
             break;
 
+         case 'm' :
+            met_type = atoi(optarg);
+            break;
+
          case 'h' :
             cout << "Usage: ./DoFit <flags>\n";
             cout << "Flags: \n";
             cout << "\t-n <number>\t Fraction of events to fit.  Default at -1.\n";
             cout << "\t-j <number>\t Jet bin pt threshold.  Default at 20 GeV.\n";
+            cout << "\t-m <number>\t Type of MET to use.  Default at -1.\n";
             cout << "\t-s\t          'Short' run, 10%% of events.\n";
             cout << "\t-c\t          Apply response correction.\n";
             cout << "\t-h\t          Display this menu.\n";
@@ -95,21 +108,35 @@ int main(int argc, char* argv[]){
    //
 
    // data
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/Run2012A-22Jan2013.root", "Data", false));
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/Run2012B-22Jan2013.root", "Data", false));
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/Run2012C-22Jan2013.root", "Data", false));
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/Run2012D-22Jan2013.root", "Data", false));
+   datasets.push_back( Dataset("Run2012A-22Jan2013/*.root", "Data", false) );
+   datasets.push_back( Dataset("Run2012B-part1-22Jan2013/*.root", "Data", false) );
+   datasets.push_back( Dataset("Run2012B-part2-22Jan2013/*.root", "Data", false) );
+   datasets.push_back( Dataset("Run2012B-part3-22Jan2013/*.root", "Data", false) );
+   datasets.push_back( Dataset("Run2012B-part4-22Jan2013/*.root", "Data", false) );
+   datasets.push_back( Dataset("Run2012C-part1-22Jan2013/*.root", "Data", false) );
+   datasets.push_back( Dataset("Run2012C-part2-22Jan2013/*.root", "Data", false) );
+   datasets.push_back( Dataset("Run2012C-part3-22Jan2013/*.root", "Data", false) );
+   datasets.push_back( Dataset("Run2012C-part4-22Jan2013/*.root", "Data", false) );
+   datasets.push_back( Dataset("Run2012D-part1-22Jan2013/*.root", "Data", false) );
+   datasets.push_back( Dataset("Run2012D-part2-22Jan2013/*.root", "Data", false) );
+   datasets.push_back( Dataset("Run2012D-part3-22Jan2013/*.root", "Data", false) );
+   datasets.push_back( Dataset("Run2012D-part4-22Jan2013/*.root", "Data", false) );
 
    // mc
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/DYJetsToLL.root", "DYJetsToLL", true));
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/TTJets.root", "TTJets", true));
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/Tbar_tW-channel.root", "Tbar_tW", true));
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/T_tW-channel.root", "T_tW", true));
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/WJetsToLNu.root", "WJetsToLNu", true));
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/WW.root", "WW", true));
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/WZ.root", "WZ", true));
-   datasets.push_back( Dataset("/eos/uscms/store/user/nmirman/Ntuples/Zmumu/20130626/ZZ.root", "ZZ", true));
+   datasets.push_back( Dataset("DYJetsToLL/*.root", "DYJetsToLL", true) );
+   datasets.push_back( Dataset("TTJets/*.root", "TTJets", true) );
+   datasets.push_back( Dataset("Tbar_tW-channel/*.root", "Tbar_tW", true) );
+   datasets.push_back( Dataset("T_tW-channel/*.root", "T_tW", true) );
+   datasets.push_back( Dataset("WJetsToLNu/*.root", "WJetsToLNu", true) );
+   datasets.push_back( Dataset("WW/*.root", "WW", true) );
+   datasets.push_back( Dataset("WZ/*.root", "WZ", true) );
+   datasets.push_back( Dataset("ZZ/*.root", "ZZ", true) );
 
+   for( vector<Dataset>::iterator data = datasets.begin(); data != datasets.end(); data++ ){
+      data->path = "/mnt/xrootd/user/nmirman/Ntuples/METsig";
+      data->date = "20130728";
+      data->channel = "Zmumu";
+   }
 
    //
    // loop through data and mc, run fit, fill histograms
@@ -134,11 +161,15 @@ int main(int argc, char* argv[]){
          if( i==0 and data->isMC ) continue;
          if( i==1 and !(data->isMC) ) continue;
 
-         fitter.ReadNtuple( data->filename, eventvec, numevents,
-               data->isMC, data->channel, do_resp_correction );
+         string fullname = data->path+"/"+data->channel+"/"+data->date+"/"+data->filename;
+         fitter.ReadNtuple( fullname.c_str(), eventvec, numevents,
+               data->isMC, data->process, do_resp_correction );
       }
 
       cout << "\nDATASET SIZE: " << eventvec.size() << " EVENTS\n" << endl;
+
+      // set type of MET
+      fitter.met_type = met_type;
 
       // run fit
       fitter.RunMinimizer( eventvec );
