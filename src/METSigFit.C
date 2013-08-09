@@ -75,8 +75,10 @@ Fitter::Fitter(){
    histsData_["cov_xy"] = new TH1D("cov_xy_Data", "Cov_{xy}", 50, -150, 150);
    histsData_["cov_yy"] = new TH1D("cov_yy_Data", "Cov_{yy}", 50, 0, 500);
    histsData_["met"] = new TH1D("met_Data", "Missing E_{T}", 50, 0, 100);
+   histsData_["met_200"] = new TH1D("met_200_Data", "Missing E_{T}", 50, 0, 200);
    histsData_["sig"] = new TH1D("sig_Data", "Significance", 50, 0, 500);
-   histsData_["sig_zoom"] = new TH1D("sig_zoom_Data", "Significance", 50, 0, 15);
+   histsData_["sig_100"] = new TH1D("sig_100_Data", "Significance", 50, 0, 100);
+   histsData_["sig_15"] = new TH1D("sig_15_Data", "Significance", 50, 0, 15);
    histsData_["sig_old"] = new TH1D("sig_old_Data", "Old Significance", 50, 0, 500);
    histsData_["det"] = new TH1D("det_Data", "Determinant", 50, 0, 100000);
    histsData_["pchi2"] = new TH1D("pchi2_Data", "P(#chi^{2})", 50, 0, 1);
@@ -609,7 +611,7 @@ void Fitter::RunMinimizer(vector<event>& eventref_temp){
    cout << "---> RunMinimizer" << endl;
 
    gMinuit = new ROOT::Minuit2::Minuit2Minimizer ( ROOT::Minuit2::kMigrad );
-   gMinuit->SetTolerance(10.0);
+   gMinuit->SetTolerance(1000.0);
    gMinuit->SetStrategy(0);
    gMinuit->SetPrintLevel(2);
 
@@ -1018,8 +1020,10 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
       hists_["cov_xy"]->Fill( ev->cov_xy, ev->weight );
       hists_["cov_yy"]->Fill( ev->cov_yy, ev->weight );
       hists_["met"]->Fill( ev->met, ev->weight );
+      hists_["met_200"]->Fill( ev->met, ev->weight );
       hists_["sig"]->Fill( ev->sig, ev->weight );
-      hists_["sig_zoom"]->Fill( ev->sig, ev->weight );
+      hists_["sig_100"]->Fill( ev->sig, ev->weight );
+      hists_["sig_15"]->Fill( ev->sig, ev->weight );
       hists_["sig_old"]->Fill( ev->metsig2011, ev->weight );
       hists_["det"]->Fill( ev->det, ev->weight );
       hists_["pchi2"]->Fill( TMath::Prob(ev->sig,2), ev->weight );
@@ -1080,7 +1084,7 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
    double histnorm = histData_temp->Integral("width") / (histMC_signal_temp->Integral("width")+histMC_top_temp->Integral("width")+histMC_EWK_temp->Integral("width")+histMC_QCD_temp->Integral("width")+histMC_gamma_temp->Integral("width")+histMC_DY_temp->Integral("width"));
    double scaleQCD = 1;
    if( stackmode.compare("Wenu") == 0 or stackmode.compare("Wenu_loose") == 0 
-         or stackmode.compare("Ttbar0lept") == 0 or stackmode.compare("Ttbar1lept") == 0 ){
+         or stackmode.compare("Ttbar0lept") == 0 ){ 
       for(double s = 0; s < 5; s += 0.01){
          TH1D *histMC_temp = new TH1D( "histMC_temp", "histMC_temp",
                histData_temp->GetNbinsX(), histData_temp->GetBinLowEdge(1),
@@ -1165,8 +1169,8 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
 
       pad1->cd();
 
-      histMC->SetLineColor(38);
-      histMC->SetFillColor(38);
+      histMC->SetLineColor(1);
+      histMC->SetFillColor(kAzure-9);
       histData->SetLineColor(1);
       histData->SetMarkerStyle(20);
 
@@ -1185,10 +1189,10 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
 
       histMC->Draw("HIST");
       if( stackmode.compare("Zmumu") == 0 ){
-         histMC_top->SetLineColor(39);
-         histMC_top->SetFillColor(39);
-         histMC_EWK->SetLineColor(40);
-         histMC_EWK->SetFillColor(40);
+         histMC_top->SetLineColor(1);
+         histMC_top->SetFillColor(kYellow-9);
+         histMC_EWK->SetLineColor(1);
+         histMC_EWK->SetFillColor(kRed-10);
 
          histMC_top->Add( histMC_EWK );
 
@@ -1196,16 +1200,16 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
          histMC_EWK->Draw("same HIST");
       }
       if( stackmode.compare("Wenu") == 0 or stackmode.compare("Wenu_loose") == 0 ){
-         histMC_QCD->SetLineColor(39);
-         histMC_QCD->SetFillColor(39);
-         histMC_gamma->SetLineColor(40);
-         histMC_gamma->SetFillColor(40);
-         histMC_DY->SetLineColor(41);
-         histMC_DY->SetFillColor(41);
-         histMC_top->SetLineColor(42);
-         histMC_top->SetFillColor(42);
-         histMC_EWK->SetLineColor(43);
-         histMC_EWK->SetFillColor(43);
+         histMC_QCD->SetLineColor(1);
+         histMC_QCD->SetFillColor(kYellow-9);
+         histMC_gamma->SetLineColor(1);
+         histMC_gamma->SetFillColor(kYellow-10);
+         histMC_DY->SetLineColor(1);
+         histMC_DY->SetFillColor(kRed-10);
+         histMC_top->SetLineColor(1);
+         histMC_top->SetFillColor(kCyan-10);
+         histMC_EWK->SetLineColor(1);
+         histMC_EWK->SetFillColor(kGreen-10);
 
          histMC_QCD->Add( histMC_gamma );
          histMC_QCD->Add( histMC_DY );
@@ -1224,34 +1228,37 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
          histMC_top->Draw("same HIST");
          histMC_EWK->Draw("same HIST");
       }
-      if( stackmode.compare("Ttbar0lept") == 0 or stackmode.compare("Ttbar1lept") == 0 ){
-         histMC_QCD->SetLineColor(39);
-         histMC_QCD->SetFillColor(39);
-         histMC_gamma->SetLineColor(40);
-         histMC_gamma->SetFillColor(40);
-         histMC_DY->SetLineColor(41);
-         histMC_DY->SetFillColor(41);
-         histMC_top->SetLineColor(42);
-         histMC_top->SetFillColor(42);
-         histMC_EWK->SetLineColor(43);
-         histMC_EWK->SetFillColor(43);
+      if( stackmode.compare("Ttbar1lept") == 0 ){
+         histMC_top->SetLineColor(1);
+         histMC_top->SetFillColor(kYellow-9);
+         histMC_DY->SetLineColor(1);
+         histMC_DY->SetFillColor(kRed-10);
+         histMC_EWK->SetLineColor(1);
+         histMC_EWK->SetFillColor(kCyan-10);
 
          histMC_top->Add( histMC_DY );
          histMC_top->Add( histMC_EWK );
-         histMC_top->Add( histMC_QCD );
-         histMC_top->Add( histMC_gamma );
          histMC_DY->Add( histMC_EWK );
-         histMC_DY->Add( histMC_QCD );
-         histMC_DY->Add( histMC_gamma );
-         histMC_EWK->Add( histMC_QCD );
-         histMC_EWK->Add( histMC_gamma );
-         histMC_QCD->Add( histMC_gamma );
 
          histMC_top->Draw("same HIST");
          histMC_DY->Draw("same HIST");
          histMC_EWK->Draw("same HIST");
+      }
+      if( stackmode.compare("Ttbar0lept") == 0 ){
+         histMC_top->SetLineColor(1);
+         histMC_top->SetFillColor(kYellow-9);
+         histMC_QCD->SetLineColor(1);
+         histMC_QCD->SetFillColor(kRed-10);
+         histMC_DY->SetLineColor(1);
+         histMC_DY->SetFillColor(kCyan-10);
+
+         histMC_top->Add( histMC_QCD );
+         histMC_top->Add( histMC_DY );
+         histMC_QCD->Add( histMC_DY );
+
+         histMC_top->Draw("same HIST");
          histMC_QCD->Draw("same HIST");
-         histMC_gamma->Draw("same HIST");
+         histMC_DY->Draw("same HIST");
       }
       if( stackmode.compare("Dijet") == 0 ){
          // nothing happens here
@@ -1259,7 +1266,7 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
 
       TH1D *histMCerror = (TH1D*)histMC->Clone("histMCerror");
       histMCerror->SetFillColor(1);
-      histMCerror->SetFillStyle(3018);
+      histMCerror->SetFillStyle(3005);
       histMCerror->Draw("E2 same");
 
       histData->Draw("EP same");
@@ -1267,28 +1274,32 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
       TLegend *leg = new TLegend(0.605528,0.655866,0.866834,0.816333);
       leg->AddEntry(histData, "data");
       if( stackmode.compare("Zmumu") == 0 ){
-         leg->AddEntry(histMC, "Z #rightarrow #mu #mu");
-         leg->AddEntry(histMC_top, "t #bar{t}");
-         leg->AddEntry(histMC_EWK, "EWK");
+         leg->AddEntry(histMC, "Z #rightarrow #mu #mu", "f");
+         leg->AddEntry(histMC_top, "t #bar{t}", "f");
+         leg->AddEntry(histMC_EWK, "EWK", "f");
       }
       if( stackmode.compare("Wenu") == 0 or stackmode.compare("Wenu_loose") == 0 ){
-         leg->AddEntry(histMC, "W #rightarrow e #nu");
-         leg->AddEntry(histMC_QCD, "QCD");
-         leg->AddEntry(histMC_gamma, "#gamma+jets");
-         leg->AddEntry(histMC_DY,  "DY");
-         leg->AddEntry(histMC_top, "t #bar{t}");
-         leg->AddEntry(histMC_EWK, "EWK");
+         leg->AddEntry(histMC, "W #rightarrow e #nu", "f");
+         leg->AddEntry(histMC_QCD, "QCD", "f");
+         leg->AddEntry(histMC_gamma, "#gamma+jets", "f");
+         leg->AddEntry(histMC_DY,  "DY", "f");
+         leg->AddEntry(histMC_top, "t #bar{t}", "f");
+         leg->AddEntry(histMC_EWK, "EWK", "f");
       }
       if( stackmode.compare("Dijet") == 0 ){
-         leg->AddEntry(histMC, "QCD");
+         leg->AddEntry(histMC, "QCD", "f");
       }
-      if( stackmode.compare("Ttbar0lept") == 0 or stackmode.compare("Ttbar1lept") == 0 ){
-         leg->AddEntry(histMC, "signal");
-         leg->AddEntry(histMC_top, "Other top");
-         leg->AddEntry(histMC_DY,  "DY");
-         leg->AddEntry(histMC_EWK, "EWK");
-         leg->AddEntry(histMC_QCD, "QCD");
-         leg->AddEntry(histMC_gamma, "#gamma+jets");
+      if( stackmode.compare("Ttbar1lept") == 0 ){
+         leg->AddEntry(histMC, "t#overline{t} Semi-Leptonic", "f");
+         leg->AddEntry(histMC_top, "Other Top", "f");
+         leg->AddEntry(histMC_DY, "DY", "f");
+         leg->AddEntry(histMC_EWK, "EWK", "f");
+      }
+      if( stackmode.compare("Ttbar0lept") == 0 ){
+         leg->AddEntry(histMC, "t#overline{t} Hadronic", "f");
+         leg->AddEntry(histMC_top, "Other Top", "f");
+         leg->AddEntry(histMC_QCD, "QCD", "f");
+         leg->AddEntry(histMC_DY,  "DY", "f");
       }
       leg->SetFillStyle(0);
       leg->SetBorderSize(0);
@@ -1310,9 +1321,9 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
       hratio->GetYaxis()->SetLabelFont(42);
       hratio->GetXaxis()->SetTitleFont(42);
       hratio->GetYaxis()->SetTitleFont(42);
-      hratio->SetMaximum( min(hratio->GetMaximum(),2.2) );
-      hratio->SetMinimum( max(hratio->GetMinimum(),0.0) );
-      hratio->GetYaxis()->SetNdivisions(5);
+      hratio->SetMaximum( 1.6 );
+      hratio->SetMinimum( 0.4 );
+      hratio->GetYaxis()->SetNdivisions(505);
       hratio->Draw("EP");
 
       TF1 *func = new TF1("func","[0]",-10E6,10E6);

@@ -59,7 +59,9 @@ int main(int argc, char* argv[]){
    double numevents = 1;
    bool do_resp_correction=false;
    int met_type = -1;
-   while( (c = getopt(argc, argv, "n:j:hscob")) != -1 ) {
+   string file_results = "results/fitresults.root";
+   string file_plots = "results/plotsDataMC.root";
+   while( (c = getopt(argc, argv, "n:j:m:r:p:hscob")) != -1 ) {
       switch(c)
       {
          case 'n' :
@@ -82,6 +84,14 @@ int main(int argc, char* argv[]){
             met_type = atoi(optarg);
             break;
 
+         case 'r' :
+            file_results = optarg;
+            break;
+
+         case 'p' :
+            file_plots = optarg;
+            break;
+
          case 'h' :
             cout << "Usage: ./DoFit <flags>\n";
             cout << "Flags: \n";
@@ -91,6 +101,8 @@ int main(int argc, char* argv[]){
             cout << "\t-s\t          'Short' run, 10%% of events.\n";
             cout << "\t-c\t          Apply response correction.\n";
             cout << "\t-h\t          Display this menu.\n";
+            cout << "\t-r <string>\t Output fit results to file.\n";
+            cout << "\t-p <string>\t Output plots to file.\n";
             return -1;
             break;
 
@@ -179,7 +191,7 @@ int main(int argc, char* argv[]){
 
    }
    // print histograms
-   fitter.PrintHists( "results/plotsDataMC.root", "Zmumu" );
+   fitter.PrintHists( file_plots.c_str(), "Zmumu" );
 
    //
    // ######################### END FIT #########################
@@ -214,7 +226,7 @@ int main(int argc, char* argv[]){
    }
    string outfilename = "/fitresults.root";
 
-   TFile *file = new TFile((pathstr+outfilename).c_str(), "RECREATE");
+   TFile *file = new TFile(file_results.c_str(), "RECREATE");
    file->cd();
    tree->Write();
    file->Write();

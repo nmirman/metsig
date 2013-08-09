@@ -56,8 +56,9 @@ int main(int argc, char* argv[]){
    bool compute_roc = false;
    bool run_data = true;
    bool run_mc = true;
+   int met_type = -1;
 
-   while( (c = getopt(argc, argv, "n:j:p:f:hscobmrdw")) != -1 ) {
+   while( (c = getopt(argc, argv, "n:j:p:f:o:t:hscbmrdw")) != -1 ) {
       switch(c)
       {
          case 'n' :
@@ -100,6 +101,10 @@ int main(int argc, char* argv[]){
             run_mc = false;
             break;
 
+         case 't':
+            met_type = atoi(optarg);
+            break;
+
          case 'h' :
             cout << "Usage: ./EvalSig <flags>\n";
             cout << "Flags: \n";
@@ -113,6 +118,7 @@ int main(int argc, char* argv[]){
             cout << "\t-r\t          Compute ROC curve.\n";
             cout << "\t-d\t          Do not run on data.\n";
             cout << "\t-w\t          Do not run on MC.\n";
+            cout << "\t-t <number>\t MET type, in range [-1,4].\n";
             cout << "\t-h\t          Display this menu.\n";
             return -1;
             break;
@@ -381,6 +387,10 @@ int main(int argc, char* argv[]){
    //double parData [] = {1.39669,1.32037,1.32047,1.38161,1.51508,0.0,0.639158};
    double parData [] =   {1.29446,1.24207,1.26686,1.34076,1.49548,0.0,0.6117};
    double parMC   [] =   {1.11659,1.06256,1.09741,1.11931,1.17266,0.0,0.569454};
+   //double parData [] = {1.15061,1.07776,1.04204,1.12509,1.56414,0.0,0.548758};
+   //double parMC [] = {1.05347,0.975375,0.957986,0.97269,1.28106,-1.10982,0.52039};
+
+   fitter.met_type = met_type;
 
    for( vector<Dataset>::iterator data = datasets.begin(); data != datasets.end(); data++ ){
 
