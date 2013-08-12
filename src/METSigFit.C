@@ -50,7 +50,7 @@ Fitter::Fitter(){
    significance_cut = false;
 
    // MET type to use in FindSignificance
-   met_type = -1;
+   met_type = 4;
 
    // compute weighted errors
    TH1::SetDefaultSumw2();
@@ -1290,13 +1290,13 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
          leg->AddEntry(histMC, "QCD", "f");
       }
       if( stackmode.compare("Ttbar1lept") == 0 ){
-         leg->AddEntry(histMC, "t#overline{t} Semi-Leptonic", "f");
+         leg->AddEntry(histMC, "t#bar{t} Semi-Leptonic", "f");
          leg->AddEntry(histMC_top, "Other Top", "f");
          leg->AddEntry(histMC_DY, "DY", "f");
          leg->AddEntry(histMC_EWK, "EWK", "f");
       }
       if( stackmode.compare("Ttbar0lept") == 0 ){
-         leg->AddEntry(histMC, "t#overline{t} Hadronic", "f");
+         leg->AddEntry(histMC, "t#bar{t} Hadronic", "f");
          leg->AddEntry(histMC_top, "Other Top", "f");
          leg->AddEntry(histMC_QCD, "QCD", "f");
          leg->AddEntry(histMC_DY,  "DY", "f");

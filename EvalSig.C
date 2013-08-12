@@ -56,7 +56,7 @@ int main(int argc, char* argv[]){
    bool compute_roc = false;
    bool run_data = true;
    bool run_mc = true;
-   int met_type = -1;
+   int met_type = 4;
 
    while( (c = getopt(argc, argv, "n:j:p:f:o:t:hscbmrdw")) != -1 ) {
       switch(c)
@@ -274,7 +274,12 @@ int main(int argc, char* argv[]){
 
       // data
       if( run_data ){
-         datasets.push_back( Dataset("Run2012A-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012A-13Jul2012/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012A-recover-06Aug2012/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012B-13Jul2012/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-24Aug2012/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-PromptReco/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012D-PromptReco/*.root", "Data", false) );
       }
 
       // mc
@@ -361,6 +366,9 @@ int main(int argc, char* argv[]){
       if( channel.compare("Wenu") == 0 and !(data->isMC) ){
          data->date = "20130802";
       }
+      if( channel.compare("Ttbar0lept") == 0 and !(data->isMC) ){
+         data->date = "20130808";
+      }
    }
 
    // get number of events in datasets
@@ -385,10 +393,10 @@ int main(int argc, char* argv[]){
    //
    //double parMC [] =   {1.12660,1.09322,1.10951,1.17178,1.12164,0.0,0.585145};
    //double parData [] = {1.39669,1.32037,1.32047,1.38161,1.51508,0.0,0.639158};
-   double parData [] =   {1.29446,1.24207,1.26686,1.34076,1.49548,0.0,0.6117};
-   double parMC   [] =   {1.11659,1.06256,1.09741,1.11931,1.17266,0.0,0.569454};
-   //double parData [] = {1.15061,1.07776,1.04204,1.12509,1.56414,0.0,0.548758};
-   //double parMC [] = {1.05347,0.975375,0.957986,0.97269,1.28106,-1.10982,0.52039};
+   //double parData [] =   {1.29446,1.24207,1.26686,1.34076,1.49548,0.0,0.6117};
+   //double parMC   [] =   {1.11659,1.06256,1.09741,1.11931,1.17266,0.0,0.569454};
+   double parData [] = {1.15061,1.07776,1.04204,1.12509,1.56414,0.0,0.548758};
+   double parMC [] = {1.05347,0.975375,0.957986,0.97269,1.28106,-1.10982,0.52039};
 
    fitter.met_type = met_type;
 
