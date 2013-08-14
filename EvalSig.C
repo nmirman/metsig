@@ -35,16 +35,13 @@ struct Dataset {
    vector<ROCPoint> ROCmet;
    vector<ROCPoint> ROCmetsig2011;
    vector<ROCPoint> ROCmetsig2012;
+   vector<ROCPoint> ROCmetrht;
 
    // constructor
    Dataset( string f, string p, bool i) : filename(f), process(p), isMC(i) {}
 };
 
 int main(int argc, char* argv[]){
-
-   // declarations
-   Fitter fitter;
-   vector<Dataset> datasets;
 
    // option flags
    char c;
@@ -57,16 +54,13 @@ int main(int argc, char* argv[]){
    bool run_data = true;
    bool run_mc = true;
    int met_type = 4;
+   double rebin = 1;
 
-   while( (c = getopt(argc, argv, "n:j:p:f:o:t:hscbmrdw")) != -1 ) {
+   while( (c = getopt(argc, argv, "n:p:f:o:t:b:hscbmrdw")) != -1 ) {
       switch(c)
       {
          case 'n' :
             fracevents = atof(optarg);
-            break;
-
-         case 'j' :
-            fitter.jetbinpt = atof(optarg);
             break;
 
          case 's' :
@@ -93,16 +87,16 @@ int main(int argc, char* argv[]){
             compute_roc = true;
             break;
 
-         case 'd':
-            run_data = false;
-            break;
-
          case 'w':
             run_mc = false;
             break;
 
          case 't':
             met_type = atoi(optarg);
+            break;
+
+         case 'b':
+            rebin = atof(optarg);
             break;
 
          case 'h' :
@@ -119,6 +113,7 @@ int main(int argc, char* argv[]){
             cout << "\t-d\t          Do not run on data.\n";
             cout << "\t-w\t          Do not run on MC.\n";
             cout << "\t-t <number>\t MET type, in range [-1,4].\n";
+            cout << "\t-b <number>\t Rebin -- divide bins by number.\n";
             cout << "\t-h\t          Display this menu.\n";
             return -1;
             break;
@@ -127,6 +122,10 @@ int main(int argc, char* argv[]){
             continue;
       }
    }
+
+   // declarations
+   Fitter fitter(rebin);
+   vector<Dataset> datasets;
 
 
    //
@@ -408,6 +407,7 @@ int main(int argc, char* argv[]){
             data->ROCmet.push_back( ROCPoint(2*i, 0, 0) );
             data->ROCmetsig2011.push_back( ROCPoint(exp(double(i)/5-10), 0, 0) );
             data->ROCmetsig2012.push_back( ROCPoint(exp(double(i)/5-10), 0, 0) );
+            data->ROCmetrht.push_back( ROCPoint(exp(double(i)/5-10), 0, 0) );
          }
       }
 
@@ -459,7 +459,8 @@ int main(int argc, char* argv[]){
                // met
                for( int i = 0; i < int(data->ROCmet.size()); i++ ){
                   data->ROCmet[i].total += 1;
-                  if( data->channel.compare("Ttbar1lept") == 0 ){
+                  if( data->channel.compare("Ttbar1lept") == 0
+                        or data->channel.compare("Ttbar0lept") == 0 ){
                      if( ev->met < data->ROCmet[i].cut ) data->ROCmet[i].pass += 1;
                   }else{
                      if( ev->met > data->ROCmet[i].cut ) data->ROCmet[i].pass += 1;
@@ -468,7 +469,8 @@ int main(int argc, char* argv[]){
                // metsig2011
                for( int i = 0; i < int(data->ROCmetsig2011.size()); i++ ){
                   data->ROCmetsig2011[i].total += 1;
-                  if( data->channel.compare("Ttbar1lept") == 0 ){
+                  if( data->channel.compare("Ttbar1lept") == 0
+                        or data->channel.compare("Ttbar0lept") == 0 ){
                      if(ev->metsig2011 < data->ROCmetsig2011[i].cut) data->ROCmetsig2011[i].pass+=1;
                   }else{
                      if(ev->metsig2011 > data->ROCmetsig2011[i].cut) data->ROCmetsig2011[i].pass+=1;
@@ -477,12 +479,29 @@ int main(int argc, char* argv[]){
                // metsig2012
                for( int i = 0; i < int(data->ROCmetsig2012.size()); i++ ){
                   data->ROCmetsig2012[i].total += 1;
-                  if( data->channel.compare("Ttbar1lept") == 0 ){
+                  if( data->channel.compare("Ttbar1lept") == 0
+                        or data->channel.compare("Ttbar0lept") == 0 ){
                      if(ev->sig < data->ROCmetsig2012[i].cut) data->ROCmetsig2012[i].pass += 1;
                   }else{
                      if(ev->sig > data->ROCmetsig2012[i].cut) data->ROCmetsig2012[i].pass += 1;
                   }
                }
+               // dumb metsig
+               double ht = ev->pjet_scalptL123;
+               for(int i=0; i < int(ev->jet_ptUncor.size()); i++){
+                  ht += ev->jet_ptL123[i];
+               }
+               double metrht = pow(ev->met,2)/ht;
+               for( int i = 0; i < int(data->ROCmetrht.size()); i++ ){
+                  data->ROCmetrht[i].total += 1;
+                  if( data->channel.compare("Ttbar1lept") == 0
+                        or data->channel.compare("Ttbar0lept") == 0 ){
+                     if(metrht < data->ROCmetrht[i].cut) data->ROCmetrht[i].pass += 1;
+                  }else{
+                     if(metrht > data->ROCmetrht[i].cut) data->ROCmetrht[i].pass += 1;
+                  }
+               }
+
             }
          } // ROC curve
 
@@ -498,6 +517,7 @@ int main(int argc, char* argv[]){
       TGraph* gROCmet = new TGraph();
       TGraph* gROCmetsig2011 = new TGraph();
       TGraph* gROCmetsig2012 = new TGraph();
+      TGraph* gROCmetrht = new TGraph();
 
       vector<Dataset>::iterator datatemp = datasets.end() - 1;
       vector<int> met_sigpass(datatemp->ROCmet.size(),0);
@@ -514,6 +534,11 @@ int main(int argc, char* argv[]){
       vector<int> metsig2012_bkgpass(datatemp->ROCmetsig2012.size(),0);
       vector<int> metsig2012_sigtot(datatemp->ROCmetsig2012.size(),0);
       vector<int> metsig2012_bkgtot(datatemp->ROCmetsig2012.size(),0);
+
+      vector<int> metrht_sigpass(datatemp->ROCmetrht.size(),0);
+      vector<int> metrht_bkgpass(datatemp->ROCmetrht.size(),0);
+      vector<int> metrht_sigtot(datatemp->ROCmetrht.size(),0);
+      vector<int> metrht_bkgtot(datatemp->ROCmetrht.size(),0);
 
       for( vector<Dataset>::iterator data = datasets.begin(); data != datasets.end(); data++ ){
          if( data->isMC ){
@@ -532,6 +557,10 @@ int main(int argc, char* argv[]){
                   metsig2012_sigpass[i] += data->ROCmetsig2012[i].pass;
                   metsig2012_sigtot[i] += data->ROCmetsig2012[i].total;
                }
+               for(int i=0; i < int(data->ROCmetrht.size()); i++){ // metrht
+                  metrht_sigpass[i] += data->ROCmetrht[i].pass;
+                  metrht_sigtot[i] += data->ROCmetrht[i].total;
+               }
             //}else if( string::npos != string(data->channel).find("DY")
             //      or string::npos != string(data->channel).find("QCD") 
             //      or string::npos != string(data->channel).find("Gamma")
@@ -548,6 +577,10 @@ int main(int argc, char* argv[]){
                for(int i=0; i < int(data->ROCmetsig2012.size()); i++){ // metsig2012
                   metsig2012_bkgpass[i] += data->ROCmetsig2012[i].pass;
                   metsig2012_bkgtot[i] += data->ROCmetsig2012[i].total;
+               }
+               for(int i=0; i < int(data->ROCmetrht.size()); i++){ // metrht
+                  metrht_bkgpass[i] += data->ROCmetrht[i].pass;
+                  metrht_bkgtot[i] += data->ROCmetrht[i].total;
                }
             }
 
@@ -566,23 +599,31 @@ int main(int argc, char* argv[]){
          gROCmetsig2012->SetPoint(i, double(metsig2012_bkgpass[i])/metsig2012_bkgtot[i],
                double(metsig2012_sigpass[i])/metsig2012_sigtot[i]);
       }
+      for(int i=0; i < int(metrht_sigpass.size()); i++){ // metrht
+         gROCmetrht->SetPoint(i, double(metrht_bkgpass[i])/metrht_bkgtot[i],
+               double(metrht_sigpass[i])/metrht_sigtot[i]);
+      }
 
       TCanvas* cROC = new TCanvas("cROC","cROC",800,800);
       cROC->cd();
 
       gROCmet->SetTitle("ROC Curve;Background Efficiency;Signal Efficiency");
 
-      gROCmet->SetMarkerStyle(20);
+      gROCmet->SetMarkerStyle(21);
       gROCmet->SetMarkerColor(1);
       gROCmet->Draw("AP");
 
-      gROCmetsig2011->SetMarkerStyle(20);
-      gROCmetsig2011->SetMarkerColor(2);
+      gROCmetsig2012->SetMarkerStyle(20);
+      gROCmetsig2012->SetMarkerColor(2);
+      gROCmetsig2012->Draw("P");
+
+      gROCmetsig2011->SetMarkerStyle(22);
+      gROCmetsig2011->SetMarkerColor(4);
       gROCmetsig2011->Draw("P");
 
-      gROCmetsig2012->SetMarkerStyle(20);
-      gROCmetsig2012->SetMarkerColor(3);
-      gROCmetsig2012->Draw("P");
+      gROCmetrht->SetMarkerStyle(23);
+      gROCmetrht->SetMarkerColor(5);
+      gROCmetrht->Draw("P");
 
       TF1* fline = new TF1("fline", "x", 0, 1);
       fline->SetLineColor(1);
@@ -593,12 +634,17 @@ int main(int argc, char* argv[]){
       lROC->AddEntry(gROCmet,"met","p");
       lROC->AddEntry(gROCmetsig2011,"metsig2011","p");
       lROC->AddEntry(gROCmetsig2012,"metsig2012","p");
+      lROC->AddEntry(gROCmetrht,"met/#sqrt{H_T}","p");
       lROC->Draw("same");
 
-      cROC->Print("results/ROCplot.root");
+      TFile *file = new TFile(fileout.c_str(),"UPDATE");
+      file->cd();
+      cROC->Write();
+      file->Close();
 
       delete cROC;
       delete lROC;
+      delete file;
    } // ROC plots
 
    return 0;

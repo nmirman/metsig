@@ -78,7 +78,7 @@ struct event {
 class Fitter{
    public:
 
-      Fitter();
+      Fitter(double=1);
       ~Fitter();
 
       void ReadNtuple(const char[], vector<event>&, const double, const bool,
@@ -95,6 +95,7 @@ class Fitter{
       double jetbinpt, jetcorrpt;
       double psig_nvert_corr, psig_qt_corr, pchi2slope_left, pchi2slope_right;
       int met_type;
+      double rebin;
 
       ROOT::Minuit2::Minuit2Minimizer* gMinuit;
 

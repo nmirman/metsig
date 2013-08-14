@@ -59,7 +59,7 @@ int main(int argc, char* argv[]){
    double numevents = 1;
    bool do_resp_correction=false;
    int met_type = -1;
-   string file_results = "results/fitresults.root";
+   string file_results = "/fitresults.root";
    string file_plots = "results/plotsDataMC.root";
    while( (c = getopt(argc, argv, "n:j:m:r:p:hscob")) != -1 ) {
       switch(c)
@@ -224,9 +224,8 @@ int main(int argc, char* argv[]){
    }else {
       pathstr = path;
    }
-   string outfilename = "/fitresults.root";
 
-   TFile *file = new TFile(file_results.c_str(), "RECREATE");
+   TFile *file = new TFile((pathstr+file_results).c_str(), "RECREATE");
    file->cd();
    tree->Write();
    file->Write();

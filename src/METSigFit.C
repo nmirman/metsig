@@ -37,7 +37,7 @@ using namespace std;
 // constructor and destructor
 //
 
-Fitter::Fitter(){
+Fitter::Fitter(double b /*=1*/){
    // MINUIT variables
    gMinuit = 0;
    fFunc = 0;
@@ -56,64 +56,65 @@ Fitter::Fitter(){
    TH1::SetDefaultSumw2();
 
    // data hists for plotting
-   histsData_["muon_pt"] = new TH1D("muon_pt_Data", "Muon p_{T}", 50, 0, 200);
-   histsData_["muon_invmass"] = new TH1D("muon_invmass_Data", "M_{#mu#mu}", 50, 0, 200);
-   histsData_["njets"  ] = new TH1D("njets_Data", "N jets", 100, 0, 100);
-   histsData_["jet_pt" ] = new TH1D("jet_pt_Data", "Jet p_{T}", 50, 0, 200);
-   histsData_["jet1_pt"] = new TH1D("jet1_pt_Data", "Jet 1 p_{T}", 50, 0, 200);
-   histsData_["jet_eta" ] = new TH1D("jet_eta_Data", "Jet #eta, p_{T} > 30 GeV", 50, -5, 5);
-   histsData_["pjet_size"  ] = new TH1D("pjet_size_Data", "N jets", 50, 0, 500);
-   histsData_["pjet_scalptL123"] = new TH1D("pjet_scalptL123_Data", "Pseudojet Scalar p_{T} (L123-corrected)", 200, 0, 2000);
-   histsData_["pjet_vectptL123"] = new TH1D("pjet_vectptL123_Data", "Pseudojet Scalar p_{T} (L123-corrected)", 50, 0, 200);
-   histsData_["pjet_scalptT1"] = new TH1D("pjet_scalptT1_Data", "Pseudojet Scalar p_{T} (T1-corrected)", 200, 0, 2000);
-   histsData_["pjet_vectptT1"] = new TH1D("pjet_vectptT1_Data", "Pseudojet Scalar p_{T} (T1-corrected)", 50, 0, 200);
-   histsData_["pjet_phi"] = new TH1D("pjet_phi_Data", "Pseudojet Phi", 50, -3.5, 3.5);
-   histsData_["qt"] = new TH1D("qt_Data", "q_{T}", 50, 0, 200);
-   histsData_["ut_par"] = new TH1D("ut_par_Data", "|u_{T}|_{#parallel}", 50, 0, 100);
-   histsData_["nvert"] = new TH1D("nvert_Data", "N Vertices", 50, 0, 100);
-   histsData_["cov_xx"] = new TH1D("cov_xx_Data", "Cov_{xx}", 50, 0, 500);
-   histsData_["cov_xy"] = new TH1D("cov_xy_Data", "Cov_{xy}", 50, -150, 150);
-   histsData_["cov_yy"] = new TH1D("cov_yy_Data", "Cov_{yy}", 50, 0, 500);
-   histsData_["met"] = new TH1D("met_Data", "Missing E_{T}", 50, 0, 100);
-   histsData_["met_200"] = new TH1D("met_200_Data", "Missing E_{T}", 50, 0, 200);
-   histsData_["sig"] = new TH1D("sig_Data", "Significance", 50, 0, 500);
-   histsData_["sig_100"] = new TH1D("sig_100_Data", "Significance", 50, 0, 100);
-   histsData_["sig_15"] = new TH1D("sig_15_Data", "Significance", 50, 0, 15);
-   histsData_["sig_old"] = new TH1D("sig_old_Data", "Old Significance", 50, 0, 500);
-   histsData_["det"] = new TH1D("det_Data", "Determinant", 50, 0, 100000);
-   histsData_["pchi2"] = new TH1D("pchi2_Data", "P(#chi^{2})", 50, 0, 1);
-   histsData_["pchi2_old"] = new TH1D("pchi2_old-Data", "P(#chi^{2}) from Old Sig", 50, 0, 1);
-   histsData_["logpchi2"] = new TH1D("logpchi2_Data", "log(P(#chi^{2}))", 50, -50, 0);
-   histsData_["cov_xx_highpt"] = new TH1D("cov_xx_highpt_Data", "Cov_{xx} High-p_{T} Jets", 50, 0, 500);
-   histsData_["cov_xx_pjet"] = new TH1D("cov_xx_pjet_Data", "Cov_{xx} Pseudojet", 50, 0, 500);
-   histsData_["cov_xx_ratio"] = new TH1D("cov_xx_ratio_Data", "Cov_{xx} High-p_{T}/Total", 50, 0, 1 );
-   histsData_["met_varx"] = new TH1D("met_varx_Data","#sigma_{x}^{2} for MET smearing",50,-10,30);
-   histsData_["met_vary"] = new TH1D("met_vary_Data","#sigma_{y}^{2} for MET smearing",50,-10,30);
-   histsData_["met_rho"] = new TH1D("met_rho_Data", "#rho for MET smearing", 50, -10, 10);
+   rebin = b;
+   histsData_["muon_pt"] = new TH1D("muon_pt_Data", "Muon p_{T}", 50/b, 0, 200);
+   histsData_["muon_invmass"] = new TH1D("muon_invmass_Data", "M_{#mu#mu}", 50/b, 0, 200);
+   histsData_["njets"  ] = new TH1D("njets_Data", "N jets", 100/b, 0, 100);
+   histsData_["jet_pt" ] = new TH1D("jet_pt_Data", "Jet p_{T}", 50/b, 0, 200);
+   histsData_["jet1_pt"] = new TH1D("jet1_pt_Data", "Jet 1 p_{T}", 50/b, 0, 200);
+   histsData_["jet_eta" ] = new TH1D("jet_eta_Data", "Jet #eta, p_{T} > 30 GeV", 50/b, -5, 5);
+   histsData_["pjet_size"  ] = new TH1D("pjet_size_Data", "N jets", 50/b, 0, 500);
+   histsData_["pjet_scalptL123"] = new TH1D("pjet_scalptL123_Data", "Pseudojet Scalar p_{T} (L123-corrected)", 200/b, 0, 2000);
+   histsData_["pjet_vectptL123"] = new TH1D("pjet_vectptL123_Data", "Pseudojet Scalar p_{T} (L123-corrected)", 50/b, 0, 200);
+   histsData_["pjet_scalptT1"] = new TH1D("pjet_scalptT1_Data", "Pseudojet Scalar p_{T} (T1-corrected)", 200/b, 0, 2000);
+   histsData_["pjet_vectptT1"] = new TH1D("pjet_vectptT1_Data", "Pseudojet Scalar p_{T} (T1-corrected)", 50/b, 0, 200);
+   histsData_["pjet_phi"] = new TH1D("pjet_phi_Data", "Pseudojet Phi", 50/b, -3.5, 3.5);
+   histsData_["qt"] = new TH1D("qt_Data", "q_{T}", 50/b, 0, 200);
+   histsData_["ut_par"] = new TH1D("ut_par_Data", "|u_{T}|_{#parallel}", 50/b, 0, 100);
+   histsData_["nvert"] = new TH1D("nvert_Data", "N Vertices", 50/b, 0, 100);
+   histsData_["cov_xx"] = new TH1D("cov_xx_Data", "Cov_{xx}", 50/b, 0, 500);
+   histsData_["cov_xy"] = new TH1D("cov_xy_Data", "Cov_{xy}", 50/b, -150, 150);
+   histsData_["cov_yy"] = new TH1D("cov_yy_Data", "Cov_{yy}", 50/b, 0, 500);
+   histsData_["met"] = new TH1D("met_Data", "Missing E_{T}", 50/b, 0, 100);
+   histsData_["met_200"] = new TH1D("met_200_Data", "Missing E_{T}", 50/b, 0, 200);
+   histsData_["sig"] = new TH1D("sig_Data", "Significance", 50/b, 0, 500);
+   histsData_["sig_100"] = new TH1D("sig_100_Data", "Significance", 50/b, 0, 100);
+   histsData_["sig_15"] = new TH1D("sig_15_Data", "Significance", 50/b, 0, 15);
+   histsData_["sig_old"] = new TH1D("sig_old_Data", "Old Significance", 50/b, 0, 500);
+   histsData_["det"] = new TH1D("det_Data", "Determinant", 50/b, 0, 100000);
+   histsData_["pchi2"] = new TH1D("pchi2_Data", "P(#chi^{2})", 50/b, 0, 1);
+   histsData_["pchi2_old"] = new TH1D("pchi2_old-Data", "P(#chi^{2}) from Old Sig", 50/b, 0, 1);
+   histsData_["logpchi2"] = new TH1D("logpchi2_Data", "log(P(#chi^{2}))", 50/b, -50, 0);
+   histsData_["cov_xx_highpt"] = new TH1D("cov_xx_highpt_Data", "Cov_{xx} High-p_{T} Jets", 50/b, 0, 500);
+   histsData_["cov_xx_pjet"] = new TH1D("cov_xx_pjet_Data", "Cov_{xx} Pseudojet", 50/b, 0, 500);
+   histsData_["cov_xx_ratio"] = new TH1D("cov_xx_ratio_Data", "Cov_{xx} High-p_{T}/Total", 50/b, 0, 1 );
+   histsData_["met_varx"] = new TH1D("met_varx_Data","#sigma_{x}^{2} for MET smearing",50/b,-10,30);
+   histsData_["met_vary"] = new TH1D("met_vary_Data","#sigma_{y}^{2} for MET smearing",50/b,-10,30);
+   histsData_["met_rho"] = new TH1D("met_rho_Data", "#rho for MET smearing", 50/b, -10, 10);
    histsData_["pjet_axesratio"] = new TH1D("pjet_axesratio_Data",
-         "Pseudo-jet Ratio of Major/Semi-Major Axes", 50, 0, 1);
+         "Pseudo-jet Ratio of Major/Semi-Major Axes", 50/b, 0, 1);
    histsData_["pjet_tiltangle"] = new TH1D("pjet_tiltangle_Data", "Tilt Angle of Pseudo-jet",
-         50, -2, 2);
+         50/b, -2, 2);
    histsData_["pjet_tiltangle_rel"] = new TH1D("pjet_tiltangle_rel_Data",
-      "Tilt Angle of Pseudo-jet relative to Pseudo-jet Momentum", 50, -2, 2);
+      "Tilt Angle of Pseudo-jet relative to Pseudo-jet Momentum", 50/b, -2, 2);
 
    // profile histograms
    profsData_["psig_nvert"] = new TH2D("psig_nvert_Data",
-         "Significance vs. N Vertices;N Vertices;<S_{E}>", 30, 0, 30, 50, 0, 50);
+         "Significance vs. N Vertices;N Vertices;<S_{E}>", 30/b, 0, 30, 50/b, 0, 50);
    profsData_["psig_qt"] = new TH2D("psig_qt_Data",
-         "Significance vs. q_{T};q_{T} (GeV);<S_{E}>", 15, 0, 50, 100, 0, 50);
+         "Significance vs. q_{T};q_{T} (GeV);<S_{E}>", 15/b, 0, 50, 100/b, 0, 50);
    profsData_["presp_qt"] = new TH2D("presp_qt_Data",
-         "Response = |<u_{#parallel}>|/q_{T} vs. q_{T};q_{T} (GeV);Response", 25, 0, 50, 100, -100, 100);
+         "Response = |<u_{#parallel}>|/q_{T} vs. q_{T};q_{T} (GeV);Response", 25/b, 0, 50, 100/b, -100, 100);
    profsData_["pMET_nvert"] = new TH2D("pMET_nvert_Data",
-         "MET vs. N Vertices;N Vertices;<MET>", 30, 0, 30, 50, 0, 100);
+         "MET vs. N Vertices;N Vertices;<MET>", 30/b, 0, 30, 50/b, 0, 100);
    profsData_["pjet_scalptL123_nvert"] = new TH2D("pjet_scalpt_nvert_Data",
-         "Pseudojet Scalar p_{T} vs. N Vertices", 30, 0, 30, 200, 0, 2000);
+         "Pseudojet Scalar p_{T} vs. N Vertices", 30/b, 0, 30, 200/b, 0, 2000);
    profsData_["jet_pt_nvert"] = new TH2D("jet_pt_nvert_Data",
-         "Jet p_{T} vs. N Vertices", 30, 0, 30, 50, 0, 200);
+         "Jet p_{T} vs. N Vertices", 30/b, 0, 30, 50/b, 0, 200);
    profsData_["njets_nvert"] = new TH2D("njets_nvert_Data",
-         "N jets vs. N Vertices", 30, 0, 30, 50, 0, 100);
+         "N jets vs. N Vertices", 30/b, 0, 30, 50/b, 0, 100);
    profsData_["sig_met"] = new TH2D("sig_met_Data",
-         "Significance vs. MET", 500, 0, 100, 500, 0, 30);
+         "Significance vs. MET", 500/b, 0, 100, 500/b, 0, 30);
 
    // clone data hists for MC
    for(map<string,TH1*>::const_iterator it = histsData_.begin();
@@ -1407,4 +1408,6 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
    psig_nvert_corr = profsData_["psig_nvert"]->GetCorrelationFactor();
    psig_qt_corr = profsData_["psig_qt"]->GetCorrelationFactor();
 
+   file->Close();
+   delete file;
 }
