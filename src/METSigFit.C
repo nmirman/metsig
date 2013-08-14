@@ -18,6 +18,7 @@
 #include "TMatrixD.h"
 #include "TMatrixD.h"
 #include "TMatrixDEigen.h"
+#include "TVirtualFFT.h"
 
 #include <cmath>
 #include <iostream>
@@ -223,6 +224,14 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    float pfj_l1[1000];
    float pfj_l1l2l3[1000];
 
+   float pfj_jetres_par0[1000];
+   float pfj_jetres_par1[1000];
+   float pfj_jetres_par2[1000];
+   float pfj_jetres_par3[1000];
+   float pfj_jetres_par4[1000];
+   float pfj_jetres_par5[1000];
+   float pfj_jetres_par6[1000];
+
    float puMyWeight = 1;
 
    int genj_size=0;
@@ -283,6 +292,14 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
 
    tree->SetBranchAddress("pfj_l1", pfj_l1);
    tree->SetBranchAddress("pfj_l1l2l3", pfj_l1l2l3);
+
+   tree->SetBranchAddress("pfj_jetres_par0", pfj_jetres_par0);
+   tree->SetBranchAddress("pfj_jetres_par1", pfj_jetres_par1);
+   tree->SetBranchAddress("pfj_jetres_par2", pfj_jetres_par2);
+   tree->SetBranchAddress("pfj_jetres_par3", pfj_jetres_par3);
+   tree->SetBranchAddress("pfj_jetres_par4", pfj_jetres_par4);
+   tree->SetBranchAddress("pfj_jetres_par5", pfj_jetres_par5);
+   tree->SetBranchAddress("pfj_jetres_par6", pfj_jetres_par6);
 
    if(isMC){
       tree->SetBranchAddress("gi_xsec", &gi_xsec);
@@ -515,6 +532,14 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
 
             evtemp.jet_ptL123.push_back( jet_ptL123_temp );
             evtemp.jet_ptT1.push_back( jet_ptT1_temp );
+
+            evtemp.jet_res_par0.push_back(pfj_jetres_par0[i]);
+            evtemp.jet_res_par1.push_back(pfj_jetres_par1[i]);
+            evtemp.jet_res_par2.push_back(pfj_jetres_par2[i]);
+            evtemp.jet_res_par3.push_back(pfj_jetres_par3[i]);
+            evtemp.jet_res_par4.push_back(pfj_jetres_par4[i]);
+            evtemp.jet_res_par5.push_back(pfj_jetres_par5[i]);
+            evtemp.jet_res_par6.push_back(pfj_jetres_par6[i]);
 
          } else {
             // pseudojet with unclustered energy
@@ -857,6 +882,304 @@ void Fitter::MatchMCjets(vector<event>& eventref_temp){
 
 }
 */
+
+//
+// Yimin's full jet resolution shapes
+//
+void Fitter::ComplexMult(int entries, double *re1, double *im1, double *re2, double *im2, double *reF, double *imF){
+   for (int i=0; i<entries; i++){
+      double tempre1=re1[i];
+      double tempim1=im1[i];
+      double tempre2=re2[i];
+      double tempim2=im2[i];
+      reF[i]=tempre1*tempre2-tempim1*tempim2;
+      imF[i]=tempre1*tempim2+tempre2*tempim1;
+   }
+}
+
+void Fitter::FFTConvolution(int dim, int *nbin, int njet, double *f, double *result){
+   if (njet==1) {
+      result=f;
+      return;
+   }
+   TVirtualFFT *ft= TVirtualFFT::FFT(dim, nbin, "R2C");
+
+   //initialization
+      int temp=1;
+   for (int i=0; i<dim; i++) temp*=nbin[i];
+   const int entries=temp;
+   double repro[entries];
+   double impro[entries];
+   for (int i=0; i<entries; i++){
+      repro[i]=1;
+      impro[i]=0;
+   }
+
+   for (int i=0; i<njet; i++){
+      //printf("\n------data=%f------\n", *(f+nbin*i));
+      ft->SetPoints((double *)(f+entries*i));
+      ft->Transform();
+
+      double retemp[entries];
+      double imtemp[entries];
+      ft->GetPointsComplex(retemp,imtemp);
+
+      ComplexMult(entries, retemp, imtemp, repro, impro, repro, impro);
+   }
+
+   //transform backwards
+   TVirtualFFT *bft= TVirtualFFT::FFT(dim, nbin, "C2R");
+   bft->SetPointsComplex(repro,impro);
+   bft->Transform();
+   double tempa[entries];
+   bft->GetPoints(tempa);
+   for (int i=0; i<nbin[0]; i++)
+      for (int j=0; j<nbin[1]; j++)
+         result[(i+nbin[0]/2*(njet-1))%nbin[0]*nbin[1]+(j+nbin[1]/2*(njet-1))%nbin[1]]=tempa[i*nbin[1]+j];
+}
+
+
+void Fitter::FullShapeSig(const double *x, vector<event>& eventref_temp, bool fullshape){
+   int option=(fullshape)? 1:-1;
+   const int nbin=128;
+   const int range=4;
+   const int pseudoin=0;
+   int mishit=0;
+   int count=0; 
+   if (option==1) cout << "##### Fullshape Significance #####" << endl;
+   // random number engine for MET-smearing
+   ROOT::Math::Random<ROOT::Math::GSLRngMT> GSLr;
+
+   for( vector<event>::iterator ev = eventref_temp.begin(); ev < eventref_temp.end(); ev++){
+      double met_x=0;
+      double met_y=0;
+      double cov_xx=0;
+      double cov_xy=0;
+      double cov_yy=0;
+      double cov_xx_pjet=0;
+      cout << count <<endl;
+
+      // muons -- assume zero resolutions
+      for(int i=0; i < int(ev->muon_pt.size()); i++){
+         met_x -= cos(ev->muon_phi[i])*(ev->muon_pt[i]);
+         met_y -= sin(ev->muon_phi[i])*(ev->muon_pt[i]);
+      }
+
+      // electrons -- assume zero resolutions
+      for(int i=0; i < int(ev->electron_pt.size()); i++){
+         met_x -= cos(ev->electron_phi[i])*(ev->electron_pt[i]);
+         met_y -= sin(ev->electron_phi[i])*(ev->electron_pt[i]);
+
+         cov_xx += pow(0.01*ev->electron_pt[i],2);
+         cov_yy += pow(0.01*ev->electron_pt[i],2);
+      }
+
+      // unclustered energy -- parameterize by scalar sum of ET
+      double c = cos(ev->pjet_phiT1);
+      double s = sin(ev->pjet_phiT1);
+
+      met_x -= c*(ev->pjet_vectptT1);
+      met_y -= s*(ev->pjet_vectptT1);
+
+      double ctt = x[5]*x[5] + x[6]*x[6]*(ev->pjet_scalptL123) + x[7]*(ev->nvertices);
+
+      if ((pseudoin)&&(option==1)){
+         //cov_xx += pow(pseudo->GetRMS(),2);
+         //cov_yy += pow(pseudo->GetRMS(),2);
+      } else {
+         cov_xx += ctt;
+         cov_yy += ctt;
+      }
+      cov_xx_pjet += ctt;
+
+      double sig=0;
+      // smear MC MET
+      double smear_x = 0;
+      double smear_y = 0;
+      double sigma_x = 0;
+      double sigma_y = 0;
+
+      if( ev->met_varx >= 0.0 and ev->met_vary >= 0.0 and fabs(ev->met_rho) <= 1.0 ){
+
+         sigma_x = sqrt(ev->met_varx);
+         sigma_y = sqrt(ev->met_vary);
+
+         GSLr.Gaussian2D( sigma_x, sigma_y, ev->met_rho, smear_x, smear_y );
+         met_x += smear_x;
+         met_y += smear_y;
+
+      }
+
+      int failure=1;
+      if ((option==1)&&((ev->jet_ptUncor.size()>0)||(pseudoin))){
+         // Full shape(non-Gaussian)
+         //
+         // clustered jets
+         // full shape histogram range estimation
+         double thisrange=range; 
+         while (failure) {
+            if (thisrange>16) break;
+            double stdx=cov_xx;
+            double stdy=cov_yy;
+            for(int i=0; i < int(ev->jet_ptUncor.size()); i++){
+               double para[7]={ev->jet_res_par0[i], ev->jet_res_par1[i], ev->jet_res_par2[i], ev->jet_res_par3[i], ev->jet_res_par4[i], ev->jet_res_par5[i], ev->jet_res_par6[i]};
+               c = cos(ev->jet_phi[i]);
+               s = sin(ev->jet_phi[i]);
+               stdx+=pow(para[2]*c*ev->jet_ptT1[i],2);
+               stdy+=pow(para[2]*s*ev->jet_ptT1[i],2);
+            }
+
+            stdx=pow(stdx,0.5);
+            stdy=pow(stdy,0.5);
+
+            if (stdx<5) stdx=5;
+            if (stdy<5) stdy=5;
+            double data[ev->jet_ptUncor.size()+1][nbin][nbin];
+            double result[nbin][nbin];
+            TH2F *res= new TH2F("met_res", "met_full_shape_resolution", nbin, -thisrange*stdx, thisrange*stdx, nbin, -thisrange*stdy, thisrange*stdy);
+            TH2F *tmpres= new TH2F("tmp_res", "tmp_full_shape_resolution", nbin, -thisrange*stdx, thisrange*stdx, nbin, -thisrange*stdy, thisrange*stdy);
+
+
+            // Full shape resolution (FFT algorithm) 
+
+            // Fill in all jet resolution
+            for(int i=0; i < int(ev->jet_ptUncor.size()); i++){
+               double para[7]={ev->jet_res_par0[i], ev->jet_res_par1[i], ev->jet_res_par2[i], ev->jet_res_par3[i], ev->jet_res_par4[i], ev->jet_res_par5[i], ev->jet_res_par6[i]};
+               double dph=0;
+               c = cos(ev->jet_phi[i]);
+               s = sin(ev->jet_phi[i]);
+               met_x -= c*(ev->jet_ptT1[i]);
+               met_y -= s*(ev->jet_ptT1[i]);
+
+               // resolutions for two jet categories
+               if( true || ev->jet_ptL123[i] > jetbinpt ){ //dummy true
+
+                  // CMS 2010 Resolutions -- parameterized by L123 corrected pt
+                  dph = dph_(ev->jet_ptL123[i], ev->jet_eta[i]);
+               }else{
+                  cout << "ERROR: JET PT OUT OF RANGE" << endl;
+               }
+
+               for (int j=0; j<nbin; j++) for (int k=0; k<nbin; k++){
+                  double px=tmpres->GetXaxis()->GetBinCenter(j+1)+c*(ev->jet_ptT1[i]);   
+                  double py=tmpres->GetYaxis()->GetBinCenter(k+1)+s*(ev->jet_ptT1[i]);   
+                  double pt=pow(pow(px,2)+pow(py,2),0.5);
+                  double phi;
+                  if (py>0) phi=acos(px/pt); else phi=-acos(px/pt);
+                  double r=pt/ev->jet_ptT1[i];
+                  tmpres->SetBinContent(j+1,k+1,fnc_dscb(&r,para)*TMath::Gaus(phi,ev->jet_phi[i],dph,1));
+               }
+
+               //Normalization
+               tmpres->Scale(1.0/tmpres->Integral("width"));
+               for (int j=0; j<nbin; j++) for (int k=0; k<nbin; k++){
+                  int xx= (j==0)? nbin:j;
+                  int yy= (k==0)? nbin:k;
+                  //calculate the value at bin boundary to avoid halfbin shifting
+                  //during FFT
+                  data[i][j][k]=0.25*(tmpres->GetBinContent(xx,yy)+tmpres->GetBinContent(j+1,yy)+tmpres->GetBinContent(xx,k+1)+tmpres->GetBinContent(j+1,k+1));
+               }
+            }
+
+            //Fill in the pseudo-jet resolution 
+            for (int j=0; j<nbin; j++) for (int k=0; k<nbin; k++){
+               double px=tmpres->GetXaxis()->GetBinCenter(j+1);   
+               double py=tmpres->GetYaxis()->GetBinCenter(k+1);   
+               /*if (pseudoin) tmpres->SetBinContent(j+1,k+1,pseudo->GetBinContent(pseudo->FindBin(px))*pseudo->GetBinContent(pseudo->FindBin(py)));
+                 else */tmpres->SetBinContent(j+1,k+1,TMath::Gaus(px,0,pow(cov_xx,0.5),1)*TMath::Gaus(py,0,pow(cov_yy,0.5),1));
+            }
+
+            for (int j=0; j<nbin; j++) for (int k=0; k<nbin; k++){
+               int xx= (j==0)? nbin:j;
+               int yy= (k==0)? nbin:k;
+               //calculate the value at bin boundary to avoid halfbin shifting
+               //during FFT
+               data[ev->jet_ptUncor.size()][j][k]=0.25*(tmpres->GetBinContent(xx,yy)+tmpres->GetBinContent(j+1,yy)+tmpres->GetBinContent(xx,k+1)+tmpres->GetBinContent(j+1,k+1));
+            }
+
+            //FFT
+            int bin[2]={nbin,nbin};
+            FFTConvolution(2, &(bin[0]), ev->jet_ptUncor.size()+1, &(data[0][0][0]), &(result[0][0]));
+
+            //Fill in backFFT results
+            for (int j=0; j<nbin; j++) for (int k=0; k<nbin; k++){
+               int xx= (j==nbin-1)? 0:j+1;
+               int yy= (k==nbin-1)? 0:k+1;
+               //calculate the value at the center of the bin and then fill the
+               //histogram
+               res->SetBinContent(j+1, k+1, 0.25*(result[j][k]+result[xx][yy]+result[j][yy]+result[xx][k]));
+            }
+
+            if ((met_x>-thisrange*stdx) && (met_x<thisrange*stdx) && (met_y<thisrange*stdy) && (met_y>-thisrange*stdy)){
+               sig=-2*log(res->GetBinContent(res->FindBin(met_x,met_y))/res->GetBinContent(res->FindBin(0,0)));
+               failure=0;
+            } else {
+               thisrange += 2; 
+               failure=0;
+            }
+            //destory the histogram and free the memory
+            res->~TH2F();
+            tmpres->~TH2F();
+         }
+      } else {
+         // Guassian Shape
+         // Direct calculation
+
+         // clustered jets
+         for(int i=0; i < int(ev->jet_ptUncor.size()); i++){
+
+            float feta = fabs(ev->jet_eta[i]);
+            c = cos(ev->jet_phi[i]);
+            s = sin(ev->jet_phi[i]);
+
+            met_x -= c*(ev->jet_ptT1[i]);
+            met_y -= s*(ev->jet_ptT1[i]);
+
+            double dpt=0;
+            double dph=0;
+
+            // resolutions for two jet categories
+            if( true || ev->jet_ptL123[i] > jetbinpt ){ //dummy true
+
+               int index=-1;
+               if(feta<0.5) index=0;
+               else if(feta<1.1) index=1;
+               else if(feta<1.7) index=2;
+               else if(feta<2.3) index=3;
+               else{
+                  index=4;
+               }
+
+               // CMS 2010 Resolutions -- parameterized by L123 corrected pt
+               dpt = x[index] * (ev->jet_ptT1[i]) * dpt_(ev->jet_ptL123[i], ev->jet_eta[i]);
+               dph =            (ev->jet_ptT1[i]) * dph_(ev->jet_ptL123[i], ev->jet_eta[i]);
+
+            }else{
+               cout << "ERROR: JET PT OUT OF RANGE" << endl;
+            }
+
+            double dtt = dpt*dpt;
+            double dff = dph*dph;
+            cov_xx += dtt*c*c + dff*s*s;
+            cov_xy += (dtt-dff)*c*s;
+            cov_yy += dff*c*c + dtt*s*s;
+
+         }
+         double det = cov_xx*cov_yy - cov_xy*cov_xy;
+         double ncov_xx = cov_yy / det;
+         double ncov_xy = -cov_xy / det;
+         double ncov_yy = cov_xx / det;
+         sig = met_x*met_x*ncov_xx + 2*met_x*met_y*ncov_xy + met_y*met_y*ncov_yy;
+         //negcount++;
+         failure=0;
+      }
+
+      count++;
+      if (!failure) ev->sig=sig;
+   }  
+   return;
+}
+
 
 void Fitter::FillHists(vector<event>& eventref, string stackmode){
    if( eventref.size() == 0 ) return;

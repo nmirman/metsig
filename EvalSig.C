@@ -55,8 +55,9 @@ int main(int argc, char* argv[]){
    bool run_mc = true;
    int met_type = 4;
    double rebin = 1;
+   bool fullshape = false;
 
-   while( (c = getopt(argc, argv, "n:p:f:o:t:b:hscbmrdw")) != -1 ) {
+   while( (c = getopt(argc, argv, "n:p:o:t:b:fhscbmrdw")) != -1 ) {
       switch(c)
       {
          case 'n' :
@@ -87,6 +88,10 @@ int main(int argc, char* argv[]){
             compute_roc = true;
             break;
 
+         case 'd':
+            run_data = false;
+            break;
+
          case 'w':
             run_mc = false;
             break;
@@ -97,6 +102,10 @@ int main(int argc, char* argv[]){
 
          case 'b':
             rebin = atof(optarg);
+            break;
+
+         case 'f':
+            fullshape = true;
             break;
 
          case 'h' :
@@ -114,6 +123,7 @@ int main(int argc, char* argv[]){
             cout << "\t-w\t          Do not run on MC.\n";
             cout << "\t-t <number>\t MET type, in range [-1,4].\n";
             cout << "\t-b <number>\t Rebin -- divide bins by number.\n";
+            cout << "\t-f\t          Compute Significance with full jet resolution shapes.\n";
             cout << "\t-h\t          Display this menu.\n";
             return -1;
             break;
@@ -444,10 +454,18 @@ int main(int argc, char* argv[]){
          }
 
          // compute significance
-         if( !(data->isMC) or smear_met ){
-            fitter.FindSignificance(parData, eventvec);
+         if( !fullshape ){
+            if( !(data->isMC) or smear_met ){
+               fitter.FindSignificance(parData, eventvec);
+            }else{
+               fitter.FindSignificance(parMC, eventvec);
+            }
          }else{
-            fitter.FindSignificance(parMC, eventvec);
+            if( !(data->isMC) or smear_met ){
+               fitter.FullShapeSig(parData, eventvec);
+            }else{
+               fitter.FullShapeSig(parMC, eventvec);
+            }
          }
 
          // fill histograms
