@@ -16,9 +16,9 @@ using namespace std;
 
 struct ROCPoint {
    double cut;
-   int pass;
-   int total;
-   ROCPoint( double c, int p, int t ) : cut(c), pass(p), total(t) {}
+   double pass;
+   double total;
+   ROCPoint( double c, double p, double t ) : cut(c), pass(p), total(t) {}
 };
 
 struct Dataset {
@@ -415,9 +415,9 @@ int main(int argc, char* argv[]){
       if( compute_roc and data->isMC ){
          for(int i=0; i < 100; i++){
             data->ROCmet.push_back( ROCPoint(2*i, 0, 0) );
-            data->ROCmetsig2011.push_back( ROCPoint(exp(double(i)/5-10), 0, 0) );
-            data->ROCmetsig2012.push_back( ROCPoint(exp(double(i)/5-10), 0, 0) );
-            data->ROCmetrht.push_back( ROCPoint(exp(double(i)/5-10), 0, 0) );
+            data->ROCmetsig2011.push_back( ROCPoint(exp(double(i)/5-15), 0, 0) );
+            data->ROCmetsig2012.push_back( ROCPoint(exp(double(i)/5-15), 0, 0) );
+            data->ROCmetrht.push_back( ROCPoint(exp(double(i)/5-15), 0, 0) );
          }
       }
 
@@ -476,32 +476,34 @@ int main(int argc, char* argv[]){
             for(vector<event>::iterator ev = eventvec.begin(); ev < eventvec.end(); ev++){
                // met
                for( int i = 0; i < int(data->ROCmet.size()); i++ ){
-                  data->ROCmet[i].total += 1;
+                  data->ROCmet[i].total += ev->weight;
                   if( data->channel.compare("Ttbar1lept") == 0
                         or data->channel.compare("Ttbar0lept") == 0 ){
-                     if( ev->met < data->ROCmet[i].cut ) data->ROCmet[i].pass += 1;
+                     if( ev->met < data->ROCmet[i].cut ) data->ROCmet[i].pass += ev->weight;
                   }else{
-                     if( ev->met > data->ROCmet[i].cut ) data->ROCmet[i].pass += 1;
+                     if( ev->met > data->ROCmet[i].cut ) data->ROCmet[i].pass += ev->weight;
                   }
                }
                // metsig2011
                for( int i = 0; i < int(data->ROCmetsig2011.size()); i++ ){
-                  data->ROCmetsig2011[i].total += 1;
+                  data->ROCmetsig2011[i].total += ev->weight;
                   if( data->channel.compare("Ttbar1lept") == 0
                         or data->channel.compare("Ttbar0lept") == 0 ){
-                     if(ev->metsig2011 < data->ROCmetsig2011[i].cut) data->ROCmetsig2011[i].pass+=1;
+                     if(ev->metsig2011 < data->ROCmetsig2011[i].cut)
+                        data->ROCmetsig2011[i].pass += ev->weight;
                   }else{
-                     if(ev->metsig2011 > data->ROCmetsig2011[i].cut) data->ROCmetsig2011[i].pass+=1;
+                     if(ev->metsig2011 > data->ROCmetsig2011[i].cut)
+                        data->ROCmetsig2011[i].pass += ev->weight;
                   }
                }
                // metsig2012
                for( int i = 0; i < int(data->ROCmetsig2012.size()); i++ ){
-                  data->ROCmetsig2012[i].total += 1;
+                  data->ROCmetsig2012[i].total += ev->weight;
                   if( data->channel.compare("Ttbar1lept") == 0
                         or data->channel.compare("Ttbar0lept") == 0 ){
-                     if(ev->sig < data->ROCmetsig2012[i].cut) data->ROCmetsig2012[i].pass += 1;
+                     if(ev->sig < data->ROCmetsig2012[i].cut) data->ROCmetsig2012[i].pass += ev->weight;
                   }else{
-                     if(ev->sig > data->ROCmetsig2012[i].cut) data->ROCmetsig2012[i].pass += 1;
+                     if(ev->sig > data->ROCmetsig2012[i].cut) data->ROCmetsig2012[i].pass += ev->weight;
                   }
                }
                // dumb metsig
@@ -511,12 +513,12 @@ int main(int argc, char* argv[]){
                }
                double metrht = pow(ev->met,2)/ht;
                for( int i = 0; i < int(data->ROCmetrht.size()); i++ ){
-                  data->ROCmetrht[i].total += 1;
+                  data->ROCmetrht[i].total += ev->weight;
                   if( data->channel.compare("Ttbar1lept") == 0
                         or data->channel.compare("Ttbar0lept") == 0 ){
-                     if(metrht < data->ROCmetrht[i].cut) data->ROCmetrht[i].pass += 1;
+                     if(metrht < data->ROCmetrht[i].cut) data->ROCmetrht[i].pass += ev->weight;
                   }else{
-                     if(metrht > data->ROCmetrht[i].cut) data->ROCmetrht[i].pass += 1;
+                     if(metrht > data->ROCmetrht[i].cut) data->ROCmetrht[i].pass += ev->weight;
                   }
                }
 
@@ -538,25 +540,25 @@ int main(int argc, char* argv[]){
       TGraph* gROCmetrht = new TGraph();
 
       vector<Dataset>::iterator datatemp = datasets.end() - 1;
-      vector<int> met_sigpass(datatemp->ROCmet.size(),0);
-      vector<int> met_bkgpass(datatemp->ROCmet.size(),0);
-      vector<int> met_sigtot(datatemp->ROCmet.size(),0);
-      vector<int> met_bkgtot(datatemp->ROCmet.size(),0);
+      vector<double> met_sigpass(datatemp->ROCmet.size(),0);
+      vector<double> met_bkgpass(datatemp->ROCmet.size(),0);
+      vector<double> met_sigtot(datatemp->ROCmet.size(),0);
+      vector<double> met_bkgtot(datatemp->ROCmet.size(),0);
 
-      vector<int> metsig2011_sigpass(datatemp->ROCmetsig2011.size(),0);
-      vector<int> metsig2011_bkgpass(datatemp->ROCmetsig2011.size(),0);
-      vector<int> metsig2011_sigtot(datatemp->ROCmetsig2011.size(),0);
-      vector<int> metsig2011_bkgtot(datatemp->ROCmetsig2011.size(),0);
+      vector<double> metsig2011_sigpass(datatemp->ROCmetsig2011.size(),0);
+      vector<double> metsig2011_bkgpass(datatemp->ROCmetsig2011.size(),0);
+      vector<double> metsig2011_sigtot(datatemp->ROCmetsig2011.size(),0);
+      vector<double> metsig2011_bkgtot(datatemp->ROCmetsig2011.size(),0);
 
-      vector<int> metsig2012_sigpass(datatemp->ROCmetsig2012.size(),0);
-      vector<int> metsig2012_bkgpass(datatemp->ROCmetsig2012.size(),0);
-      vector<int> metsig2012_sigtot(datatemp->ROCmetsig2012.size(),0);
-      vector<int> metsig2012_bkgtot(datatemp->ROCmetsig2012.size(),0);
+      vector<double> metsig2012_sigpass(datatemp->ROCmetsig2012.size(),0);
+      vector<double> metsig2012_bkgpass(datatemp->ROCmetsig2012.size(),0);
+      vector<double> metsig2012_sigtot(datatemp->ROCmetsig2012.size(),0);
+      vector<double> metsig2012_bkgtot(datatemp->ROCmetsig2012.size(),0);
 
-      vector<int> metrht_sigpass(datatemp->ROCmetrht.size(),0);
-      vector<int> metrht_bkgpass(datatemp->ROCmetrht.size(),0);
-      vector<int> metrht_sigtot(datatemp->ROCmetrht.size(),0);
-      vector<int> metrht_bkgtot(datatemp->ROCmetrht.size(),0);
+      vector<double> metrht_sigpass(datatemp->ROCmetrht.size(),0);
+      vector<double> metrht_bkgpass(datatemp->ROCmetrht.size(),0);
+      vector<double> metrht_sigtot(datatemp->ROCmetrht.size(),0);
+      vector<double> metrht_bkgtot(datatemp->ROCmetrht.size(),0);
 
       for( vector<Dataset>::iterator data = datasets.begin(); data != datasets.end(); data++ ){
          if( data->isMC ){
