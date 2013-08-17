@@ -897,7 +897,7 @@ void Fitter::ComplexMult(int entries, double *re1, double *im1, double *re2, dou
    }
 }
 
-void Fitter::FFTConvolution(int dim, int *nbin, int njet, double *f, double *result){
+void Fitter::FFTConvolution(int dim, const int entries, int *nbin, int njet, double *f, double *result){
    if (njet==1) {
       result=f;
       return;
@@ -905,11 +905,8 @@ void Fitter::FFTConvolution(int dim, int *nbin, int njet, double *f, double *res
    TVirtualFFT *ft= TVirtualFFT::FFT(dim, nbin, "R2C");
 
    //initialization
-      int temp=1;
-   for (int i=0; i<dim; i++) temp*=nbin[i];
-   const int entries=temp;
-   double repro[entries];
-   double impro[entries];
+   double *repro = (double *) malloc (entries);
+   double *impro = (double *) malloc (entries);
    for (int i=0; i<entries; i++){
       repro[i]=1;
       impro[i]=0;
@@ -920,31 +917,36 @@ void Fitter::FFTConvolution(int dim, int *nbin, int njet, double *f, double *res
       ft->SetPoints((double *)(f+entries*i));
       ft->Transform();
 
-      double retemp[entries];
-      double imtemp[entries];
+      double *retemp = (double *) malloc (entries);
+      double *imtemp = (double *) malloc (entries);
       ft->GetPointsComplex(retemp,imtemp);
 
       ComplexMult(entries, retemp, imtemp, repro, impro, repro, impro);
+      free(retemp);
+      free(imtemp);
    }
 
    //transform backwards
    TVirtualFFT *bft= TVirtualFFT::FFT(dim, nbin, "C2R");
    bft->SetPointsComplex(repro,impro);
    bft->Transform();
-   double tempa[entries];
+   double *tempa= (double *) malloc (entries);
    bft->GetPoints(tempa);
    for (int i=0; i<nbin[0]; i++)
       for (int j=0; j<nbin[1]; j++)
          result[(i+nbin[0]/2*(njet-1))%nbin[0]*nbin[1]+(j+nbin[1]/2*(njet-1))%nbin[1]]=tempa[i*nbin[1]+j];
+   free(repro);
+   free(impro);
+   free(tempa);
 }
 
 
 void Fitter::FullShapeSig(const double *x, vector<event>& eventref_temp, bool fullshape){
    int option=(fullshape)? 1:-1;
    const int nbin=128;
+   const int entries=nbin*nbin;
    const int range=4;
    const int pseudoin=0;
-   int mishit=0;
    int count=0; 
    if (option==1) cout << "##### Fullshape Significance #####" << endl;
    // random number engine for MET-smearing
@@ -957,6 +959,7 @@ void Fitter::FullShapeSig(const double *x, vector<event>& eventref_temp, bool fu
       double cov_xy=0;
       double cov_yy=0;
       double cov_xx_pjet=0;
+      double cov_xx_highpt=0;
       cout << count <<endl;
 
       // muons -- assume zero resolutions
@@ -1034,7 +1037,7 @@ void Fitter::FullShapeSig(const double *x, vector<event>& eventref_temp, bool fu
 
             if (stdx<5) stdx=5;
             if (stdy<5) stdy=5;
-            double data[ev->jet_ptUncor.size()+1][nbin][nbin];
+            double *data = (double *) malloc ((ev->jet_ptUncor.size()+1)*nbin*nbin);
             double result[nbin][nbin];
             TH2F *res= new TH2F("met_res", "met_full_shape_resolution", nbin, -thisrange*stdx, thisrange*stdx, nbin, -thisrange*stdy, thisrange*stdy);
             TH2F *tmpres= new TH2F("tmp_res", "tmp_full_shape_resolution", nbin, -thisrange*stdx, thisrange*stdx, nbin, -thisrange*stdy, thisrange*stdy);
@@ -1077,7 +1080,7 @@ void Fitter::FullShapeSig(const double *x, vector<event>& eventref_temp, bool fu
                   int yy= (k==0)? nbin:k;
                   //calculate the value at bin boundary to avoid halfbin shifting
                   //during FFT
-                  data[i][j][k]=0.25*(tmpres->GetBinContent(xx,yy)+tmpres->GetBinContent(j+1,yy)+tmpres->GetBinContent(xx,k+1)+tmpres->GetBinContent(j+1,k+1));
+                  data[i*nbin*nbin+j*nbin+k]=0.25*(tmpres->GetBinContent(xx,yy)+tmpres->GetBinContent(j+1,yy)+tmpres->GetBinContent(xx,k+1)+tmpres->GetBinContent(j+1,k+1));
                }
             }
 
@@ -1094,12 +1097,12 @@ void Fitter::FullShapeSig(const double *x, vector<event>& eventref_temp, bool fu
                int yy= (k==0)? nbin:k;
                //calculate the value at bin boundary to avoid halfbin shifting
                //during FFT
-               data[ev->jet_ptUncor.size()][j][k]=0.25*(tmpres->GetBinContent(xx,yy)+tmpres->GetBinContent(j+1,yy)+tmpres->GetBinContent(xx,k+1)+tmpres->GetBinContent(j+1,k+1));
+               data[ev->jet_ptUncor.size()*nbin*nbin+j*nbin+k]=0.25*(tmpres->GetBinContent(xx,yy)+tmpres->GetBinContent(j+1,yy)+tmpres->GetBinContent(xx,k+1)+tmpres->GetBinContent(j+1,k+1));
             }
 
             //FFT
             int bin[2]={nbin,nbin};
-            FFTConvolution(2, &(bin[0]), ev->jet_ptUncor.size()+1, &(data[0][0][0]), &(result[0][0]));
+            FFTConvolution(2, entries, &(bin[0]), ev->jet_ptUncor.size()+1, data, &(result[0][0]));
 
             //Fill in backFFT results
             for (int j=0; j<nbin; j++) for (int k=0; k<nbin; k++){
@@ -1117,9 +1120,41 @@ void Fitter::FullShapeSig(const double *x, vector<event>& eventref_temp, bool fu
                thisrange += 2; 
                failure=0;
             }
+            ev->met = sqrt( met_x*met_x + met_y*met_y );
+            ev->sig = sig;
+            //ev->det = det;
+
+            //ev->cov_xx = cov_xx;
+            //ev->cov_xy = cov_xy;
+            //ev->cov_yy = cov_yy;
+
+            //ev->cov_xx_highpt = cov_xx_highpt;
+            //ev->cov_xx_pjet = cov_xx_pjet;
+
+            // fill qt, ut
+            double qt_x=0, qt_y=0;
+            for(int i=0; i < int(ev->muon_pt.size()); i++){
+               qt_x += ev->muon_pt[i]*cos(ev->muon_phi[i]);
+               qt_y += ev->muon_pt[i]*sin(ev->muon_phi[i]);
+            }
+            double qt = sqrt( qt_x*qt_x + qt_y*qt_y );
+
+            double ut_x = -met_x - qt_x;
+            double ut_y = -met_y - qt_y;
+            double ut = sqrt( ut_x*ut_x + ut_y*ut_y );
+
+            double ut_par = (ut_x*qt_x + ut_y*qt_y)/qt;
+            double ut_perp = (ut_y*qt_x - qt_y*ut_x)/qt;
+
+            ev->qt = qt;
+            ev->ut = ut;
+            ev->ut_par = ut_par;
+            ev->ut_perp = ut_perp;
+
             //destory the histogram and free the memory
             res->~TH2F();
             tmpres->~TH2F();
+            free(data);
          }
       } else {
          // Guassian Shape
@@ -1163,7 +1198,8 @@ void Fitter::FullShapeSig(const double *x, vector<event>& eventref_temp, bool fu
             cov_xx += dtt*c*c + dff*s*s;
             cov_xy += (dtt-dff)*c*s;
             cov_yy += dff*c*c + dtt*s*s;
-
+            
+            cov_xx_highpt += dtt*c*c +dff*s*s;
          }
          double det = cov_xx*cov_yy - cov_xy*cov_xy;
          double ncov_xx = cov_yy / det;
@@ -1171,6 +1207,37 @@ void Fitter::FullShapeSig(const double *x, vector<event>& eventref_temp, bool fu
          double ncov_yy = cov_xx / det;
          sig = met_x*met_x*ncov_xx + 2*met_x*met_y*ncov_xy + met_y*met_y*ncov_yy;
          //negcount++;
+         ev->met = sqrt( met_x*met_x + met_y*met_y );
+         ev->sig = sig;
+         ev->det = det;
+
+         ev->cov_xx = cov_xx;
+         ev->cov_xy = cov_xy;
+         ev->cov_yy = cov_yy;
+
+         ev->cov_xx_highpt = cov_xx_highpt;
+         ev->cov_xx_pjet = cov_xx_pjet;
+
+         // fill qt, ut
+         double qt_x=0, qt_y=0;
+         for(int i=0; i < int(ev->muon_pt.size()); i++){
+            qt_x += ev->muon_pt[i]*cos(ev->muon_phi[i]);
+            qt_y += ev->muon_pt[i]*sin(ev->muon_phi[i]);
+         }
+         double qt = sqrt( qt_x*qt_x + qt_y*qt_y );
+
+         double ut_x = -met_x - qt_x;
+         double ut_y = -met_y - qt_y;
+         double ut = sqrt( ut_x*ut_x + ut_y*ut_y );
+
+         double ut_par = (ut_x*qt_x + ut_y*qt_y)/qt;
+         double ut_perp = (ut_y*qt_x - qt_y*ut_x)/qt;
+
+         ev->qt = qt;
+         ev->ut = ut;
+         ev->ut_par = ut_par;
+         ev->ut_perp = ut_perp;
+
          failure=0;
       }
 
