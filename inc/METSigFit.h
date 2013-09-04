@@ -101,7 +101,7 @@ class Fitter{
       void ResponseCorrection(vector<event>&);
       void FullShapeSig(const double*, vector<event>&, bool=true);
       void ComplexMult(int, double*, double*, double*, double*, double*, double*);
-      void FFTConvolution(int, int*, int, double*, double*);
+      void FFTConvolution(int, const int, int*, int, double*, double*);
 
       bool significance_cut;
       double jetbinpt, jetcorrpt;
