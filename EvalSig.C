@@ -628,22 +628,36 @@ int main(int argc, char* argv[]){
       cROC->cd();
 
       gROCmet->SetTitle("ROC Curve;Background Efficiency;Signal Efficiency");
+      gROCmet->GetXaxis()->SetTitleSize(0.07);
+      gROCmet->GetYaxis()->SetTitleSize(0.07);
+      gROCmet->GetXaxis()->SetTitleOffset(0.8);
+      gROCmet->GetYaxis()->SetTitleOffset(1.0);
 
-      gROCmet->SetMarkerStyle(21);
+      gROCmet->SetMarkerStyle(20);
+      gROCmet->SetMarkerSize(0.7);
       gROCmet->SetMarkerColor(1);
-      gROCmet->Draw("AP");
+      gROCmet->SetLineColor(1);
+      gROCmet->SetLineStyle(2);
+
+      gROCmetsig2011->SetMarkerStyle(20);
+      gROCmetsig2011->SetMarkerSize(0.7);
+      gROCmetsig2011->SetMarkerColor(1);
+      gROCmetsig2011->SetLineColor(1);
 
       gROCmetsig2012->SetMarkerStyle(20);
+      gROCmetsig2012->SetMarkerSize(0.7);
       gROCmetsig2012->SetMarkerColor(2);
-      gROCmetsig2012->Draw("P");
+      gROCmetsig2012->SetLineColor(2);
 
-      gROCmetsig2011->SetMarkerStyle(22);
-      gROCmetsig2011->SetMarkerColor(4);
-      gROCmetsig2011->Draw("P");
+      gROCmetrht->SetMarkerStyle(20);
+      gROCmetrht->SetMarkerSize(0.7);
+      gROCmetrht->SetMarkerColor(4);
+      gROCmetrht->SetLineColor(4);
 
-      gROCmetrht->SetMarkerStyle(23);
-      gROCmetrht->SetMarkerColor(5);
-      gROCmetrht->Draw("P");
+      gROCmet->Draw("ACP");
+      gROCmetsig2012->Draw("CP");
+      gROCmetsig2011->Draw("CP");
+      gROCmetrht->Draw("CP");
 
       TF1* fline = new TF1("fline", "x", 0, 1);
       fline->SetLineColor(1);
@@ -651,10 +665,10 @@ int main(int argc, char* argv[]){
       fline->Draw("same");
 
       TLegend *lROC = new TLegend(0.605528,0.655866,0.866834,0.816333);
-      lROC->AddEntry(gROCmet,"met","p");
-      lROC->AddEntry(gROCmetsig2011,"metsig2011","p");
-      lROC->AddEntry(gROCmetsig2012,"metsig2012","p");
-      lROC->AddEntry(gROCmetrht,"met/#sqrt{H_T}","p");
+      lROC->AddEntry(gROCmet,"met","lp");
+      lROC->AddEntry(gROCmetsig2011,"metsig2011","lp");
+      lROC->AddEntry(gROCmetsig2012,"metsig2012","lp");
+      lROC->AddEntry(gROCmetrht,"met/#sqrt{H_T}","lp");
       lROC->Draw("same");
 
       TFile *file = new TFile(fileout.c_str(),"UPDATE");
