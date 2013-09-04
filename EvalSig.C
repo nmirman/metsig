@@ -668,7 +668,7 @@ int main(int argc, char* argv[]){
       lROC->AddEntry(gROCmet,"met","lp");
       lROC->AddEntry(gROCmetsig2011,"metsig2011","lp");
       lROC->AddEntry(gROCmetsig2012,"metsig2012","lp");
-      lROC->AddEntry(gROCmetrht,"met/#sqrt{H_T}","lp");
+      lROC->AddEntry(gROCmetrht,"met/#sqrt{H_{T}}","lp");
       lROC->Draw("same");
 
       TFile *file = new TFile(fileout.c_str(),"UPDATE");
