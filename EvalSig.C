@@ -368,15 +368,12 @@ int main(int argc, char* argv[]){
    for( vector<Dataset>::iterator data = datasets.begin(); data != datasets.end(); data++ ){
       data->channel = channel;
       data->path = "/mnt/xrootd/user/nmirman/Ntuples/METsig";
-      data->date = "20130723";
-      if( channel.compare("Zmumu") == 0 or ((channel.compare("Dijet") == 0) and !(data->isMC)) ){
-         data->date = "20130728";
+      data->date = "20130830";
+      if( channel.compare("Zmumu") == 0 and data->isMC ){
+         data->date = "20130913";
       }
       if( channel.compare("Wenu") == 0 and !(data->isMC) ){
-         data->date = "20130802";
-      }
-      if( channel.compare("Ttbar0lept") == 0 and !(data->isMC) ){
-         data->date = "20130808";
+         data->date = "20130913";
       }
    }
 
