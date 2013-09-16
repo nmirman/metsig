@@ -56,8 +56,9 @@ int main(int argc, char* argv[]){
    int met_type = 4;
    double rebin = 1;
    bool fullshape = false;
+   int jec_var = 0;
 
-   while( (c = getopt(argc, argv, "n:p:o:t:b:fhscbmrdw")) != -1 ) {
+   while( (c = getopt(argc, argv, "n:p:o:t:b:v:fhscbmrdw")) != -1 ) {
       switch(c)
       {
          case 'n' :
@@ -108,6 +109,10 @@ int main(int argc, char* argv[]){
             fullshape = true;
             break;
 
+         case 'v':
+            jec_var = atoi(optarg);
+            break;
+
          case 'h' :
             cout << "Usage: ./EvalSig <flags>\n";
             cout << "Flags: \n";
@@ -124,6 +129,7 @@ int main(int argc, char* argv[]){
             cout << "\t-t <number>\t MET type, in range [-1,4].\n";
             cout << "\t-b <number>\t Rebin -- divide bins by number.\n";
             cout << "\t-f\t          Compute Significance with full jet resolution shapes.\n";
+            cout << "\t-v\t          Scale up (1) or down (-1) by JEC uncertainty.\n";
             cout << "\t-h\t          Display this menu.\n";
             return -1;
             break;
@@ -368,15 +374,12 @@ int main(int argc, char* argv[]){
    for( vector<Dataset>::iterator data = datasets.begin(); data != datasets.end(); data++ ){
       data->channel = channel;
       data->path = "/mnt/xrootd/user/nmirman/Ntuples/METsig";
-      data->date = "20130723";
-      if( channel.compare("Zmumu") == 0 or ((channel.compare("Dijet") == 0) and !(data->isMC)) ){
-         data->date = "20130728";
+      data->date = "20130830";
+      if( channel.compare("Zmumu") == 0 and data->isMC ){
+         data->date = "20130913";
       }
       if( channel.compare("Wenu") == 0 and !(data->isMC) ){
-         data->date = "20130802";
-      }
-      if( channel.compare("Ttbar0lept") == 0 and !(data->isMC) ){
-         data->date = "20130808";
+         data->date = "20130913";
       }
    }
 
@@ -407,6 +410,12 @@ int main(int argc, char* argv[]){
    double parData [] = {1.15061,1.07776,1.04204,1.12509,1.56414,0.0,0.548758};
    double parMC [] = {1.05347,0.975375,0.957986,0.97269,1.28106,-1.10982,0.52039};
 
+   double parData_up [] = {1.35306,1.29897,1.3321,1.41755,1.55433,0.00577946,0.661309};
+   double parMC_up [] = {1.1209,1.08497,1.13166,1.20168,1.26644,0.0187089,0.612264};
+
+   double parData_down [] = {1.25072,1.19462,1.20274,1.28262,1.37358,-0.000417604,0.57619};
+   double parMC_down [] = {1.0629,1.00068,1.03557,1.0542,1.02387,-2.08438,0.531183};
+
    fitter.met_type = met_type;
 
    for( vector<Dataset>::iterator data = datasets.begin(); data != datasets.end(); data++ ){
@@ -435,7 +444,7 @@ int main(int argc, char* argv[]){
          vector<event> eventvec;
          string fullname = data->path+"/"+data->channel+"/"+data->date+"/"+data->filename;
          fitter.ReadNtuple( fullname.c_str(), eventvec, 1,
-               data->isMC, data->process, do_resp_correction, start, end );
+               data->isMC, data->process, do_resp_correction, start, end, jec_var );
 
          vector<event> eventvec_sigmaMC;
 
@@ -443,8 +452,17 @@ int main(int argc, char* argv[]){
          if( data->isMC and smear_met ){
             eventvec_sigmaMC = eventvec;
 
-            fitter.FindSignificance(parMC, eventvec_sigmaMC);
-            fitter.FindSignificance(parData, eventvec);
+            if( jec_var == 1 ){
+               fitter.FindSignificance(parMC_up, eventvec_sigmaMC);
+               fitter.FindSignificance(parData_up, eventvec);
+            } else if ( jec_var == -1 ){
+               fitter.FindSignificance(parMC_down, eventvec_sigmaMC);
+               fitter.FindSignificance(parData_down, eventvec);
+            } else {
+               fitter.FindSignificance(parMC, eventvec_sigmaMC);
+               fitter.FindSignificance(parData, eventvec);
+            }
+
             for( int i=0; i < int(eventvec.size()); i++ ){
                eventvec[i].met_varx = eventvec[i].cov_xx - eventvec_sigmaMC[i].cov_xx;
                eventvec[i].met_vary = eventvec[i].cov_yy - eventvec_sigmaMC[i].cov_yy;
@@ -456,9 +474,21 @@ int main(int argc, char* argv[]){
          // compute significance
          if( !fullshape ){
             if( !(data->isMC) or smear_met ){
-               fitter.FindSignificance(parData, eventvec);
+               if( jec_var == 1 ){
+                  fitter.FindSignificance(parData_up, eventvec);
+               } else if ( jec_var == -1 ){
+                  fitter.FindSignificance(parData_down, eventvec);
+               } else {
+                  fitter.FindSignificance(parData, eventvec);
+               }
             }else{
-               fitter.FindSignificance(parMC, eventvec);
+               if( jec_var == 1 ){
+                  fitter.FindSignificance(parMC_up, eventvec);
+               } else if ( jec_var == -1 ){
+                  fitter.FindSignificance(parMC_down, eventvec);
+               } else {
+                  fitter.FindSignificance(parMC, eventvec);
+               }
             }
          }else{
             if( !(data->isMC) or smear_met ){

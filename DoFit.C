@@ -59,9 +59,10 @@ int main(int argc, char* argv[]){
    double numevents = 1;
    bool do_resp_correction=false;
    int met_type = -1;
+   int jec_var = 0;
    string file_results = "/fitresults.root";
    string file_plots = "results/plotsDataMC.root";
-   while( (c = getopt(argc, argv, "n:j:m:r:p:hscob")) != -1 ) {
+   while( (c = getopt(argc, argv, "n:j:m:r:p:v:hscob")) != -1 ) {
       switch(c)
       {
          case 'n' :
@@ -92,6 +93,10 @@ int main(int argc, char* argv[]){
             file_plots = optarg;
             break;
 
+         case 'v':
+            jec_var = atoi(optarg);
+            break;
+
          case 'h' :
             cout << "Usage: ./DoFit <flags>\n";
             cout << "Flags: \n";
@@ -100,9 +105,10 @@ int main(int argc, char* argv[]){
             cout << "\t-m <number>\t Type of MET to use.  Default at -1.\n";
             cout << "\t-s\t          'Short' run, 10%% of events.\n";
             cout << "\t-c\t          Apply response correction.\n";
-            cout << "\t-h\t          Display this menu.\n";
             cout << "\t-r <string>\t Output fit results to file.\n";
             cout << "\t-p <string>\t Output plots to file.\n";
+            cout << "\t-v\t          Scale up (1) or down (-1) by JEC uncertainty.\n";
+            cout << "\t-h\t          Display this menu.\n";
             return -1;
             break;
 
@@ -146,8 +152,9 @@ int main(int argc, char* argv[]){
 
    for( vector<Dataset>::iterator data = datasets.begin(); data != datasets.end(); data++ ){
       data->path = "/mnt/xrootd/user/nmirman/Ntuples/METsig";
-      data->date = "20130728";
+      data->date = "20130830";
       data->channel = "Zmumu";
+      if( data->isMC ) data->date = "20130913";
    }
 
    //
@@ -175,7 +182,7 @@ int main(int argc, char* argv[]){
 
          string fullname = data->path+"/"+data->channel+"/"+data->date+"/"+data->filename;
          fitter.ReadNtuple( fullname.c_str(), eventvec, numevents,
-               data->isMC, data->process, do_resp_correction );
+               data->isMC, data->process, do_resp_correction, -1, -1, jec_var );
       }
 
       cout << "\nDATASET SIZE: " << eventvec.size() << " EVENTS\n" << endl;

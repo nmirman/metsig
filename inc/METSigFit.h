@@ -75,6 +75,7 @@ struct event {
    vector<double> jet_ptT1;
 
    // full shape resolutions
+   /*
    vector<double> jet_res_par0;
    vector<double> jet_res_par1;
    vector<double> jet_res_par2;
@@ -82,6 +83,7 @@ struct event {
    vector<double> jet_res_par4;
    vector<double> jet_res_par5;
    vector<double> jet_res_par6;
+   */
 }; 
 
 class Fitter{
@@ -91,7 +93,7 @@ class Fitter{
       ~Fitter();
 
       void ReadNtuple(const char[], vector<event>&, const double, const bool,
-            string, const bool=false, const int=-1, const int=-1);
+            string, const bool=false, const int=-1, const int=-1, const int=0);
       //void MatchMCjets(vector<event>&);
       void RunMinimizer(vector<event>&);
       void FindSignificance(const double*, vector<event>&);

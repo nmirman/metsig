@@ -176,7 +176,7 @@ const double Fitter::sigmaPhi[10][5]={{926.978, 2.52747, 0.0304001, -926.224, -1
 
 void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, const double fracevents,
       const bool isMC, string channel, const bool do_resp_correction, 
-      const int start_evt_num, const int end_evt_num ){
+      const int start_evt_num, const int end_evt_num , const int jvar){
    cout << "---> ReadNtuple " << channel << endl;
 
    float gi_xsec=0;
@@ -231,6 +231,8 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    float pfj_jetres_par4[1000];
    float pfj_jetres_par5[1000];
    float pfj_jetres_par6[1000];
+
+   float pfj_jec_unc[1000];
 
    float puMyWeight = 1;
 
@@ -300,6 +302,8 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    tree->SetBranchAddress("pfj_jetres_par4", pfj_jetres_par4);
    tree->SetBranchAddress("pfj_jetres_par5", pfj_jetres_par5);
    tree->SetBranchAddress("pfj_jetres_par6", pfj_jetres_par6);
+
+   tree->SetBranchAddress("pfj_jec_unc", pfj_jec_unc);
 
    if(isMC){
       tree->SetBranchAddress("gi_xsec", &gi_xsec);
@@ -516,12 +520,28 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       }
 
       // jets
+      double dpx = 0;
+      double dpy = 0;
       for( int i=0; i < pfj_size; i++){
 
-         double jet_ptL123_temp = (pfj_pt[i]*pfj_l1l2l3[i] > jetcorrpt)
+         double jec_unc = jvar*pfj_jec_unc[i];
+         double pfj_l123 = pfj_l1l2l3[i] + jec_unc;
+
+         double jet_ptL123_temp = (pfj_pt[i]*pfj_l123 > jetcorrpt)
+            ? pfj_pt[i]*pfj_l123 : pfj_pt[i];
+         double jet_ptT1_temp = (pfj_pt[i]*pfj_l123 > jetcorrpt)
+            ? pfj_pt[i]*(pfj_l123 + 1 - pfj_l1[i]) : pfj_pt[i];
+
+         // find dp after correction
+         double jet_ptL123_nocorr = (pfj_pt[i]*pfj_l1l2l3[i] > jetcorrpt)
             ? pfj_pt[i]*pfj_l1l2l3[i] : pfj_pt[i];
-         double jet_ptT1_temp = (pfj_pt[i]*pfj_l1l2l3[i] > jetcorrpt)
+         double jet_ptT1_nocorr = (pfj_pt[i]*pfj_l1l2l3[i] > jetcorrpt)
             ? pfj_pt[i]*(pfj_l1l2l3[i] + 1 - pfj_l1[i]) : pfj_pt[i];
+
+         if( jvar != 0 ){
+            dpx += (jet_ptL123_temp - jet_ptL123_nocorr)*cos( pfj_phi[i] );
+            dpy += (jet_ptL123_temp - jet_ptL123_nocorr)*sin( pfj_phi[i] );
+         }
 
          if( jet_ptL123_temp > jetbinpt ){
             // clustered jets
@@ -533,6 +553,7 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
             evtemp.jet_ptL123.push_back( jet_ptL123_temp );
             evtemp.jet_ptT1.push_back( jet_ptT1_temp );
 
+            /*
             evtemp.jet_res_par0.push_back(pfj_jetres_par0[i]);
             evtemp.jet_res_par1.push_back(pfj_jetres_par1[i]);
             evtemp.jet_res_par2.push_back(pfj_jetres_par2[i]);
@@ -540,6 +561,7 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
             evtemp.jet_res_par4.push_back(pfj_jetres_par4[i]);
             evtemp.jet_res_par5.push_back(pfj_jetres_par5[i]);
             evtemp.jet_res_par6.push_back(pfj_jetres_par6[i]);
+            */
 
          } else {
             // pseudojet with unclustered energy
@@ -577,6 +599,10 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       for(int i=0; i < 5; i++){
          evtemp.pfmet_px[i] = met_px[i];
          evtemp.pfmet_py[i] = met_py[i];
+         if( jvar != 0 ){
+            evtemp.pfmet_px[i] -= dpx;
+            evtemp.pfmet_py[i] -= dpy;
+         }
       }
       
       // met smearing
@@ -942,6 +968,7 @@ void Fitter::FFTConvolution(int dim, const int entries, int *nbin, int njet, dou
 
 
 void Fitter::FullShapeSig(const double *x, vector<event>& eventref_temp, bool fullshape){
+   /*
    int option=(fullshape)? 1:-1;
    const int nbin=128;
    const int entries=nbin*nbin;
@@ -1088,8 +1115,9 @@ void Fitter::FullShapeSig(const double *x, vector<event>& eventref_temp, bool fu
             for (int j=0; j<nbin; j++) for (int k=0; k<nbin; k++){
                double px=tmpres->GetXaxis()->GetBinCenter(j+1);   
                double py=tmpres->GetYaxis()->GetBinCenter(k+1);   
-               /*if (pseudoin) tmpres->SetBinContent(j+1,k+1,pseudo->GetBinContent(pseudo->FindBin(px))*pseudo->GetBinContent(pseudo->FindBin(py)));
-                 else */tmpres->SetBinContent(j+1,k+1,TMath::Gaus(px,0,pow(cov_xx,0.5),1)*TMath::Gaus(py,0,pow(cov_yy,0.5),1));
+               //if (pseudoin) tmpres->SetBinContent(j+1,k+1,pseudo->GetBinContent(pseudo->FindBin(px))*pseudo->GetBinContent(pseudo->FindBin(py)));
+                 //else
+                    tmpres->SetBinContent(j+1,k+1,TMath::Gaus(px,0,pow(cov_xx,0.5),1)*TMath::Gaus(py,0,pow(cov_yy,0.5),1));
             }
 
             for (int j=0; j<nbin; j++) for (int k=0; k<nbin; k++){
@@ -1245,6 +1273,7 @@ void Fitter::FullShapeSig(const double *x, vector<event>& eventref_temp, bool fu
       if (!failure) ev->sig=sig;
    }  
    return;
+   */
 }
 
 
