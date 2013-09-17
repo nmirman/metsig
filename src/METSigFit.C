@@ -1310,7 +1310,16 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
       }
       if( stackmode.compare("Dijet") == 0 ){
 
-         hists_ = histsMC_signal_;
+         if( iter_begin->channel.find("QCD") != string::npos ) hists_ = histsMC_signal_;
+         else if( iter_begin->channel.compare("DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
+         else if( iter_begin->channel.compare("TTJets") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->channel.compare("Tbar_tW") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->channel.compare("T_tW") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->channel.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
+         else if( iter_begin->channel.compare("WW") == 0 ) hists_ = histsMC_EWK_;
+         else if( iter_begin->channel.compare("WZ") == 0 ) hists_ = histsMC_EWK_;
+         else if( iter_begin->channel.compare("ZZ") == 0 ) hists_ = histsMC_EWK_;
+         else cout << "Histogram fill error, channel " << iter_begin->channel << endl;
 
       }
       if( stackmode.compare("Ttbar0lept") == 0){
@@ -1652,7 +1661,20 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
          histMC_DY->Draw("same HIST");
       }
       if( stackmode.compare("Dijet") == 0 ){
-         // nothing happens here
+         histMC_top->SetLineColor(1);
+         histMC_top->SetFillColor(kYellow-9);
+         histMC_EWK->SetLineColor(1);
+         histMC_EWK->SetFillColor(kRed-10);
+         histMC_DY->SetLineColor(1);
+         histMC_DY->SetFillColor(kCyan-10);
+
+         histMC_top->Add( histMC_EWK );
+         histMC_top->Add( histMC_DY );
+         histMC_EWK->Add( histMC_DY );
+
+         histMC_top->Draw("same HIST");
+         histMC_EWK->Draw("same HIST");
+         histMC_DY->Draw("same HIST");
       }
 
       TH1D *histMCerror = (TH1D*)histMC->Clone("histMCerror");
@@ -1679,6 +1701,9 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
       }
       if( stackmode.compare("Dijet") == 0 ){
          leg->AddEntry(histMC, "QCD", "f");
+         leg->AddEntry(histMC_top, "top", "f");
+         leg->AddEntry(histMC_EWK, "EWK", "f");
+         leg->AddEntry(histMC_DY, "DY", "f");
       }
       if( stackmode.compare("Ttbar1lept") == 0 ){
          leg->AddEntry(histMC, "t#bar{t} Semi-Leptonic", "f");
