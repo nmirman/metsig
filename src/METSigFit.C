@@ -1475,7 +1475,7 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
    double histnorm = histData_temp->Integral("width") / (histMC_signal_temp->Integral("width")+histMC_top_temp->Integral("width")+histMC_EWK_temp->Integral("width")+histMC_QCD_temp->Integral("width")+histMC_gamma_temp->Integral("width")+histMC_DY_temp->Integral("width"));
    double scaleQCD = 1;
    if( stackmode.compare("Wenu") == 0 or stackmode.compare("Wenu_loose") == 0 
-         or stackmode.compare("Ttbar0lept") == 0 ){ 
+        /* or stackmode.compare("Ttbar0lept") == 0 */){ 
       for(double s = 0; s < 5; s += 0.01){
          TH1D *histMC_temp = new TH1D( "histMC_temp", "histMC_temp",
                histData_temp->GetNbinsX(), histData_temp->GetBinLowEdge(1),
