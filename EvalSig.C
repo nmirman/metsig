@@ -276,6 +276,14 @@ int main(int argc, char* argv[]){
          datasets.push_back( Dataset("QCD_600_800/*.root", "QCD_600_800", true) );
          datasets.push_back( Dataset("QCD_800_1000/*.root", "QCD_800_1000", true) );
          datasets.push_back( Dataset("QCD_1000_1400/*.root", "QCD_1000_1400", true) );
+         datasets.push_back( Dataset("DYJetsToLL/*.root", "DYJetsToLL", true) );
+         datasets.push_back( Dataset("TTJets/*.root", "TTJets", true) );
+         datasets.push_back( Dataset("Tbar_tW-channel/*.root", "Tbar_tW", true) );
+         datasets.push_back( Dataset("T_tW-channel/*.root", "T_tW", true) );
+         datasets.push_back( Dataset("WJetsToLNu/*.root", "WJetsToLNu", true) );
+         datasets.push_back( Dataset("WW/*.root", "WW", true) );
+         datasets.push_back( Dataset("WZ/*.root", "WZ", true) );
+         datasets.push_back( Dataset("ZZ/*.root", "ZZ", true) );
       }
 
    }
@@ -373,6 +381,12 @@ int main(int argc, char* argv[]){
          data->date = "20130913";
       }
       if( channel.compare("Wenu") == 0 and !(data->isMC) ){
+         data->date = "20130913";
+      }
+      if( channel.compare("Dijet") == 0 and data->isMC ){
+         data->date = "20130913";
+      }
+      if( channel.compare("Ttbar0lept") == 0 ){
          data->date = "20130913";
       }
    }
@@ -475,7 +489,8 @@ int main(int argc, char* argv[]){
                for( int i = 0; i < int(data->ROCmet.size()); i++ ){
                   data->ROCmet[i].total += ev->weight;
                   if( data->channel.compare("Ttbar1lept") == 0
-                        or data->channel.compare("Ttbar0lept") == 0 ){
+                        or data->channel.compare("Ttbar0lept") == 0
+                        or data->channel.compare("Dijet") == 0 ){
                      if( ev->met < data->ROCmet[i].cut ) data->ROCmet[i].pass += ev->weight;
                   }else{
                      if( ev->met > data->ROCmet[i].cut ) data->ROCmet[i].pass += ev->weight;
@@ -485,7 +500,8 @@ int main(int argc, char* argv[]){
                for( int i = 0; i < int(data->ROCmetsig2011.size()); i++ ){
                   data->ROCmetsig2011[i].total += ev->weight;
                   if( data->channel.compare("Ttbar1lept") == 0
-                        or data->channel.compare("Ttbar0lept") == 0 ){
+                        or data->channel.compare("Ttbar0lept") == 0
+                        or data->channel.compare("Dijet") == 0 ){
                      if(ev->metsig2011 < data->ROCmetsig2011[i].cut)
                         data->ROCmetsig2011[i].pass += ev->weight;
                   }else{
@@ -497,7 +513,8 @@ int main(int argc, char* argv[]){
                for( int i = 0; i < int(data->ROCmetsig2012.size()); i++ ){
                   data->ROCmetsig2012[i].total += ev->weight;
                   if( data->channel.compare("Ttbar1lept") == 0
-                        or data->channel.compare("Ttbar0lept") == 0 ){
+                        or data->channel.compare("Ttbar0lept") == 0
+                        or data->channel.compare("Dijet") == 0 ){
                      if(ev->sig < data->ROCmetsig2012[i].cut) data->ROCmetsig2012[i].pass += ev->weight;
                   }else{
                      if(ev->sig > data->ROCmetsig2012[i].cut) data->ROCmetsig2012[i].pass += ev->weight;
@@ -512,7 +529,8 @@ int main(int argc, char* argv[]){
                for( int i = 0; i < int(data->ROCmetrht.size()); i++ ){
                   data->ROCmetrht[i].total += ev->weight;
                   if( data->channel.compare("Ttbar1lept") == 0
-                        or data->channel.compare("Ttbar0lept") == 0 ){
+                        or data->channel.compare("Ttbar0lept") == 0
+                        or data->channel.compare("Dijet") == 0 ){
                      if(metrht < data->ROCmetrht[i].cut) data->ROCmetrht[i].pass += ev->weight;
                   }else{
                      if(metrht > data->ROCmetrht[i].cut) data->ROCmetrht[i].pass += ev->weight;
@@ -561,7 +579,9 @@ int main(int argc, char* argv[]){
          if( data->isMC ){
 
             if( (data->channel.compare("Wenu") == 0 and data->process.compare("WJetsToLNu") == 0)
-                  or (data->channel.compare("Ttbar1lept") == 0 and data->process.compare("TTJets_SemiLept") == 0) or (data->channel.compare("Ttbar0lept") == 0 and data->process.compare("TTJets_Hadronic") == 0) ){
+                  or (data->channel.compare("Ttbar1lept") == 0 and data->process.compare("TTJets_SemiLept") == 0)
+                  or (data->channel.compare("Ttbar0lept") == 0 and data->process.compare("TTJets_Hadronic") == 0)
+                  or (data->channel.compare("Dijet") == 0 and data->process.find("QCD") != string::npos)  ) {
                for(int i=0; i < int(data->ROCmet.size()); i++){ // met
                   met_sigpass[i] += data->ROCmet[i].pass;
                   met_sigtot[i] += data->ROCmet[i].total;
@@ -629,6 +649,7 @@ int main(int argc, char* argv[]){
       gROCmet->GetYaxis()->SetTitleSize(0.07);
       gROCmet->GetXaxis()->SetTitleOffset(0.8);
       gROCmet->GetYaxis()->SetTitleOffset(1.0);
+      gROCmet->GetXaxis()->SetLimits(0.01,1.05);
 
       gROCmet->SetMarkerStyle(20);
       gROCmet->SetMarkerSize(0.7);
