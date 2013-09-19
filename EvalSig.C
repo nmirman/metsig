@@ -380,8 +380,8 @@ int main(int argc, char* argv[]){
       if( channel.compare("Zmumu") == 0 and data->isMC ){
          data->date = "20130913";
       }
-      if( channel.compare("Wenu") == 0 and !(data->isMC) ){
-         data->date = "20130913";
+      if( channel.compare("Wenu") == 0 ){
+         data->date = "20130916";
       }
       if( channel.compare("Dijet") == 0 and data->isMC ){
          data->date = "20130913";
