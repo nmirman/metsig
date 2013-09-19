@@ -596,6 +596,15 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       evtemp.pjet_size = pjet_size_temp;
 
       // met
+      double metcorr_x = 0;
+      double metcorr_y = 0;
+      if( isMC ){ // phi correction
+         metcorr_x = 0.162861 - 0.0238517*v_size;
+         metcorr_y = 0.360860 - 0.130335*v_size;
+      }else{
+         metcorr_x = 0.0483642 + 0.248870*v_size;
+         metcorr_y = -0.150135 - 0.0827917*v_size;
+      }
       for(int i=0; i < 5; i++){
          evtemp.pfmet_px[i] = met_px[i];
          evtemp.pfmet_py[i] = met_py[i];
