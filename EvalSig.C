@@ -56,7 +56,7 @@ int main(int argc, char* argv[]){
    int met_type = 4;
    double rebin = 1;
    bool fullshape = false;
-   int jec_var = 0;
+   double jec_var = 0;
 
    while( (c = getopt(argc, argv, "n:p:o:t:b:v:fhscbmrdw")) != -1 ) {
       switch(c)
@@ -110,7 +110,7 @@ int main(int argc, char* argv[]){
             break;
 
          case 'v':
-            jec_var = atoi(optarg);
+            jec_var = atof(optarg);
             break;
 
          case 'h' :
@@ -410,11 +410,15 @@ int main(int argc, char* argv[]){
    double parData [] = {1.15061,1.07776,1.04204,1.12509,1.56414,0.0,0.548758};
    double parMC [] = {1.05347,0.975375,0.957986,0.97269,1.28106,-1.10982,0.52039};
 
-   double parData_up [] = {1.35306,1.29897,1.3321,1.41755,1.55433,0.00577946,0.661309};
-   double parMC_up [] = {1.1209,1.08497,1.13166,1.20168,1.26644,0.0187089,0.612264};
+   //double parData_up [] = {1.35306,1.29897,1.3321,1.41755,1.55433,0.00577946,0.661309};
+   double parData_up [] = {1.15061,1.07776,1.04204,1.12509,1.56414,0.0,0.548758};
+   double parMC_up [] = {1.16877,1.12051,1.15082,1.22544,1.27364,0.01854,0.612024};
+   //double parMC_up [] = {1.05347,0.975375,0.957986,0.97269,1.28106,-1.10982,0.52039};
 
-   double parData_down [] = {1.25072,1.19462,1.20274,1.28262,1.37358,-0.000417604,0.57619};
-   double parMC_down [] = {1.0629,1.00068,1.03557,1.0542,1.02387,-2.08438,0.531183};
+   //double parData_down [] = {1.25072,1.19462,1.20274,1.28262,1.37358,-0.000417604,0.57619};
+   double parData_down [] = {1.15061,1.07776,1.04204,1.12509,1.56414,0.0,0.548758};
+   double parMC_down [] = {1.10188,1.03284,1.0547,1.07594,1.03263,-2.24773,0.52979};
+   //double parMC_down [] = {1.05347,0.975375,0.957986,0.97269,1.28106,-1.10982,0.52039};
 
    fitter.met_type = met_type;
 
@@ -441,10 +445,12 @@ int main(int argc, char* argv[]){
          int end = (isec == num_sections-1) ? num_events : start + section_size;
          cout << "Begin section [" << start << ", " << end << "]" << endl;
 
+         double jec_var2 = data->isMC ? jec_var : 0;
+
          vector<event> eventvec;
          string fullname = data->path+"/"+data->channel+"/"+data->date+"/"+data->filename;
          fitter.ReadNtuple( fullname.c_str(), eventvec, 1,
-               data->isMC, data->process, do_resp_correction, start, end, jec_var );
+               data->isMC, data->process, do_resp_correction, start, end, jec_var2 );
 
          vector<event> eventvec_sigmaMC;
 

@@ -71,12 +71,18 @@ Fitter::Fitter(double b /*=1*/){
    histsData_["pjet_vectptT1"] = new TH1D("pjet_vectptT1_Data", "Pseudojet Scalar p_{T} (T1-corrected)", 50/b, 0, 200);
    histsData_["pjet_phi"] = new TH1D("pjet_phi_Data", "Pseudojet Phi", 50/b, -3.5, 3.5);
    histsData_["qt"] = new TH1D("qt_Data", "q_{T}", 50/b, 0, 200);
+   histsData_["qx"] = new TH1D("qx_Data", "q_{x}", 50/b, -50, 50);
    histsData_["ut_par"] = new TH1D("ut_par_Data", "|u_{T}|_{#parallel}", 50/b, 0, 100);
    histsData_["nvert"] = new TH1D("nvert_Data", "N Vertices", 50/b, 0, 100);
    histsData_["cov_xx"] = new TH1D("cov_xx_Data", "Cov_{xx}", 50/b, 0, 500);
    histsData_["cov_xy"] = new TH1D("cov_xy_Data", "Cov_{xy}", 50/b, -150, 150);
    histsData_["cov_yy"] = new TH1D("cov_yy_Data", "Cov_{yy}", 50/b, 0, 500);
    histsData_["met"] = new TH1D("met_Data", "Missing E_{T}", 50/b, 0, 100);
+   histsData_["met0_px"] = new TH1D("met0_px_Data", "Missing E_{T}", 50/b, -50, 50);
+   histsData_["met1_px"] = new TH1D("met1_px_Data", "Missing E_{T}", 50/b, -50, 50);
+   histsData_["met2_px"] = new TH1D("met2_px_Data", "Missing E_{T}", 50/b, -50, 50);
+   histsData_["met3_px"] = new TH1D("met3_px_Data", "Missing E_{T}", 50/b, -50, 50);
+   histsData_["met4_px"] = new TH1D("met4_px_Data", "Missing E_{T}", 50/b, -50, 50);
    histsData_["met_200"] = new TH1D("met_200_Data", "Missing E_{T}", 50/b, 0, 200);
    histsData_["sig"] = new TH1D("sig_Data", "Significance", 50/b, 0, 500);
    histsData_["sig_100"] = new TH1D("sig_100_Data", "Significance", 50/b, 0, 100);
@@ -89,8 +95,8 @@ Fitter::Fitter(double b /*=1*/){
    histsData_["cov_xx_highpt"] = new TH1D("cov_xx_highpt_Data", "Cov_{xx} High-p_{T} Jets", 50/b, 0, 500);
    histsData_["cov_xx_pjet"] = new TH1D("cov_xx_pjet_Data", "Cov_{xx} Pseudojet", 50/b, 0, 500);
    histsData_["cov_xx_ratio"] = new TH1D("cov_xx_ratio_Data", "Cov_{xx} High-p_{T}/Total", 50/b, 0, 1 );
-   histsData_["met_varx"] = new TH1D("met_varx_Data","#sigma_{x}^{2} for MET smearing",50/b,-10,30);
-   histsData_["met_vary"] = new TH1D("met_vary_Data","#sigma_{y}^{2} for MET smearing",50/b,-10,30);
+   histsData_["met_varx"] = new TH1D("met_varx_Data","#sigma_{x}^{2} for MET smearing",50/b,-100,100);
+   histsData_["met_vary"] = new TH1D("met_vary_Data","#sigma_{y}^{2} for MET smearing",50/b,-100,100);
    histsData_["met_rho"] = new TH1D("met_rho_Data", "#rho for MET smearing", 50/b, -10, 10);
    histsData_["pjet_axesratio"] = new TH1D("pjet_axesratio_Data",
          "Pseudo-jet Ratio of Major/Semi-Major Axes", 50/b, 0, 1);
@@ -176,7 +182,7 @@ const double Fitter::sigmaPhi[10][5]={{926.978, 2.52747, 0.0304001, -926.224, -1
 
 void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, const double fracevents,
       const bool isMC, string channel, const bool do_resp_correction, 
-      const int start_evt_num, const int end_evt_num , const int jvar){
+      const int start_evt_num, const int end_evt_num , const double jvar){
    cout << "---> ReadNtuple " << channel << endl;
 
    float gi_xsec=0;
@@ -524,13 +530,28 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
       double dpy = 0;
       for( int i=0; i < pfj_size; i++){
 
-         double jec_unc = jvar*pfj_jec_unc[i];
+         double jec_unc = 0;
+         //if( jvar == 1 or jvar == -1 ) jec_unc = jvar*pfj_jec_unc[i];
+         jec_unc = jvar*pfj_jec_unc[i];
+
          double pfj_l123 = pfj_l1l2l3[i] + jec_unc;
 
          double jet_ptL123_temp = (pfj_pt[i]*pfj_l123 > jetcorrpt)
             ? pfj_pt[i]*pfj_l123 : pfj_pt[i];
          double jet_ptT1_temp = (pfj_pt[i]*pfj_l123 > jetcorrpt)
             ? pfj_pt[i]*(pfj_l123 + 1 - pfj_l1[i]) : pfj_pt[i];
+
+         // unclustered energy uncertainty
+         /*
+         if( jvar == 2 ){ 
+            jet_ptL123_temp *= 1.1;
+            jet_ptT1_temp *= 1.1;
+         }
+         if( jvar == 3 ){ 
+            jet_ptL123_temp *= 0.9;
+            jet_ptT1_temp *= 0.9;
+         }
+         */
 
          // find dp after correction
          double jet_ptL123_nocorr = (pfj_pt[i]*pfj_l1l2l3[i] > jetcorrpt)
@@ -870,6 +891,7 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       double ut_perp = (ut_y*qt_x - qt_y*ut_x)/qt;
 
       ev->qt = qt;
+      ev->qx = qt_x;
       ev->ut = ut;
       ev->ut_par = ut_par;
       ev->ut_perp = ut_perp;
@@ -1443,12 +1465,18 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
       hists_["nvert"]->Fill( ev->nvertices , ev->weight );
 
       hists_["qt"]->Fill( ev->qt, ev->weight );
+      hists_["qx"]->Fill( ev->qx, ev->weight );
       hists_["ut_par"]->Fill( fabs(ev->ut_par), ev->weight );
 
       hists_["cov_xx"]->Fill( ev->cov_xx, ev->weight );
       hists_["cov_xy"]->Fill( ev->cov_xy, ev->weight );
       hists_["cov_yy"]->Fill( ev->cov_yy, ev->weight );
       hists_["met"]->Fill( ev->met, ev->weight );
+      hists_["met0_px"]->Fill( ev->pfmet_px[0], ev->weight );
+      hists_["met1_px"]->Fill( ev->pfmet_px[1], ev->weight );
+      hists_["met2_px"]->Fill( ev->pfmet_px[2], ev->weight );
+      hists_["met3_px"]->Fill( ev->pfmet_px[3], ev->weight );
+      hists_["met4_px"]->Fill( ev->pfmet_px[4], ev->weight );
       hists_["met_200"]->Fill( ev->met, ev->weight );
       hists_["sig"]->Fill( ev->sig, ev->weight );
       hists_["sig_100"]->Fill( ev->sig, ev->weight );
