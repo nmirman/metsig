@@ -96,7 +96,8 @@ class Fitter{
       void RunMinimizer(vector<event>&);
       void FindSignificance(const double*, vector<event>&);
       void FillHists(vector<event>&, string);
-      void PrintHists( const char*, string );
+      void PrintHists(const char*, string, bool=true);
+      void AddOverflow(TH1*);
       void PJetReweight(vector<event>&, vector<event>&);
       void ResponseCorrection(vector<event>&);
       void FullShapeSig(const double*, vector<event>&, bool=true);

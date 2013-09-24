@@ -1456,7 +1456,7 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
 
 }
 
-void Fitter::PrintHists( const char* filename, string stackmode ){
+void Fitter::PrintHists( const char* filename, string stackmode, bool overflow ){
 
    // draw hists and write to file
    gROOT->ProcessLineSync(".L tdrstyle.C");
@@ -1530,8 +1530,21 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
       TH1D *histMC_gamma = (TH1D*)histsMC_gamma_[hname];
       TH1D *histMC_DY = (TH1D*)histsMC_DY_[hname];
 
+      // scale QCD
       histMC_QCD->Scale( scaleQCD );
       histMC_gamma->Scale( scaleQCD );
+
+      // add overflow bin
+      if( overflow ){
+         AddOverflow(histData);
+         AddOverflow(histMC);
+         AddOverflow(histMC_signal);
+         AddOverflow(histMC_top);
+         AddOverflow(histMC_EWK);
+         AddOverflow(histMC_QCD);
+         AddOverflow(histMC_gamma);
+         AddOverflow(histMC_DY);
+      }
 
       // get total MC histogram
       histMC->Add( histMC_signal );
@@ -1825,4 +1838,13 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
 
    file->Close();
    delete file;
+}
+
+void Fitter::AddOverflow( TH1* hist ){
+
+   int nbins = hist->GetNbinsX();
+   double overflow = hist->GetBinContent(nbins+1);
+
+   hist->SetBinContent( nbins, hist->GetBinContent(nbins) + overflow );
+
 }
