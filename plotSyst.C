@@ -86,19 +86,19 @@ void plotSyst(){
    cmet_smeared->cd();
    cmet_smeared->Draw();
    
-   cmet_down->SetName("down");
-   cmet_down->Draw();
-   cmet_up->SetName("up");
-   cmet_up->Draw();
+   //cmet_down->SetName("down");
+   //cmet_down->Draw();
+   //cmet_up->SetName("up");
+   //cmet_up->Draw();
    
 
-   TCanvas * c = new TCanvas("c","c",800,800);
-   c->cd();
-   hmetratio_up->Draw();
-   hmetratio_down->SetMarkerColor(2);
-   hmetratio_down->SetLineColor(2);
-   hmetratio_down->Draw("same");
-   c->Draw();
+   //TCanvas * c = new TCanvas("c","c",800,800);
+   //c->cd();
+   //hmetratio_up->Draw();
+   //hmetratio_down->SetMarkerColor(2);
+   //hmetratio_down->SetLineColor(2);
+   //hmetratio_down->Draw("same");
+   //c->Draw();
 
    return;
 }

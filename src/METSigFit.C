@@ -83,6 +83,7 @@ Fitter::Fitter(double b /*=1*/){
    histsData_["met2_px"] = new TH1D("met2_px_Data", "Missing E_{T}", 50/b, -50, 50);
    histsData_["met3_px"] = new TH1D("met3_px_Data", "Missing E_{T}", 50/b, -50, 50);
    histsData_["met4_px"] = new TH1D("met4_px_Data", "Missing E_{T}", 50/b, -50, 50);
+   histsData_["met5_px"] = new TH1D("met5_px_Data", "Missing E_{T}", 50/b, -50, 50);
    histsData_["met_200"] = new TH1D("met_200_Data", "Missing E_{T}", 50/b, 0, 200);
    histsData_["sig"] = new TH1D("sig_Data", "Significance", 50/b, 0, 500);
    histsData_["sig_100"] = new TH1D("sig_100_Data", "Significance", 50/b, 0, 100);
@@ -840,6 +841,9 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       double ncov_xy = -cov_xy / det;
       double ncov_yy = cov_xx / det;
 
+      ev->pfmet_px[5] = met_x;
+      ev->pfmet_py[5] = met_y;
+
       if( met_type != -1 ){
          met_x = ev->pfmet_px[met_type];
          met_y = ev->pfmet_py[met_type];
@@ -1477,6 +1481,7 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
       hists_["met2_px"]->Fill( ev->pfmet_px[2], ev->weight );
       hists_["met3_px"]->Fill( ev->pfmet_px[3], ev->weight );
       hists_["met4_px"]->Fill( ev->pfmet_px[4], ev->weight );
+      hists_["met5_px"]->Fill( ev->pfmet_px[5], ev->weight );
       hists_["met_200"]->Fill( ev->met, ev->weight );
       hists_["sig"]->Fill( ev->sig, ev->weight );
       hists_["sig_100"]->Fill( ev->sig, ev->weight );

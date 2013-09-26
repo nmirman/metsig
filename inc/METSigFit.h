@@ -59,8 +59,8 @@ struct event {
    double metsig2011;
 
    // pfmet
-   float pfmet_px [5];
-   float pfmet_py [5];
+   float pfmet_px [6];
+   float pfmet_py [6];
 
    // leptons
    vector<double> muon_pt;
