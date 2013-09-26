@@ -10,24 +10,27 @@ using namespace std;
 
 void plotSyst(){
 
-   TFile* fcent = new TFile("results/plotsZmumu_nosmear.root");
-   TFile* fup = new TFile("results/plotsZmumu_mcup_nosmear.root");
-   TFile* fdown = new TFile("results/plotsZmumu_mcdown_nosmear.root");
+   //TFile* fcent = new TFile("results/plotsZmumu_nosmear.root");
+   //TFile* fup = new TFile("results/plotsZmumu_mcup_nosmear.root");
+   //TFile* fdown = new TFile("results/plotsZmumu_mcdown_nosmear.root");
+   TFile* fcent = new TFile("plots20130926/plotsZmumu.root");
+   TFile* fup = new TFile("plots20130926/plotsZmumu_up.root");
+   TFile* fdown = new TFile("plots20130926/plotsZmumu_down.root");
 
    TFile* fsmeared = new TFile("results/plotsZmumu.root");
 
    // get canvases
-   TCanvas* cmet = (TCanvas*)fcent->Get("met_200");
-   TCanvas* cmet_up = (TCanvas*)fup->Get("met_200");
-   TCanvas* cmet_down = (TCanvas*)fdown->Get("met_200");
-   TCanvas* cmet_smeared = (TCanvas*)fsmeared->Get("met_200");
+   TCanvas* cmet = (TCanvas*)fcent->Get("sig_100");
+   TCanvas* cmet_up = (TCanvas*)fup->Get("sig_100");
+   TCanvas* cmet_down = (TCanvas*)fdown->Get("sig_100");
+   TCanvas* cmet_smeared = (TCanvas*)fsmeared->Get("sig_100");
    
    // get histograms
-   TH1D* hmet_mc = (TH1D*)cmet->FindObject("met_200_MC");
-   TH1D* hmet_data = (TH1D*)cmet->FindObject("met_200_Data");
-   TH1D* hmet_mc_up = (TH1D*)cmet_up->FindObject("met_200_MC");
-   TH1D* hmet_mc_down = (TH1D*)cmet_down->FindObject("met_200_MC");
-   TH1D* hmet_mc_smeared = (TH1D*)cmet_smeared->FindObject("met_200_MC");
+   TH1D* hmet_mc = (TH1D*)cmet->FindObject("sig_100_MC");
+   TH1D* hmet_data = (TH1D*)cmet->FindObject("sig_100_Data");
+   TH1D* hmet_mc_up = (TH1D*)cmet_up->FindObject("sig_100_MC");
+   TH1D* hmet_mc_down = (TH1D*)cmet_down->FindObject("sig_100_MC");
+   TH1D* hmet_mc_smeared = (TH1D*)cmet_smeared->FindObject("sig_100_MC");
 
    TH1D* hmetratio = (TH1D*)cmet->FindObject("hratio");
    TH1D* hmetratio_up = (TH1D*)cmet_up->FindObject("hratio");
