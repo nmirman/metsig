@@ -160,7 +160,7 @@ int main(int argc, char* argv[]){
    //
    // loop through data and mc, run fit, fill histograms
    //
-   for(int i=0; i < 2; i++){
+   for(int i=1; i < 2; i++){
 
       if(i==0){
          cout << "\n ############################ " << endl;

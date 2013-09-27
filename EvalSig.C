@@ -378,8 +378,8 @@ int main(int argc, char* argv[]){
       if( channel.compare("Zmumu") == 0 and data->isMC ){
          data->date = "20130913";
       }
-      if( channel.compare("Wenu") == 0 and !(data->isMC) ){
-         data->date = "20130913";
+      if( channel.compare("Wenu") == 0 ){
+         data->date = "20130916";
       }
    }
 
@@ -413,16 +413,17 @@ int main(int argc, char* argv[]){
    //double parData_up [] = {1.35306,1.29897,1.3321,1.41755,1.55433,0.00577946,0.661309};
    double parData_up [] = {1.15061,1.07776,1.04204,1.12509,1.56414,0.0,0.548758};
    //double parMC_up [] = {1.16877,1.12051,1.15082,1.22544,1.27364,0.01854,0.612024};
+   //double parMC_up [] = {1.1681,1.12038,1.15105,1.22505,1.27393,0.0230496,0.612008};
    double parMC_up [] = {1.05347,0.975375,0.957986,0.97269,1.28106,-1.10982,0.52039};
 
    //double parData_down [] = {1.25072,1.19462,1.20274,1.28262,1.37358,-0.000417604,0.57619};
    double parData_down [] = {1.15061,1.07776,1.04204,1.12509,1.56414,0.0,0.548758};
    //double parMC_down [] = {1.10188,1.03284,1.0547,1.07594,1.03263,-2.24773,0.52979};
+   //double parMC_down [] = {1.10135,1.03227,1.05524,1.07604,1.03301,-2.24888,0.529785};
    double parMC_down [] = {1.05347,0.975375,0.957986,0.97269,1.28106,-1.10982,0.52039};
 
    fitter.met_type = met_type;
 
-   int count = 0;
    for( vector<Dataset>::iterator data = datasets.begin(); data != datasets.end(); data++ ){
 
       // initialize counters for ROC curve
@@ -502,14 +503,6 @@ int main(int argc, char* argv[]){
                fitter.FullShapeSig(parData, eventvec);
             }else{
                fitter.FullShapeSig(parMC, eventvec);
-            }
-         }
-
-         if( count < 100 ){
-            for(vector<event>::iterator ev = eventvec.begin(); ev < eventvec.end(); ev++){
-               cout << count << " pfmet " << ev->pfmet_px[1] << " " << "my met = " << ev->pfmet_px[5] << endl;
-               count++;
-               if( count > 100 ) continue;
             }
          }
 

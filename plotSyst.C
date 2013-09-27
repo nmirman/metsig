@@ -17,7 +17,7 @@ void plotSyst(){
    TFile* fup = new TFile("plots20130926/plotsZmumu_up.root");
    TFile* fdown = new TFile("plots20130926/plotsZmumu_down.root");
 
-   TFile* fsmeared = new TFile("results/plotsZmumu.root");
+   TFile* fsmeared = new TFile("plots20130926/plotsZmumu.root");
 
    // get canvases
    TCanvas* cmet = (TCanvas*)fcent->Get("sig_100");

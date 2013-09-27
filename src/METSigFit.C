@@ -565,18 +565,6 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
             dpy += (jet_ptT1_temp - jet_ptT1_nocorr)*sin( pfj_phi[i] );
          }
 
-         double d1 = jet_ptT1_temp - jet_ptT1_nocorr;
-         double d2 = jet_ptL123_temp - jet_ptL123_nocorr;
-         if( channel.compare("DYJetsToLL") == 0 and fabs(d1 - d2) > 1 and ev < 100 ){
-            cout << "########################" << endl;
-            cout << "jec_unc = " << jec_unc << endl;
-            cout << "jec_unc*pfj_pt = " << jec_unc*pfj_pt[i] << endl;
-            cout << "d1, d2 = " << d1 << ", " << d2 << endl;
-            cout << "jet_ptL123_temp, jet_ptL123_nocorr = " << jet_ptL123_temp << ", " << jet_ptL123_nocorr << endl;
-            cout << "jet_ptT1_temp, jet_ptT1_nocorr = " << jet_ptT1_temp << ", " << jet_ptT1_nocorr << endl;
-            cout << "########################" << endl;
-         }
-
          if( jet_ptL123_temp > jetbinpt ){
             // clustered jets
 
