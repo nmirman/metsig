@@ -58,7 +58,7 @@ int main(int argc, char* argv[]){
    char c;
    double numevents = 1;
    bool do_resp_correction=false;
-   int met_type = -1;
+   int met_type = 4;
    string file_results = "/fitresults.root";
    string file_plots = "results/plotsDataMC.root";
    while( (c = getopt(argc, argv, "n:j:m:r:p:hscob")) != -1 ) {
