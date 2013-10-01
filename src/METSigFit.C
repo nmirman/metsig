@@ -1374,7 +1374,16 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
       }
       if( stackmode.compare("Dijet") == 0 ){
 
-         hists_ = histsMC_signal_;
+         if( iter_begin->channel.find("QCD") != string::npos ) hists_ = histsMC_signal_;
+         else if( iter_begin->channel.compare("DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
+         else if( iter_begin->channel.compare("TTJets") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->channel.compare("Tbar_tW") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->channel.compare("T_tW") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->channel.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
+         else if( iter_begin->channel.compare("WW") == 0 ) hists_ = histsMC_EWK_;
+         else if( iter_begin->channel.compare("WZ") == 0 ) hists_ = histsMC_EWK_;
+         else if( iter_begin->channel.compare("ZZ") == 0 ) hists_ = histsMC_EWK_;
+         else cout << "Histogram fill error, channel " << iter_begin->channel << endl;
 
       }
       if( stackmode.compare("Ttbar0lept") == 0){
@@ -1518,7 +1527,7 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
 
 }
 
-void Fitter::PrintHists( const char* filename, string stackmode ){
+void Fitter::PrintHists( const char* filename, string stackmode, bool overflow ){
 
    // draw hists and write to file
    gROOT->ProcessLineSync(".L tdrstyle.C");
@@ -1546,7 +1555,7 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
    double histnorm = histData_temp->Integral("width") / (histMC_signal_temp->Integral("width")+histMC_top_temp->Integral("width")+histMC_EWK_temp->Integral("width")+histMC_QCD_temp->Integral("width")+histMC_gamma_temp->Integral("width")+histMC_DY_temp->Integral("width"));
    double scaleQCD = 1;
    if( stackmode.compare("Wenu") == 0 or stackmode.compare("Wenu_loose") == 0 
-         or stackmode.compare("Ttbar0lept") == 0 ){ 
+        /* or stackmode.compare("Ttbar0lept") == 0 */){ 
       for(double s = 0; s < 5; s += 0.01){
          TH1D *histMC_temp = new TH1D( "histMC_temp", "histMC_temp",
                histData_temp->GetNbinsX(), histData_temp->GetBinLowEdge(1),
@@ -1592,8 +1601,21 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
       TH1D *histMC_gamma = (TH1D*)histsMC_gamma_[hname];
       TH1D *histMC_DY = (TH1D*)histsMC_DY_[hname];
 
+      // scale QCD
       histMC_QCD->Scale( scaleQCD );
       histMC_gamma->Scale( scaleQCD );
+
+      // add overflow bin
+      if( overflow ){
+         AddOverflow(histData);
+         AddOverflow(histMC);
+         AddOverflow(histMC_signal);
+         AddOverflow(histMC_top);
+         AddOverflow(histMC_EWK);
+         AddOverflow(histMC_QCD);
+         AddOverflow(histMC_gamma);
+         AddOverflow(histMC_DY);
+      }
 
       // get total MC histogram
       histMC->Add( histMC_signal );
@@ -1723,7 +1745,20 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
          histMC_DY->Draw("same HIST");
       }
       if( stackmode.compare("Dijet") == 0 ){
-         // nothing happens here
+         histMC_top->SetLineColor(1);
+         histMC_top->SetFillColor(kYellow-9);
+         histMC_EWK->SetLineColor(1);
+         histMC_EWK->SetFillColor(kRed-10);
+         histMC_DY->SetLineColor(1);
+         histMC_DY->SetFillColor(kCyan-10);
+
+         histMC_top->Add( histMC_EWK );
+         histMC_top->Add( histMC_DY );
+         histMC_EWK->Add( histMC_DY );
+
+         histMC_top->Draw("same HIST");
+         histMC_EWK->Draw("same HIST");
+         histMC_DY->Draw("same HIST");
       }
 
       TH1D *histMCerror = (TH1D*)histMC->Clone("histMCerror");
@@ -1750,6 +1785,9 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
       }
       if( stackmode.compare("Dijet") == 0 ){
          leg->AddEntry(histMC, "QCD", "f");
+         leg->AddEntry(histMC_top, "top", "f");
+         leg->AddEntry(histMC_EWK, "EWK", "f");
+         leg->AddEntry(histMC_DY, "DY", "f");
       }
       if( stackmode.compare("Ttbar1lept") == 0 ){
          leg->AddEntry(histMC, "t#bar{t} Semi-Leptonic", "f");
@@ -1871,4 +1909,13 @@ void Fitter::PrintHists( const char* filename, string stackmode ){
 
    file->Close();
    delete file;
+}
+
+void Fitter::AddOverflow( TH1* hist ){
+
+   int nbins = hist->GetNbinsX();
+   double overflow = hist->GetBinContent(nbins+1);
+
+   hist->SetBinContent( nbins, hist->GetBinContent(nbins) + overflow );
+
 }
