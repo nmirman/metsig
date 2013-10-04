@@ -9,6 +9,7 @@
 #include "TChain.h"
 #include "TLorentzVector.h"
 #include "TLegend.h"
+#include "TSystem.h"
 
 #include <iostream>
 #include <unistd.h>
@@ -146,69 +147,69 @@ int main(int argc, char* argv[]){
 
       // data
       if( run_data ){
-         datasets.push_back( Dataset("Run2012A-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012B-1-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012B-2-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012B-3-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012B-4-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012B-5-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012B-6-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012B-7-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012B-8-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012B-9-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012B-10-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012C-1-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012C-2-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012C-3-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012C-4-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012C-5-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012C-6-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012C-7-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012C-8-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012C-9-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012C-10-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012D-1-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012D-2-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012D-3-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012D-4-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012D-5-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012D-6-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012D-7-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012D-8-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012D-9-22Jan2013/*.root", "Data", false));
-         datasets.push_back( Dataset("Run2012D-10-22Jan2013/*.root", "Data", false));
+         datasets.push_back( Dataset("Run2012A-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012B-1-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012B-2-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012B-3-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012B-4-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012B-5-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012B-6-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012B-7-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012B-8-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012B-9-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012B-10-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012C-1-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012C-2-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012C-3-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012C-4-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012C-5-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012C-6-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012C-7-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012C-8-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012C-9-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012C-10-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012D-1-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012D-2-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012D-3-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012D-4-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012D-5-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012D-6-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012D-7-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012D-8-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012D-9-22Jan2013/", "Data", false));
+         datasets.push_back( Dataset("Run2012D-10-22Jan2013/", "Data", false));
       }
 
       // mc
       if( run_mc ){
-         datasets.push_back( Dataset("DYJetsToLL_M-50/*.root", "DYJetsToLL", true) );
-         datasets.push_back( Dataset("DYJetsToLL_M-10To50/*.root", "DYJetsToLL_M10To50", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_20_30/*.root", "QCD_EMEnriched_20_30", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_30_80/*.root", "QCD_EMEnriched_30_80", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_80_170/*.root", "QCD_EMEnriched_80_170", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_170_250/*.root", "QCD_EMEnriched_170_250", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_250_350/*.root", "QCD_EMEnriched_250_350", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_350/*.root", "QCD_EMEnriched_350", true) );
-         datasets.push_back( Dataset("QCD_BCtoE_20_30/*.root", "QCD_BCtoE_20_30", true) );
-         datasets.push_back( Dataset("QCD_BCtoE_30_80/*.root", "QCD_BCtoE_30_80", true) );
-         datasets.push_back( Dataset("QCD_BCtoE_80_170/*.root", "QCD_BCtoE_80_170", true) );
-         datasets.push_back( Dataset("QCD_BCtoE_170_250/*.root", "QCD_BCtoE_170_250", true) );
-         datasets.push_back( Dataset("QCD_BCtoE_250_350/*.root", "QCD_BCtoE_250_350", true) );
-         datasets.push_back( Dataset("Gamma_0_15/*.root", "Gamma_0_15", true) );
-         datasets.push_back( Dataset("Gamma_15_30/*.root", "Gamma_15_30", true) );
-         datasets.push_back( Dataset("Gamma_30_50/*.root", "Gamma_30_50", true) );
-         datasets.push_back( Dataset("Gamma_50_80/*.root", "Gamma_50_80", true) );
-         datasets.push_back( Dataset("Gamma_80_120/*.root", "Gamma_80_120", true) );
-         datasets.push_back( Dataset("Gamma_120_170/*.root", "Gamma_120_170", true) );
-         datasets.push_back( Dataset("Gamma_170_300/*.root", "Gamma_170_300", true) );
-         datasets.push_back( Dataset("Gamma_300_470/*.root", "Gamma_300_470", true) );
-         datasets.push_back( Dataset("TTJets/*.root", "TTJets", true) );
-         datasets.push_back( Dataset("Tbar_tW-channel/*.root", "Tbar_tW", true) );
-         datasets.push_back( Dataset("T_tW-channel/*.root", "T_tW", true) );
-         datasets.push_back( Dataset("WJetsToLNu/*.root", "WJetsToLNu", true) );
-         datasets.push_back( Dataset("WW/*.root", "WW", true) );
-         datasets.push_back( Dataset("WZ/*.root", "WZ", true) );
-         datasets.push_back( Dataset("ZZ/*.root", "ZZ", true) );
+         datasets.push_back( Dataset("DYJetsToLL_M-50/", "DYJetsToLL", true) );
+         datasets.push_back( Dataset("DYJetsToLL_M-10To50/", "DYJetsToLL_M10To50", true) );
+         datasets.push_back( Dataset("QCD_EMEnriched_20_30/", "QCD_EMEnriched_20_30", true) );
+         datasets.push_back( Dataset("QCD_EMEnriched_30_80/", "QCD_EMEnriched_30_80", true) );
+         datasets.push_back( Dataset("QCD_EMEnriched_80_170/", "QCD_EMEnriched_80_170", true) );
+         datasets.push_back( Dataset("QCD_EMEnriched_170_250/", "QCD_EMEnriched_170_250", true) );
+         datasets.push_back( Dataset("QCD_EMEnriched_250_350/", "QCD_EMEnriched_250_350", true) );
+         datasets.push_back( Dataset("QCD_EMEnriched_350/", "QCD_EMEnriched_350", true) );
+         datasets.push_back( Dataset("QCD_BCtoE_20_30/", "QCD_BCtoE_20_30", true) );
+         datasets.push_back( Dataset("QCD_BCtoE_30_80/", "QCD_BCtoE_30_80", true) );
+         datasets.push_back( Dataset("QCD_BCtoE_80_170/", "QCD_BCtoE_80_170", true) );
+         datasets.push_back( Dataset("QCD_BCtoE_170_250/", "QCD_BCtoE_170_250", true) );
+         datasets.push_back( Dataset("QCD_BCtoE_250_350/", "QCD_BCtoE_250_350", true) );
+         datasets.push_back( Dataset("Gamma_0_15/", "Gamma_0_15", true) );
+         datasets.push_back( Dataset("Gamma_15_30/", "Gamma_15_30", true) );
+         datasets.push_back( Dataset("Gamma_30_50/", "Gamma_30_50", true) );
+         datasets.push_back( Dataset("Gamma_50_80/", "Gamma_50_80", true) );
+         datasets.push_back( Dataset("Gamma_80_120/", "Gamma_80_120", true) );
+         datasets.push_back( Dataset("Gamma_120_170/", "Gamma_120_170", true) );
+         datasets.push_back( Dataset("Gamma_170_300/", "Gamma_170_300", true) );
+         datasets.push_back( Dataset("Gamma_300_470/", "Gamma_300_470", true) );
+         datasets.push_back( Dataset("TTJets/", "TTJets", true) );
+         datasets.push_back( Dataset("Tbar_tW-channel/", "Tbar_tW", true) );
+         datasets.push_back( Dataset("T_tW-channel/", "T_tW", true) );
+         datasets.push_back( Dataset("WJetsToLNu/", "WJetsToLNu", true) );
+         datasets.push_back( Dataset("WW/", "WW", true) );
+         datasets.push_back( Dataset("WZ/", "WZ", true) );
+         datasets.push_back( Dataset("ZZ/", "ZZ", true) );
       }
 
    }
@@ -216,31 +217,31 @@ int main(int argc, char* argv[]){
 
       // data
       if( run_data ){
-         datasets.push_back( Dataset("Run2012A-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-part1-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-part2-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-part3-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-part4-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-part1-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-part2-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-part3-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-part4-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-part1-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-part2-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-part3-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-part4-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012A-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012B-part1-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012B-part2-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012B-part3-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012B-part4-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-part1-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-part2-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-part3-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-part4-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012D-part1-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012D-part2-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012D-part3-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012D-part4-22Jan2013/", "Data", false) );
       }
 
       // mc
       if( run_mc ){
-         datasets.push_back( Dataset("DYJetsToLL/*.root", "DYJetsToLL", true) );
-         datasets.push_back( Dataset("TTJets/*.root", "TTJets", true) );
-         datasets.push_back( Dataset("Tbar_tW-channel/*.root", "Tbar_tW", true) );
-         datasets.push_back( Dataset("T_tW-channel/*.root", "T_tW", true) );
-         datasets.push_back( Dataset("WJetsToLNu/*.root", "WJetsToLNu", true) );
-         datasets.push_back( Dataset("WW/*.root", "WW", true) );
-         datasets.push_back( Dataset("WZ/*.root", "WZ", true) );
-         datasets.push_back( Dataset("ZZ/*.root", "ZZ", true) );
+         datasets.push_back( Dataset("DYJetsToLL/", "DYJetsToLL", true) );
+         datasets.push_back( Dataset("TTJets/", "TTJets", true) );
+         datasets.push_back( Dataset("Tbar_tW-channel/", "Tbar_tW", true) );
+         datasets.push_back( Dataset("T_tW-channel/", "T_tW", true) );
+         datasets.push_back( Dataset("WJetsToLNu/", "WJetsToLNu", true) );
+         datasets.push_back( Dataset("WW/", "WW", true) );
+         datasets.push_back( Dataset("WZ/", "WZ", true) );
+         datasets.push_back( Dataset("ZZ/", "ZZ", true) );
       }
 
    }
@@ -248,42 +249,42 @@ int main(int argc, char* argv[]){
 
       // data
       if( run_data ){
-         datasets.push_back( Dataset("Run2012A-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-part1-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-part2-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-part3-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-part4-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-part1-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-part2-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-part3-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-part4-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-part1-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-part2-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-part3-22Jan2013/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-part4-22Jan2013/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012A-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012B-part1-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012B-part2-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012B-part3-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012B-part4-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-part1-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-part2-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-part3-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-part4-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012D-part1-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012D-part2-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012D-part3-22Jan2013/", "Data", false) );
+         datasets.push_back( Dataset("Run2012D-part4-22Jan2013/", "Data", false) );
       }
 
       // mc
       if( run_mc ){
-         datasets.push_back( Dataset("QCD_15_30/*.root", "QCD_15_30", true) );
-         datasets.push_back( Dataset("QCD_30_50/*.root", "QCD_30_50", true) );
-         datasets.push_back( Dataset("QCD_50_80/*.root", "QCD_50_80", true) );
-         datasets.push_back( Dataset("QCD_80_120/*.root", "QCD_80_120", true) );
-         datasets.push_back( Dataset("QCD_120_170/*.root", "QCD_120_170", true) );
-         datasets.push_back( Dataset("QCD_170_300/*.root", "QCD_170_300", true) );
-         datasets.push_back( Dataset("QCD_300_470/*.root", "QCD_300_470", true) );
-         datasets.push_back( Dataset("QCD_470_600/*.root", "QCD_470_600", true) );
-         datasets.push_back( Dataset("QCD_600_800/*.root", "QCD_600_800", true) );
-         datasets.push_back( Dataset("QCD_800_1000/*.root", "QCD_800_1000", true) );
-         datasets.push_back( Dataset("QCD_1000_1400/*.root", "QCD_1000_1400", true) );
-         datasets.push_back( Dataset("DYJetsToLL/*.root", "DYJetsToLL", true) );
-         datasets.push_back( Dataset("TTJets/*.root", "TTJets", true) );
-         datasets.push_back( Dataset("Tbar_tW-channel/*.root", "Tbar_tW", true) );
-         datasets.push_back( Dataset("T_tW-channel/*.root", "T_tW", true) );
-         datasets.push_back( Dataset("WJetsToLNu/*.root", "WJetsToLNu", true) );
-         datasets.push_back( Dataset("WW/*.root", "WW", true) );
-         datasets.push_back( Dataset("WZ/*.root", "WZ", true) );
-         datasets.push_back( Dataset("ZZ/*.root", "ZZ", true) );
+         datasets.push_back( Dataset("QCD_15_30/", "QCD_15_30", true) );
+         datasets.push_back( Dataset("QCD_30_50/", "QCD_30_50", true) );
+         datasets.push_back( Dataset("QCD_50_80/", "QCD_50_80", true) );
+         datasets.push_back( Dataset("QCD_80_120/", "QCD_80_120", true) );
+         datasets.push_back( Dataset("QCD_120_170/", "QCD_120_170", true) );
+         datasets.push_back( Dataset("QCD_170_300/", "QCD_170_300", true) );
+         datasets.push_back( Dataset("QCD_300_470/", "QCD_300_470", true) );
+         datasets.push_back( Dataset("QCD_470_600/", "QCD_470_600", true) );
+         datasets.push_back( Dataset("QCD_600_800/", "QCD_600_800", true) );
+         datasets.push_back( Dataset("QCD_800_1000/", "QCD_800_1000", true) );
+         datasets.push_back( Dataset("QCD_1000_1400/", "QCD_1000_1400", true) );
+         datasets.push_back( Dataset("DYJetsToLL/", "DYJetsToLL", true) );
+         datasets.push_back( Dataset("TTJets/", "TTJets", true) );
+         datasets.push_back( Dataset("Tbar_tW-channel/", "Tbar_tW", true) );
+         datasets.push_back( Dataset("T_tW-channel/", "T_tW", true) );
+         datasets.push_back( Dataset("WJetsToLNu/", "WJetsToLNu", true) );
+         datasets.push_back( Dataset("WW/", "WW", true) );
+         datasets.push_back( Dataset("WZ/", "WZ", true) );
+         datasets.push_back( Dataset("ZZ/", "ZZ", true) );
       }
 
    }
@@ -291,34 +292,34 @@ int main(int argc, char* argv[]){
 
       // data
       if( run_data ){
-         datasets.push_back( Dataset("Run2012A-13Jul2012/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012A-recover-06Aug2012/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-13Jul2012/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-24Aug2012/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-PromptReco/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-PromptReco/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012A-13Jul2012/", "Data", false) );
+         datasets.push_back( Dataset("Run2012A-recover-06Aug2012/", "Data", false) );
+         datasets.push_back( Dataset("Run2012B-13Jul2012/", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-24Aug2012/", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-PromptReco/", "Data", false) );
+         datasets.push_back( Dataset("Run2012D-PromptReco/", "Data", false) );
       }
 
       // mc
       if( run_mc ){
-         datasets.push_back( Dataset("TTJets_Hadronic/*.root", "TTJets_Hadronic", true) );
-         datasets.push_back( Dataset("TTJets_FullLept/*.root", "TTJets_FullLept", true) );
-         datasets.push_back( Dataset("TTJets_SemiLept/*.root", "TTJets_SemiLept", true) );
-         datasets.push_back( Dataset("DYJetsToLL/*.root", "DYJetsToLL", true) );
-         datasets.push_back( Dataset("Tbar_tW-channel/*.root", "Tbar_tW", true) );
-         datasets.push_back( Dataset("T_tW-channel/*.root", "T_tW", true) );
-         datasets.push_back( Dataset("WJetsToLNu/*.root", "WJetsToLNu", true) );
-         datasets.push_back( Dataset("QCD_15_30/*.root", "QCD_15_30", true) );
-         datasets.push_back( Dataset("QCD_30_50/*.root", "QCD_30_50", true) );
-         datasets.push_back( Dataset("QCD_50_80/*.root", "QCD_50_80", true) );
-         datasets.push_back( Dataset("QCD_80_120/*.root", "QCD_80_120", true) );
-         datasets.push_back( Dataset("QCD_120_170/*.root", "QCD_120_170", true) );
-         datasets.push_back( Dataset("QCD_170_300/*.root", "QCD_170_300", true) );
-         datasets.push_back( Dataset("QCD_300_470/*.root", "QCD_300_470", true) );
-         datasets.push_back( Dataset("QCD_470_600/*.root", "QCD_470_600", true) );
-         datasets.push_back( Dataset("QCD_600_800/*.root", "QCD_600_800", true) );
-         datasets.push_back( Dataset("QCD_800_1000/*.root", "QCD_800_1000", true) );
-         datasets.push_back( Dataset("QCD_1000_1400/*.root", "QCD_1000_1400", true) );
+         datasets.push_back( Dataset("TTJets_Hadronic/", "TTJets_Hadronic", true) );
+         datasets.push_back( Dataset("TTJets_FullLept/", "TTJets_FullLept", true) );
+         datasets.push_back( Dataset("TTJets_SemiLept/", "TTJets_SemiLept", true) );
+         datasets.push_back( Dataset("DYJetsToLL/", "DYJetsToLL", true) );
+         datasets.push_back( Dataset("Tbar_tW-channel/", "Tbar_tW", true) );
+         datasets.push_back( Dataset("T_tW-channel/", "T_tW", true) );
+         datasets.push_back( Dataset("WJetsToLNu/", "WJetsToLNu", true) );
+         datasets.push_back( Dataset("QCD_15_30/", "QCD_15_30", true) );
+         datasets.push_back( Dataset("QCD_30_50/", "QCD_30_50", true) );
+         datasets.push_back( Dataset("QCD_50_80/", "QCD_50_80", true) );
+         datasets.push_back( Dataset("QCD_80_120/", "QCD_80_120", true) );
+         datasets.push_back( Dataset("QCD_120_170/", "QCD_120_170", true) );
+         datasets.push_back( Dataset("QCD_170_300/", "QCD_170_300", true) );
+         datasets.push_back( Dataset("QCD_300_470/", "QCD_300_470", true) );
+         datasets.push_back( Dataset("QCD_470_600/", "QCD_470_600", true) );
+         datasets.push_back( Dataset("QCD_600_800/", "QCD_600_800", true) );
+         datasets.push_back( Dataset("QCD_800_1000/", "QCD_800_1000", true) );
+         datasets.push_back( Dataset("QCD_1000_1400/", "QCD_1000_1400", true) );
       }
 
    }
@@ -326,48 +327,48 @@ int main(int argc, char* argv[]){
 
       // data
       if( run_data ){
-         datasets.push_back( Dataset("Run2012A-22Jan2013-SingleMu/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012A-22Jan2013-SingleElectron/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-22Jan2013-SingleMu/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-22Jan2013-SingleElectron/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-22Jan2013-SingleMu/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-22Jan2013-SingleElectron/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-22Jan2013-SingleMu/*.root", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-22Jan2013-SingleElectron/*.root", "Data", false) );
+         datasets.push_back( Dataset("Run2012A-22Jan2013-SingleMu/", "Data", false) );
+         datasets.push_back( Dataset("Run2012A-22Jan2013-SingleElectron/", "Data", false) );
+         datasets.push_back( Dataset("Run2012B-22Jan2013-SingleMu/", "Data", false) );
+         datasets.push_back( Dataset("Run2012B-22Jan2013-SingleElectron/", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-22Jan2013-SingleMu/", "Data", false) );
+         datasets.push_back( Dataset("Run2012C-22Jan2013-SingleElectron/", "Data", false) );
+         datasets.push_back( Dataset("Run2012D-22Jan2013-SingleMu/", "Data", false) );
+         datasets.push_back( Dataset("Run2012D-22Jan2013-SingleElectron/", "Data", false) );
       }
 
       // mc
       if( run_mc ){
-         datasets.push_back( Dataset("TTJets_FullLept/*.root", "TTJets_FullLept", true) );
-         datasets.push_back( Dataset("TTJets_SemiLept/*.root", "TTJets_SemiLept", true) );
-         datasets.push_back( Dataset("TTJets_Hadronic/*.root", "TTJets_Hadronic", true) );
-         datasets.push_back( Dataset("DYJetsToLL_M-50/*.root", "DYJetsToLL", true) );
-         datasets.push_back( Dataset("DYJetsToLL_M-10To50/*.root", "DYJetsToLL_M10To50", true) );
-         datasets.push_back( Dataset("Tbar_tW-channel/*.root", "Tbar_tW", true) );
-         datasets.push_back( Dataset("T_tW-channel/*.root", "T_tW", true) );
-         datasets.push_back( Dataset("WJetsToLNu/*.root", "WJetsToLNu", true) );
-         datasets.push_back( Dataset("WW/*.root", "WW", true) );
-         datasets.push_back( Dataset("WZ/*.root", "WZ", true) );
-         datasets.push_back( Dataset("ZZ/*.root", "ZZ", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_20_30/*.root", "QCD_EMEnriched_20_30", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_30_80/*.root", "QCD_EMEnriched_30_80", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_80_170/*.root", "QCD_EMEnriched_80_170", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_170_250/*.root", "QCD_EMEnriched_170_250", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_250_350/*.root", "QCD_EMEnriched_250_350", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_350/*.root", "QCD_EMEnriched_350", true) );
-         datasets.push_back( Dataset("QCD_BCtoE_20_30/*.root", "QCD_BCtoE_20_30", true) );
-         datasets.push_back( Dataset("QCD_BCtoE_30_80/*.root", "QCD_BCtoE_30_80", true) );
-         datasets.push_back( Dataset("QCD_BCtoE_80_170/*.root", "QCD_BCtoE_80_170", true) );
-         datasets.push_back( Dataset("QCD_BCtoE_170_250/*.root", "QCD_BCtoE_170_250", true) );
-         datasets.push_back( Dataset("QCD_BCtoE_250_350/*.root", "QCD_BCtoE_250_350", true) );
-         datasets.push_back( Dataset("Gamma_0_15/*.root", "Gamma_0_15", true) );
-         datasets.push_back( Dataset("Gamma_15_30/*.root", "Gamma_15_30", true) );
-         datasets.push_back( Dataset("Gamma_30_50/*.root", "Gamma_30_50", true) );
-         datasets.push_back( Dataset("Gamma_50_80/*.root", "Gamma_50_80", true) );
-         datasets.push_back( Dataset("Gamma_80_120/*.root", "Gamma_80_120", true) );
-         datasets.push_back( Dataset("Gamma_120_170/*.root", "Gamma_120_170", true) );
-         datasets.push_back( Dataset("Gamma_170_300/*.root", "Gamma_170_300", true) );
-         datasets.push_back( Dataset("Gamma_300_470/*.root", "Gamma_300_470", true) );
+         datasets.push_back( Dataset("TTJets_FullLept/", "TTJets_FullLept", true) );
+         datasets.push_back( Dataset("TTJets_SemiLept/", "TTJets_SemiLept", true) );
+         datasets.push_back( Dataset("TTJets_Hadronic/", "TTJets_Hadronic", true) );
+         datasets.push_back( Dataset("DYJetsToLL_M-50/", "DYJetsToLL", true) );
+         datasets.push_back( Dataset("DYJetsToLL_M-10To50/", "DYJetsToLL_M10To50", true) );
+         datasets.push_back( Dataset("Tbar_tW-channel/", "Tbar_tW", true) );
+         datasets.push_back( Dataset("T_tW-channel/", "T_tW", true) );
+         datasets.push_back( Dataset("WJetsToLNu/", "WJetsToLNu", true) );
+         datasets.push_back( Dataset("WW/", "WW", true) );
+         datasets.push_back( Dataset("WZ/", "WZ", true) );
+         datasets.push_back( Dataset("ZZ/", "ZZ", true) );
+         datasets.push_back( Dataset("QCD_EMEnriched_20_30/", "QCD_EMEnriched_20_30", true) );
+         datasets.push_back( Dataset("QCD_EMEnriched_30_80/", "QCD_EMEnriched_30_80", true) );
+         datasets.push_back( Dataset("QCD_EMEnriched_80_170/", "QCD_EMEnriched_80_170", true) );
+         datasets.push_back( Dataset("QCD_EMEnriched_170_250/", "QCD_EMEnriched_170_250", true) );
+         datasets.push_back( Dataset("QCD_EMEnriched_250_350/", "QCD_EMEnriched_250_350", true) );
+         datasets.push_back( Dataset("QCD_EMEnriched_350/", "QCD_EMEnriched_350", true) );
+         datasets.push_back( Dataset("QCD_BCtoE_20_30/", "QCD_BCtoE_20_30", true) );
+         datasets.push_back( Dataset("QCD_BCtoE_30_80/", "QCD_BCtoE_30_80", true) );
+         datasets.push_back( Dataset("QCD_BCtoE_80_170/", "QCD_BCtoE_80_170", true) );
+         datasets.push_back( Dataset("QCD_BCtoE_170_250/", "QCD_BCtoE_170_250", true) );
+         datasets.push_back( Dataset("QCD_BCtoE_250_350/", "QCD_BCtoE_250_350", true) );
+         datasets.push_back( Dataset("Gamma_0_15/", "Gamma_0_15", true) );
+         datasets.push_back( Dataset("Gamma_15_30/", "Gamma_15_30", true) );
+         datasets.push_back( Dataset("Gamma_30_50/", "Gamma_30_50", true) );
+         datasets.push_back( Dataset("Gamma_50_80/", "Gamma_50_80", true) );
+         datasets.push_back( Dataset("Gamma_80_120/", "Gamma_80_120", true) );
+         datasets.push_back( Dataset("Gamma_120_170/", "Gamma_120_170", true) );
+         datasets.push_back( Dataset("Gamma_170_300/", "Gamma_170_300", true) );
+         datasets.push_back( Dataset("Gamma_300_470/", "Gamma_300_470", true) );
       }
 
    }
@@ -376,6 +377,7 @@ int main(int argc, char* argv[]){
    for( vector<Dataset>::iterator data = datasets.begin(); data != datasets.end(); data++ ){
       data->channel = channel;
       data->path = "/mnt/xrootd/user/nmirman/Ntuples/METsig";
+      //data->path="root://osg-se.cac.cornell.edu//xrootd/cache/cms/store/user/nmirman/Ntuples/METsig";
       data->date = "20130830";
       if( channel.compare("Zmumu") == 0 and data->isMC ){
          data->date = "20130913";
@@ -402,11 +404,30 @@ int main(int argc, char* argv[]){
       //Tree *tree = (TTree*)file->Get("events");
       string fullname = data->path+"/"+data->channel+"/"+data->date+"/"+data->filename;
       TChain tree("events");
-      tree.Add( fullname.c_str() );
+      string xrdname = fullname;
+      xrdname.replace(xrdname.begin(),xrdname.begin()+11,
+            "root://osg-se.cac.cornell.edu//xrootd/cache/cms/store");
+   TString filename = fullname;
+   void *dir = gSystem->OpenDirectory( filename );
+   const char *ent;
+   while ((ent = gSystem->GetDirEntry(dir))) {
+      string entry = ent;
+      TString fn = xrdname+ent;
+      if (fn.EndsWith(".root")) {
+         FileStat_t st;
+         //if (!gSystem->GetPathInfo(fn, st) && R_ISREG(st.fMode)) 
+         cout << "Adding file " << entry << endl;
+         tree.Add(fn);
+         //TFile::Open(fn);
+      }
+   }
+   gSystem->FreeDirectory(dir);
+      //tree.Add( fullname.c_str() );
       data->size = tree.GetEntries();
       cout << fullname << ": " << data->size << " events." << endl;
    }
    cout << endl;
+   //return 0;
 
    //
    // loop through datasets, fill histograms

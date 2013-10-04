@@ -6,10 +6,12 @@
 #include "TTree.h"
 #include "TChain.h"
 #include "TFile.h"
+#include "TFileCollection.h"
 #include "TCanvas.h"
 #include "TH2.h"
 #include "TROOT.h"
 #include "TStyle.h"
+#include "TSystem.h"
 #include "TVector2.h"
 #include "TRandom3.h"
 #include "TProfile.h"
@@ -246,9 +248,24 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    //TFile *file = TFile::Open(filename);
    //if( !file ){ return; }
 
-   //TTree *tree = (TTree*)file->Get("events");
    TChain *tree = new TChain("events");
-   tree->Add( filename );
+   string xrdname = filename;
+   xrdname.replace(xrdname.begin(),xrdname.begin()+11,
+         "root://osg-se.cac.cornell.edu//xrootd/cache/cms/store");
+   void *dir = gSystem->OpenDirectory( filename );
+   const char *ent;
+   while ((ent = gSystem->GetDirEntry(dir))) {
+      string entry = ent;
+      TString fn = xrdname+ent;
+      if (fn.EndsWith(".root")) {
+         FileStat_t st;
+         //if (!gSystem->GetPathInfo(fn, st) && R_ISREG(st.fMode)) 
+         cout << "Adding file " << entry << endl;
+         tree->Add(fn);
+         //TFile::Open(fn);
+      }
+   }
+   gSystem->FreeDirectory(dir);
 
    tree->SetBranchAddress("v_size", &v_size);
    tree->SetBranchAddress("met_pt", met_pt);
