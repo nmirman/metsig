@@ -4,6 +4,7 @@
 #include "TH1.h"
 #include "TGraphAsymmErrors.h"
 #include "TKey.h"
+#include "TLegend.h"
 
 #include <iostream>
 
@@ -11,13 +12,13 @@ using namespace std;
 
 void plotSyst(){
 
-   TFile* fsmeared = new TFile("plots20130930/plotsWenu.root");
+   TFile* fsmeared = new TFile("plots20131010/plotsWenu.root");
 
-   TFile* fcent = new TFile("plots20130930/plotsWenu_nosmear.root");
-   TFile* fup = new TFile("plots20130930/plotsWenu_nosmear_up.root");
-   TFile* fdown = new TFile("plots20130930/plotsWenu_nosmear_down.root");
+   TFile* fcent = new TFile("plots20131010/plotsWenu_nosmear.root");
+   TFile* fup = new TFile("plots20131010/plotsWenu_nosmear_up.root");
+   TFile* fdown = new TFile("plots20131010/plotsWenu_nosmear_down.root");
 
-   TFile* fout = new TFile("plots20130930/plotsWenuJEC_nosmear.root","RECREATE");
+   TFile* fout = new TFile("plots20131010/plotsWenuJEC.root","RECREATE");
    fout->cd();
 
    // loop through objects in file
@@ -27,7 +28,7 @@ void plotSyst(){
       string name = key->GetName();
       string classname = key->GetClassName();
 
-      cout << "Opening key, class " << name << ", " << classname << endl;
+      cout << "Adding " << classname << " " << name << endl;
       if( classname.compare("TCanvas") != 0 ) continue;
       if( name.compare("pchi2_old") == 0 ) continue;
 
@@ -64,9 +65,10 @@ void plotSyst(){
                hmet_mc->GetBinContent(i));
          double ehigh = maxvar - hmet_mc->GetBinContent(i);
          double elow = hmet_mc->GetBinContent(i) - minvar;
+         double w = hmet_mc->GetBinWidth(i)/2;
 
          gmet->SetPoint(i-1, hmet_mc_smeared->GetBinCenter(i), hmet_mc_smeared->GetBinContent(i));
-         gmet->SetPointError(i-1, 0, 0, elow, ehigh);
+         gmet->SetPointError(i-1, w, w, elow, ehigh);
 
       }
 
@@ -81,7 +83,7 @@ void plotSyst(){
          double elow = hmetratio->GetBinContent(i) - minvar;
 
          gmetratio->SetPoint(i-1,
-               hmetratio_smeared->GetBinCenter(i), hmetratio_smeared->GetBinContent(i));
+               hmetratio_smeared->GetBinCenter(i), 1.0/*hmetratio_smeared->GetBinContent(i)*/);
          gmetratio->SetPointError(i-1, 0, 0, elow, ehigh);
 
       }
@@ -91,8 +93,16 @@ void plotSyst(){
       p1->cd();
       gmet->SetFillColor(17);
       gmet->SetFillStyle(3001);
-      gmet->Draw("4");
+      gmet->Draw("2");
       hmet_data->Draw("same");
+
+      TH1D* hmc_error = (TH1D*)cmet_smeared->FindObject( "histMCerror" );
+      p1->GetListOfPrimitives()->Remove(hmc_error);
+
+      // legend
+      TLegend *leg = (TLegend*)cmet_smeared->FindObject("TPave");
+      leg->AddEntry(gmet, "uncertainties", "f");
+      leg->Draw();
 
       TPad* p2 = (TPad*)cmet_smeared->FindObject("pad2");
       p2->cd();

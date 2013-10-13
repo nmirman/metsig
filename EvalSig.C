@@ -438,24 +438,16 @@ int main(int argc, char* argv[]){
 
       // initialize counters for ROC curve
       if( compute_roc and data->isMC ){
-         if( data->channel.compare("Ttbar0lept") != 0 ){
-            for(int i=0; i < 10; i++){
-               data->ROCmet.push_back( ROCPoint(2*10*i, 0, 0) );
-               data->ROCmetsig2011.push_back( ROCPoint(exp(double(10*i)/5-15), 0, 0) );
-               data->ROCmetsig2012.push_back( ROCPoint(exp(double(10*i)/5-15), 0, 0) );
-               data->ROCmetrht.push_back( ROCPoint(exp(double(10*i)/5-15), 0, 0) );
-            }
-         }else{
-            for(int i=0; i < 100; i++){
-               data->ROCmet.push_back( ROCPoint(2*i, 0, 0) );
-               data->ROCmetsig2011.push_back( ROCPoint(exp(double(i)/5-15), 0, 0) );
-               data->ROCmetsig2012.push_back( ROCPoint(exp(double(i)/5-15), 0, 0) );
-               data->ROCmetrht.push_back( ROCPoint(exp(double(i)/5-15), 0, 0) );
-            }
+         for(int i=0; i < 100; i++){
+            data->ROCmet.push_back( ROCPoint(2*i, 0, 0) );
+            data->ROCmetsig2011.push_back( ROCPoint(exp(double(i)/5-15), 0, 0) );
+            data->ROCmetsig2012.push_back( ROCPoint(exp(double(i)/5-15), 0, 0) );
+            data->ROCmetrht.push_back( ROCPoint(exp(double(i)/5-15), 0, 0) );
          }
       }
 
-      int section_size = 1000000;
+      //int section_size = 1000000;
+      int section_size = 500000;
       int num_events = fracevents*data->size;
       int num_sections = 1 + ((num_events-1)/section_size);
       cout << "Opening dataset " << data->filename << endl;
