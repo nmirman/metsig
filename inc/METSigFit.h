@@ -85,6 +85,66 @@ struct event {
    vector<double> jet_res_par5;
    vector<double> jet_res_par6;
    */
+
+   event(){
+   channel = "";
+
+   nvertices = 0;
+   weight = 0;
+
+   met = 0;
+   sig = 0;
+   sig_init = 0;
+   det = 0;
+   cov_xx = 0;
+   cov_xy = 0;
+   cov_yy = 0;
+
+   cov_xx_highpt = 0;
+   cov_xx_pjet = 0;
+   cov_dtt = 0;
+   cov_dff = 0;
+
+   qt = 0;
+   qx = 0;
+   ut = 0;
+   ut_par = 0;
+   ut_perp = 0;
+
+   resp_correction = 0;
+
+   // pseudojet
+   pjet_phiL123 = 0;
+   pjet_vectptL123 = 0;
+   pjet_scalptL123 = 0;
+   pjet_phiT1 = 0;
+   pjet_vectptT1 = 0;
+   pjet_scalptT1 = 0;
+   pjet_size = 0;
+
+   // MC MET smearing
+   met_varx = 0;
+   met_vary = 0;
+   met_rho = 0;
+
+   // variables for ROC
+   metsig2011 = 0;
+
+   // pfmet
+   pfmet_px [0] = 0;
+   pfmet_py [0] = 0;
+   pfmet_px [1] = 0;
+   pfmet_px [1] = 0;
+   pfmet_px [2] = 0;
+   pfmet_px [2] = 0;
+   pfmet_px [3] = 0;
+   pfmet_py [3] = 0;
+   pfmet_py [4] = 0;
+   pfmet_py [4] = 0;
+   pfmet_py [5] = 0;
+   pfmet_py [5] = 0;
+   }
+
 }; 
 
 class Fitter{

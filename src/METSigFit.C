@@ -1835,6 +1835,12 @@ void Fitter::PrintHists( const char* filename, string stackmode, bool overflow )
 
       canvas->cd();
       canvas->Write();
+
+      delete pad1;
+      delete pad2;
+      delete leg;
+      delete func;
+      delete canvas;
    }
    cout << "\nCORRELATION COEFFICIENTS: data, mc" << endl;
    for(map<string,TH2*>::const_iterator it = profsData_.begin();
@@ -1888,6 +1894,9 @@ void Fitter::PrintHists( const char* filename, string stackmode, bool overflow )
 
       cout << pname << ": " << histData->GetCorrelationFactor() << ", "
          << histMC->GetCorrelationFactor() << endl;
+
+      delete leg;
+      delete canvas;
    }
    TCanvas *canvas2 = new TCanvas( "sig_met_2D", "sig_met_2D", 800, 800 );
    canvas2->cd();
@@ -1908,6 +1917,10 @@ void Fitter::PrintHists( const char* filename, string stackmode, bool overflow )
    psig_qt_corr = profsData_["psig_qt"]->GetCorrelationFactor();
 
    file->Close();
+
+   delete canvas2;
+   delete pchi2_left;
+   delete pchi2_right;
    delete file;
 }
 
