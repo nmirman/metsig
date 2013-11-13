@@ -1525,6 +1525,9 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
 
    }
 
+   cout << "hist mean = " << hists_["met"]->GetMean() << ", rms = "
+      << hists_["met"]->GetRMS() << endl;
+
 }
 
 void Fitter::PrintHists( const char* filename, string stackmode, bool overflow ){

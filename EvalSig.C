@@ -517,6 +517,15 @@ int main(int argc, char* argv[]){
             }
          }
 
+         // compute average met
+         double norm = 0;
+         double met = 0;
+         for( int i=0; i < int(eventvec.size()); i++ ){
+            met += eventvec[i].met * eventvec[i].weight;
+            norm += eventvec[i].weight;
+         }
+         cout << "Avg MET = " << met << "/" << norm << " = " << met/norm << endl;
+
          // fill histograms
          fitter.FillHists(eventvec, channel); 
 
