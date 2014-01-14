@@ -176,7 +176,8 @@ const double Fitter::sigmaPhi[10][5]={{926.978, 2.52747, 0.0304001, -926.224, -1
    {   0.765787, -3.90638e-06, -4.70224e-08,   0.11831,      -1.4675},
    {    259.189,   0.00132792,    -0.311411,  -258.647,            0}};
 
-void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, const double fracevents,
+void Fitter::ReadNtuple(const char* filename, const char* xrdname, 
+      vector<event>& eventref_temp, const double fracevents,
       const bool isMC, string channel, const bool do_resp_correction, 
       const int start_evt_num, const int end_evt_num ){
    cout << "---> ReadNtuple " << channel << endl;
@@ -249,18 +250,15 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    //if( !file ){ return; }
 
    TChain *tree = new TChain("events");
-   string xrdname = filename;
-   xrdname.replace(xrdname.begin(),xrdname.begin()+11,
-         "root://osg-se.cac.cornell.edu//xrootd/cache/cms/store");
    void *dir = gSystem->OpenDirectory( filename );
    const char *ent;
    while ((ent = gSystem->GetDirEntry(dir))) {
       string entry = ent;
-      TString fn = xrdname+ent;
+      string xrdstring = xrdname;
+      TString fn = xrdstring+ent;
       if (fn.EndsWith(".root")) {
          FileStat_t st;
          //if (!gSystem->GetPathInfo(fn, st) && R_ISREG(st.fMode)) 
-         cout << "Adding file " << entry << endl;
          tree->Add(fn);
          //TFile::Open(fn);
       }

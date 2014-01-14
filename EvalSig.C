@@ -12,6 +12,7 @@
 #include "TSystem.h"
 
 #include <iostream>
+#include <stdio.h>
 #include <unistd.h>
 using namespace std;
 
@@ -29,6 +30,7 @@ struct Dataset {
    string channel;
    string filename;
    string process;
+   string xrdname;
    bool isMC;
    int size;
 
@@ -44,6 +46,8 @@ struct Dataset {
 
 int main(int argc, char* argv[]){
 
+   freopen ("stderr.txt","w",stderr);
+
    // option flags
    char c;
    double fracevents = 1;
@@ -57,6 +61,7 @@ int main(int argc, char* argv[]){
    int met_type = 4;
    double rebin = 1;
    bool fullshape = false;
+   string xrdopt = "path";
 
    while( (c = getopt(argc, argv, "n:p:o:t:b:fhscbmrdw")) != -1 ) {
       switch(c)
@@ -70,7 +75,7 @@ int main(int argc, char* argv[]){
             break;
 
          case 'c' :
-            do_resp_correction=true;
+            xrdopt = "cache";
             break;
 
          case 'p':
@@ -406,22 +411,24 @@ int main(int argc, char* argv[]){
       TChain tree("events");
       string xrdname = fullname;
       xrdname.replace(xrdname.begin(),xrdname.begin()+11,
-            "root://osg-se.cac.cornell.edu//xrootd/cache/cms/store");
-   TString filename = fullname;
-   void *dir = gSystem->OpenDirectory( filename );
-   const char *ent;
-   while ((ent = gSystem->GetDirEntry(dir))) {
-      string entry = ent;
-      TString fn = xrdname+ent;
-      if (fn.EndsWith(".root")) {
-         FileStat_t st;
-         //if (!gSystem->GetPathInfo(fn, st) && R_ISREG(st.fMode)) 
-         cout << "Adding file " << entry << endl;
-         tree.Add(fn);
-         //TFile::Open(fn);
+            "root://osg-se.cac.cornell.edu//xrootd/"+xrdopt+"/cms/store");
+      data->xrdname = xrdname;
+      TString filename = fullname;
+      void *dir = gSystem->OpenDirectory( filename );
+      const char *ent;
+      ent = gSystem->GetDirEntry(dir);
+      while ((ent = gSystem->GetDirEntry(dir))) {
+         string entry = ent;
+         TString fn = xrdname+ent;
+         if (fn.EndsWith(".root")) {
+            FileStat_t st;
+            //if (!gSystem->GetPathInfo(fn, st) && R_ISREG(st.fMode)) 
+            //cout << "Adding file " << entry << endl;
+            tree.Add(fn);
+            //TFile::Open(fn);
+         }
       }
-   }
-   gSystem->FreeDirectory(dir);
+      gSystem->FreeDirectory(dir);
       //tree.Add( fullname.c_str() );
       data->size = tree.GetEntries();
       cout << fullname << ": " << data->size << " events." << endl;
@@ -475,7 +482,7 @@ int main(int argc, char* argv[]){
 
          vector<event> eventvec;
          string fullname = data->path+"/"+data->channel+"/"+data->date+"/"+data->filename;
-         fitter.ReadNtuple( fullname.c_str(), eventvec, 1,
+         fitter.ReadNtuple( fullname.c_str(), (data->xrdname).c_str(), eventvec, 1,
                data->isMC, data->process, do_resp_correction, start, end );
 
          vector<event> eventvec_sigmaMC;
