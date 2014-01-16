@@ -12,6 +12,8 @@
 #include "TSystem.h"
 
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <stdio.h>
 #include <unistd.h>
 using namespace std;
@@ -28,11 +30,12 @@ struct Dataset {
    string path;
    string date;
    string channel;
-   string filename;
+   string dirname;
    string process;
-   string xrdname;
    bool isMC;
    int size;
+
+   vector<string> filenames;
 
    // for ROC curve
    vector<ROCPoint> ROCmet;
@@ -41,7 +44,7 @@ struct Dataset {
    vector<ROCPoint> ROCmetrht;
 
    // constructor
-   Dataset( string f, string p, bool i) : filename(f), process(p), isMC(i) {}
+   Dataset( string f="", string p="", bool i=0) : dirname(f), process(p), isMC(i) {}
 };
 
 int main(int argc, char* argv[]){
@@ -62,8 +65,10 @@ int main(int argc, char* argv[]){
    double rebin = 1;
    bool fullshape = false;
    string xrdopt = "path";
+   string file_catalog = "";
+   bool use_catalog = false;
 
-   while( (c = getopt(argc, argv, "n:p:o:t:b:fhscbmrdw")) != -1 ) {
+   while( (c = getopt(argc, argv, "n:p:o:t:b:q:fhscbmrdw")) != -1 ) {
       switch(c)
       {
          case 'n' :
@@ -114,13 +119,18 @@ int main(int argc, char* argv[]){
             fullshape = true;
             break;
 
+         case 'q':
+            file_catalog = optarg;
+            use_catalog = true;
+            break;
+
          case 'h' :
             cout << "Usage: ./EvalSig <flags>\n";
             cout << "Flags: \n";
             cout << "\t-n <number>\t  Fraction of events to fit.  Default at -1.\n";
             cout << "\t-j <number>\t  Jet bin pt threshold.  Default at 20 GeV.\n";
             cout << "\t-s\t          'Short' run, 10%% of events.\n";
-            cout << "\t-c\t          Apply response correction.\n";
+            cout << "\t-c\t          Read from xrootd cache.\n";
             cout << "\t-p <string>\t  Physics channel: Zmumu or Wenu.\n";
             cout << "\t-o <string>\t  Filename for Data/MC plots.\n";
             cout << "\t-m\t          Turn off MET smearing.\n";
@@ -130,6 +140,7 @@ int main(int argc, char* argv[]){
             cout << "\t-t <number>\t MET type, in range [-1,4].\n";
             cout << "\t-b <number>\t Rebin -- divide bins by number.\n";
             cout << "\t-f\t          Compute Significance with full jet resolution shapes.\n";
+            cout << "\t-q\t          Filename containing ntuple filenames.\n";
             cout << "\t-h\t          Display this menu.\n";
             return -1;
             break;
@@ -148,293 +159,72 @@ int main(int argc, char* argv[]){
    // get all ntuples
    //
 
-   if( channel.compare("Wenu") == 0 or channel.compare("Wenu_loose") == 0 ){
 
-      // data
-      if( run_data ){
-         datasets.push_back( Dataset("Run2012A-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012B-1-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012B-2-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012B-3-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012B-4-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012B-5-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012B-6-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012B-7-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012B-8-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012B-9-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012B-10-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012C-1-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012C-2-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012C-3-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012C-4-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012C-5-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012C-6-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012C-7-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012C-8-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012C-9-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012C-10-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012D-1-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012D-2-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012D-3-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012D-4-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012D-5-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012D-6-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012D-7-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012D-8-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012D-9-22Jan2013/", "Data", false));
-         datasets.push_back( Dataset("Run2012D-10-22Jan2013/", "Data", false));
+   ifstream inFile;
+   inFile.open("file_catalog.txt");
+
+   while(!inFile.eof()){
+
+      Dataset data;
+      data.path = "root://osg-se.cac.cornell.edu//xrootd/"
+         +xrdopt+"/cms/store/user/nmirman/Ntuples/METsig";
+
+      // get line from file
+      string line;
+      getline(inFile,line);
+      stringstream stream(line);
+
+      // get ntuple attributes
+      stream >> data.channel;
+      stream >> data.date;
+      stream >> data.dirname;
+
+      data.process = data.dirname;
+      data.isMC = true;
+      if( data.dirname.find("Run") != string::npos ){
+         data.isMC = false;
+         data.process = "Data";
       }
 
-      // mc
-      if( run_mc ){
-         datasets.push_back( Dataset("DYJetsToLL_M-50/", "DYJetsToLL", true) );
-         datasets.push_back( Dataset("DYJetsToLL_M-10To50/", "DYJetsToLL_M10To50", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_20_30/", "QCD_EMEnriched_20_30", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_30_80/", "QCD_EMEnriched_30_80", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_80_170/", "QCD_EMEnriched_80_170", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_170_250/", "QCD_EMEnriched_170_250", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_250_350/", "QCD_EMEnriched_250_350", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_350/", "QCD_EMEnriched_350", true) );
-         datasets.push_back( Dataset("QCD_BCtoE_20_30/", "QCD_BCtoE_20_30", true) );
-         datasets.push_back( Dataset("QCD_BCtoE_30_80/", "QCD_BCtoE_30_80", true) );
-         datasets.push_back( Dataset("QCD_BCtoE_80_170/", "QCD_BCtoE_80_170", true) );
-         datasets.push_back( Dataset("QCD_BCtoE_170_250/", "QCD_BCtoE_170_250", true) );
-         datasets.push_back( Dataset("QCD_BCtoE_250_350/", "QCD_BCtoE_250_350", true) );
-         datasets.push_back( Dataset("Gamma_0_15/", "Gamma_0_15", true) );
-         datasets.push_back( Dataset("Gamma_15_30/", "Gamma_15_30", true) );
-         datasets.push_back( Dataset("Gamma_30_50/", "Gamma_30_50", true) );
-         datasets.push_back( Dataset("Gamma_50_80/", "Gamma_50_80", true) );
-         datasets.push_back( Dataset("Gamma_80_120/", "Gamma_80_120", true) );
-         datasets.push_back( Dataset("Gamma_120_170/", "Gamma_120_170", true) );
-         datasets.push_back( Dataset("Gamma_170_300/", "Gamma_170_300", true) );
-         datasets.push_back( Dataset("Gamma_300_470/", "Gamma_300_470", true) );
-         datasets.push_back( Dataset("TTJets/", "TTJets", true) );
-         datasets.push_back( Dataset("Tbar_tW-channel/", "Tbar_tW", true) );
-         datasets.push_back( Dataset("T_tW-channel/", "T_tW", true) );
-         datasets.push_back( Dataset("WJetsToLNu/", "WJetsToLNu", true) );
-         datasets.push_back( Dataset("WW/", "WW", true) );
-         datasets.push_back( Dataset("WZ/", "WZ", true) );
-         datasets.push_back( Dataset("ZZ/", "ZZ", true) );
-      }
-
-   }
-   else if( channel.compare("Zmumu") == 0 ){
-
-      // data
-      if( run_data ){
-         datasets.push_back( Dataset("Run2012A-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-part1-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-part2-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-part3-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-part4-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-part1-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-part2-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-part3-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-part4-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-part1-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-part2-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-part3-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-part4-22Jan2013/", "Data", false) );
-      }
-
-      // mc
-      if( run_mc ){
-         datasets.push_back( Dataset("DYJetsToLL/", "DYJetsToLL", true) );
-         datasets.push_back( Dataset("TTJets/", "TTJets", true) );
-         datasets.push_back( Dataset("Tbar_tW-channel/", "Tbar_tW", true) );
-         datasets.push_back( Dataset("T_tW-channel/", "T_tW", true) );
-         datasets.push_back( Dataset("WJetsToLNu/", "WJetsToLNu", true) );
-         datasets.push_back( Dataset("WW/", "WW", true) );
-         datasets.push_back( Dataset("WZ/", "WZ", true) );
-         datasets.push_back( Dataset("ZZ/", "ZZ", true) );
-      }
-
-   }
-   else if( channel.compare("Dijet") == 0 ){
-
-      // data
-      if( run_data ){
-         datasets.push_back( Dataset("Run2012A-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-part1-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-part2-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-part3-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-part4-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-part1-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-part2-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-part3-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-part4-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-part1-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-part2-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-part3-22Jan2013/", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-part4-22Jan2013/", "Data", false) );
-      }
-
-      // mc
-      if( run_mc ){
-         datasets.push_back( Dataset("QCD_15_30/", "QCD_15_30", true) );
-         datasets.push_back( Dataset("QCD_30_50/", "QCD_30_50", true) );
-         datasets.push_back( Dataset("QCD_50_80/", "QCD_50_80", true) );
-         datasets.push_back( Dataset("QCD_80_120/", "QCD_80_120", true) );
-         datasets.push_back( Dataset("QCD_120_170/", "QCD_120_170", true) );
-         datasets.push_back( Dataset("QCD_170_300/", "QCD_170_300", true) );
-         datasets.push_back( Dataset("QCD_300_470/", "QCD_300_470", true) );
-         datasets.push_back( Dataset("QCD_470_600/", "QCD_470_600", true) );
-         datasets.push_back( Dataset("QCD_600_800/", "QCD_600_800", true) );
-         datasets.push_back( Dataset("QCD_800_1000/", "QCD_800_1000", true) );
-         datasets.push_back( Dataset("QCD_1000_1400/", "QCD_1000_1400", true) );
-         datasets.push_back( Dataset("DYJetsToLL/", "DYJetsToLL", true) );
-         datasets.push_back( Dataset("TTJets/", "TTJets", true) );
-         datasets.push_back( Dataset("Tbar_tW-channel/", "Tbar_tW", true) );
-         datasets.push_back( Dataset("T_tW-channel/", "T_tW", true) );
-         datasets.push_back( Dataset("WJetsToLNu/", "WJetsToLNu", true) );
-         datasets.push_back( Dataset("WW/", "WW", true) );
-         datasets.push_back( Dataset("WZ/", "WZ", true) );
-         datasets.push_back( Dataset("ZZ/", "ZZ", true) );
-      }
-
-   }
-   else if( channel.compare("Ttbar0lept") == 0 ){
-
-      // data
-      if( run_data ){
-         datasets.push_back( Dataset("Run2012A-13Jul2012/", "Data", false) );
-         datasets.push_back( Dataset("Run2012A-recover-06Aug2012/", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-13Jul2012/", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-24Aug2012/", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-PromptReco/", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-PromptReco/", "Data", false) );
-      }
-
-      // mc
-      if( run_mc ){
-         datasets.push_back( Dataset("TTJets_Hadronic/", "TTJets_Hadronic", true) );
-         datasets.push_back( Dataset("TTJets_FullLept/", "TTJets_FullLept", true) );
-         datasets.push_back( Dataset("TTJets_SemiLept/", "TTJets_SemiLept", true) );
-         datasets.push_back( Dataset("DYJetsToLL/", "DYJetsToLL", true) );
-         datasets.push_back( Dataset("Tbar_tW-channel/", "Tbar_tW", true) );
-         datasets.push_back( Dataset("T_tW-channel/", "T_tW", true) );
-         datasets.push_back( Dataset("WJetsToLNu/", "WJetsToLNu", true) );
-         datasets.push_back( Dataset("QCD_15_30/", "QCD_15_30", true) );
-         datasets.push_back( Dataset("QCD_30_50/", "QCD_30_50", true) );
-         datasets.push_back( Dataset("QCD_50_80/", "QCD_50_80", true) );
-         datasets.push_back( Dataset("QCD_80_120/", "QCD_80_120", true) );
-         datasets.push_back( Dataset("QCD_120_170/", "QCD_120_170", true) );
-         datasets.push_back( Dataset("QCD_170_300/", "QCD_170_300", true) );
-         datasets.push_back( Dataset("QCD_300_470/", "QCD_300_470", true) );
-         datasets.push_back( Dataset("QCD_470_600/", "QCD_470_600", true) );
-         datasets.push_back( Dataset("QCD_600_800/", "QCD_600_800", true) );
-         datasets.push_back( Dataset("QCD_800_1000/", "QCD_800_1000", true) );
-         datasets.push_back( Dataset("QCD_1000_1400/", "QCD_1000_1400", true) );
-      }
-
-   }
-   else if( channel.compare("Ttbar1lept") == 0 ){
-
-      // data
-      if( run_data ){
-         datasets.push_back( Dataset("Run2012A-22Jan2013-SingleMu/", "Data", false) );
-         datasets.push_back( Dataset("Run2012A-22Jan2013-SingleElectron/", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-22Jan2013-SingleMu/", "Data", false) );
-         datasets.push_back( Dataset("Run2012B-22Jan2013-SingleElectron/", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-22Jan2013-SingleMu/", "Data", false) );
-         datasets.push_back( Dataset("Run2012C-22Jan2013-SingleElectron/", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-22Jan2013-SingleMu/", "Data", false) );
-         datasets.push_back( Dataset("Run2012D-22Jan2013-SingleElectron/", "Data", false) );
-      }
-
-      // mc
-      if( run_mc ){
-         datasets.push_back( Dataset("TTJets_FullLept/", "TTJets_FullLept", true) );
-         datasets.push_back( Dataset("TTJets_SemiLept/", "TTJets_SemiLept", true) );
-         datasets.push_back( Dataset("TTJets_Hadronic/", "TTJets_Hadronic", true) );
-         datasets.push_back( Dataset("DYJetsToLL_M-50/", "DYJetsToLL", true) );
-         datasets.push_back( Dataset("DYJetsToLL_M-10To50/", "DYJetsToLL_M10To50", true) );
-         datasets.push_back( Dataset("Tbar_tW-channel/", "Tbar_tW", true) );
-         datasets.push_back( Dataset("T_tW-channel/", "T_tW", true) );
-         datasets.push_back( Dataset("WJetsToLNu/", "WJetsToLNu", true) );
-         datasets.push_back( Dataset("WW/", "WW", true) );
-         datasets.push_back( Dataset("WZ/", "WZ", true) );
-         datasets.push_back( Dataset("ZZ/", "ZZ", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_20_30/", "QCD_EMEnriched_20_30", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_30_80/", "QCD_EMEnriched_30_80", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_80_170/", "QCD_EMEnriched_80_170", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_170_250/", "QCD_EMEnriched_170_250", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_250_350/", "QCD_EMEnriched_250_350", true) );
-         datasets.push_back( Dataset("QCD_EMEnriched_350/", "QCD_EMEnriched_350", true) );
-         datasets.push_back( Dataset("QCD_BCtoE_20_30/", "QCD_BCtoE_20_30", true) );
-         datasets.push_back( Dataset("QCD_BCtoE_30_80/", "QCD_BCtoE_30_80", true) );
-         datasets.push_back( Dataset("QCD_BCtoE_80_170/", "QCD_BCtoE_80_170", true) );
-         datasets.push_back( Dataset("QCD_BCtoE_170_250/", "QCD_BCtoE_170_250", true) );
-         datasets.push_back( Dataset("QCD_BCtoE_250_350/", "QCD_BCtoE_250_350", true) );
-         datasets.push_back( Dataset("Gamma_0_15/", "Gamma_0_15", true) );
-         datasets.push_back( Dataset("Gamma_15_30/", "Gamma_15_30", true) );
-         datasets.push_back( Dataset("Gamma_30_50/", "Gamma_30_50", true) );
-         datasets.push_back( Dataset("Gamma_50_80/", "Gamma_50_80", true) );
-         datasets.push_back( Dataset("Gamma_80_120/", "Gamma_80_120", true) );
-         datasets.push_back( Dataset("Gamma_120_170/", "Gamma_120_170", true) );
-         datasets.push_back( Dataset("Gamma_170_300/", "Gamma_170_300", true) );
-         datasets.push_back( Dataset("Gamma_300_470/", "Gamma_300_470", true) );
-      }
-
-   }
-   else{ cout << "Unknown physics channel.  Use option 'p' to input channel name." << endl; }
-
-   for( vector<Dataset>::iterator data = datasets.begin(); data != datasets.end(); data++ ){
-      data->channel = channel;
-      data->path = "/mnt/xrootd/user/nmirman/Ntuples/METsig";
-      //data->path="root://osg-se.cac.cornell.edu//xrootd/cache/cms/store/user/nmirman/Ntuples/METsig";
-      data->date = "20130830";
-      if( channel.compare("Zmumu") == 0 and data->isMC ){
-         data->date = "20130913";
+      string date = "20130830";
+      if( channel.compare("Zmumu") == 0 and data.isMC ){
+         date = "20130913";
       }
       if( channel.compare("Wenu") == 0 ){
-         data->date = "20130916";
+         date = "20130916";
       }
-      if( channel.compare("Dijet") == 0 and data->isMC ){
-         data->date = "20130913";
+      if( channel.compare("Dijet") == 0 and data.isMC ){
+         date = "20130913";
       }
       if( channel.compare("Ttbar0lept") == 0 ){
-         data->date = "20130913";
+         date = "20130913";
       }
+
+      // vector of filenames
+      string file;
+      while( stream >> file ){
+         data.filenames.push_back( file );
+      }
+
+      // add to datasets
+      if( channel.compare(data.channel) == 0 and date.compare(data.date) == 0 )
+         if( (run_data and !data.isMC) or (run_mc and data.isMC) )
+            datasets.push_back( data );
+
    }
 
-   // get number of events in datasets
-   cout << "Getting number of events in datasets." << endl;
+   // get size of datasets
    for( vector<Dataset>::iterator data = datasets.begin(); data != datasets.end(); data++ ){
-      //TFile *file = TFile::Open(data->filename);
-      //if( !file ){
-      //   data->size = 0;
-      //   continue;
-      //}
-      //Tree *tree = (TTree*)file->Get("events");
-      string fullname = data->path+"/"+data->channel+"/"+data->date+"/"+data->filename;
       TChain tree("events");
-      string xrdname = fullname;
-      xrdname.replace(xrdname.begin(),xrdname.begin()+11,
-            "root://osg-se.cac.cornell.edu//xrootd/"+xrdopt+"/cms/store");
-      data->xrdname = xrdname;
-      TString filename = fullname;
-      void *dir = gSystem->OpenDirectory( filename );
-      const char *ent;
-      ent = gSystem->GetDirEntry(dir);
-      while ((ent = gSystem->GetDirEntry(dir))) {
-         string entry = ent;
-         TString fn = xrdname+ent;
-         if (fn.EndsWith(".root")) {
-            FileStat_t st;
-            //if (!gSystem->GetPathInfo(fn, st) && R_ISREG(st.fMode)) 
-            //cout << "Adding file " << entry << endl;
-            tree.Add(fn);
-            //TFile::Open(fn);
-         }
+      for( vector<string>::iterator file = data->filenames.begin(); file != data->filenames.end(); file++){
+         TString fn = data->path+"/"+data->channel+"/"+data->date+"/"+data->dirname+"/"+(*file);
+         tree.Add( fn );
       }
-      gSystem->FreeDirectory(dir);
-      //tree.Add( fullname.c_str() );
       data->size = tree.GetEntries();
-      cout << fullname << ": " << data->size << " events." << endl;
+      cout << data->dirname << ": " << data->size << endl;
    }
    cout << endl;
-   //return 0;
+
 
    //
    // loop through datasets, fill histograms
@@ -472,7 +262,7 @@ int main(int argc, char* argv[]){
       int section_size = 1000000;
       int num_events = fracevents*data->size;
       int num_sections = 1 + ((num_events-1)/section_size);
-      cout << "Opening dataset " << data->filename << endl;
+      cout << "Opening dataset " << data->dirname << endl;
       cout << "Divide " << num_events << " events into " << num_sections << " sections..." << endl;
 
       for(int isec=0; isec < num_sections; isec++){
@@ -481,8 +271,8 @@ int main(int argc, char* argv[]){
          cout << "Begin section [" << start << ", " << end << "]" << endl;
 
          vector<event> eventvec;
-         string fullname = data->path+"/"+data->channel+"/"+data->date+"/"+data->filename;
-         fitter.ReadNtuple( fullname.c_str(), (data->xrdname).c_str(), eventvec, 1,
+         string fullname = data->path+"/"+data->channel+"/"+data->date+"/"+data->dirname;
+         fitter.ReadNtuple( fullname.c_str(), data->filenames, eventvec, 1,
                data->isMC, data->process, do_resp_correction, start, end );
 
          vector<event> eventvec_sigmaMC;

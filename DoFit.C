@@ -177,8 +177,8 @@ int main(int argc, char* argv[]){
          string xrdname = fullname;
          xrdname.replace(xrdname.begin(),xrdname.begin()+11,
                "root://osg-se.cac.cornell.edu//xrootd/path/cms/store");
-         fitter.ReadNtuple( fullname.c_str(), xrdname.c_str(), eventvec, numevents,
-               data->isMC, data->process, do_resp_correction );
+         //fitter.ReadNtuple( fullname.c_str(), xrdname.c_str(), eventvec, numevents,
+         //      data->isMC, data->process, do_resp_correction );
       }
 
       cout << "\nDATASET SIZE: " << eventvec.size() << " EVENTS\n" << endl;
