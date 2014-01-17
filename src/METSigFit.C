@@ -134,6 +134,9 @@ Fitter::Fitter(double b /*=1*/){
 
       histsMC_signal_[hname] = (TH1D*)hist->Clone( (hname+"_MC_signal").c_str() );
       histsMC_top_[hname] = (TH1D*)hist->Clone( (hname+"_MC_top").c_str() );
+      histsMC_top_dileptonic_[hname] = (TH1D*)hist->Clone( (hname+"_MC_top_dileptonic").c_str() );
+      histsMC_top_hadronic_[hname] = (TH1D*)hist->Clone( (hname+"_MC_top_hadronic").c_str() );
+      histsMC_top_single_[hname] = (TH1D*)hist->Clone( (hname+"_MC_top_single").c_str() );
       histsMC_EWK_[hname] = (TH1D*)hist->Clone( (hname+"_MC_EWK").c_str() );
       histsMC_QCD_[hname] = (TH1D*)hist->Clone( (hname+"_MC_QCD").c_str() );
       histsMC_gamma_[hname] = (TH1D*)hist->Clone( (hname+"_MC_gamma").c_str() );
@@ -1412,13 +1415,13 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
       if( stackmode.compare("Ttbar1lept") == 0 ){
 
          if( iter_begin->channel.compare("TTJets_SemiLept") == 0 ) hists_ = histsMC_signal_;
-         else if( iter_begin->channel.compare("TTJets_FullLept") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("TTJets_Hadronic") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("WJetsToLNu") == 0 ) hists_ = histsMC_signal_;
+         else if( iter_begin->channel.compare("TTJets_FullLept") == 0 ) hists_ = histsMC_top_dileptonic_;
+         else if( iter_begin->channel.compare("TTJets_Hadronic") == 0 ) hists_ = histsMC_top_hadronic_;
+         else if( iter_begin->channel.compare("Tbar_tW") == 0 ) hists_ = histsMC_top_single_;
+         else if( iter_begin->channel.compare("T_tW") == 0 ) hists_ = histsMC_top_single_;
+         else if( iter_begin->channel.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
          else if( iter_begin->channel.compare("DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
          else if( iter_begin->channel.compare("DYJetsToLL_M10To50") == 0 ) hists_ = histsMC_DY_;
-         else if( iter_begin->channel.compare("Tbar_tW") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("T_tW") == 0 ) hists_ = histsMC_top_;
          else if( iter_begin->channel.compare("QCD_EMEnriched_20_30") == 0 ) hists_ = histsMC_QCD_;
          else if( iter_begin->channel.compare("QCD_EMEnriched_30_80") == 0 ) hists_ = histsMC_QCD_;
          else if( iter_begin->channel.compare("QCD_EMEnriched_80_170") == 0 ) hists_ = histsMC_QCD_;
@@ -1548,6 +1551,9 @@ void Fitter::PrintHists( const char* filename, string stackmode, bool overflow )
    TH1D *histData_temp = (TH1D*)histsData_["met"]->Clone("histData_temp");
    TH1D *histMC_signal_temp = (TH1D*)histsMC_signal_["met"]->Clone("histMC_signal_temp");
    TH1D *histMC_top_temp = (TH1D*)histsMC_top_["met"]->Clone("histMC_top_temp");
+   TH1D *histMC_top_dileptonic_temp = (TH1D*)histsMC_top_dileptonic_["met"]->Clone("histMC_top_dileptonic_temp");
+   TH1D *histMC_top_hadronic_temp = (TH1D*)histsMC_top_hadronic_["met"]->Clone("histMC_top_hadronic_temp");
+   TH1D *histMC_top_single_temp = (TH1D*)histsMC_top_single_["met"]->Clone("histMC_top_single_temp");
    TH1D *histMC_EWK_temp = (TH1D*)histsMC_EWK_["met"]->Clone("histMC_EWK_temp");
    TH1D *histMC_QCD_temp = (TH1D*)histsMC_QCD_["met"]->Clone("histMC_QCD_temp");
    TH1D *histMC_gamma_temp = (TH1D*)histsMC_gamma_["met"]->Clone("histMC_gamma_temp");
@@ -1555,7 +1561,7 @@ void Fitter::PrintHists( const char* filename, string stackmode, bool overflow )
 
    // rescale QCD & gamma+jets numerically (approximate)
    double chi2 = -1;
-   double histnorm = histData_temp->Integral("width") / (histMC_signal_temp->Integral("width")+histMC_top_temp->Integral("width")+histMC_EWK_temp->Integral("width")+histMC_QCD_temp->Integral("width")+histMC_gamma_temp->Integral("width")+histMC_DY_temp->Integral("width"));
+   double histnorm = histData_temp->Integral("width") / (histMC_signal_temp->Integral("width")+histMC_top_temp->Integral("width")+histMC_top_dileptonic_temp->Integral("width")+histMC_top_hadronic_temp->Integral("width")+histMC_top_single_temp->Integral("width")+histMC_EWK_temp->Integral("width")+histMC_QCD_temp->Integral("width")+histMC_gamma_temp->Integral("width")+histMC_DY_temp->Integral("width"));
    double scaleQCD = 1;
    if( stackmode.compare("Wenu") == 0 or stackmode.compare("Wenu_loose") == 0 
         /* or stackmode.compare("Ttbar0lept") == 0 */){ 
@@ -1567,6 +1573,9 @@ void Fitter::PrintHists( const char* filename, string stackmode, bool overflow )
 
          histMC_temp->Add( histMC_signal_temp );
          histMC_temp->Add( histMC_top_temp );
+         histMC_temp->Add( histMC_top_dileptonic_temp );
+         histMC_temp->Add( histMC_top_hadronic_temp );
+         histMC_temp->Add( histMC_top_single_temp );
          histMC_temp->Add( histMC_EWK_temp );
          histMC_temp->Add( histMC_QCD_temp, s );
          histMC_temp->Add( histMC_gamma_temp, s );
@@ -1599,6 +1608,9 @@ void Fitter::PrintHists( const char* filename, string stackmode, bool overflow )
 
       TH1D *histMC_signal = (TH1D*)histsMC_signal_[hname];
       TH1D *histMC_top = (TH1D*)histsMC_top_[hname];
+      TH1D *histMC_top_dileptonic = (TH1D*)histsMC_top_dileptonic_[hname];
+      TH1D *histMC_top_hadronic = (TH1D*)histsMC_top_hadronic_[hname];
+      TH1D *histMC_top_single = (TH1D*)histsMC_top_single_[hname];
       TH1D *histMC_EWK = (TH1D*)histsMC_EWK_[hname];
       TH1D *histMC_QCD = (TH1D*)histsMC_QCD_[hname];
       TH1D *histMC_gamma = (TH1D*)histsMC_gamma_[hname];
@@ -1614,6 +1626,9 @@ void Fitter::PrintHists( const char* filename, string stackmode, bool overflow )
          AddOverflow(histMC);
          AddOverflow(histMC_signal);
          AddOverflow(histMC_top);
+         AddOverflow(histMC_top_dileptonic);
+         AddOverflow(histMC_top_hadronic);
+         AddOverflow(histMC_top_single);
          AddOverflow(histMC_EWK);
          AddOverflow(histMC_QCD);
          AddOverflow(histMC_gamma);
@@ -1623,6 +1638,9 @@ void Fitter::PrintHists( const char* filename, string stackmode, bool overflow )
       // get total MC histogram
       histMC->Add( histMC_signal );
       histMC->Add( histMC_top );
+      histMC->Add( histMC_top_dileptonic );
+      histMC->Add( histMC_top_hadronic );
+      histMC->Add( histMC_top_single );
       histMC->Add( histMC_EWK );
       histMC->Add( histMC_QCD );
       histMC->Add( histMC_gamma );
@@ -1634,6 +1652,9 @@ void Fitter::PrintHists( const char* filename, string stackmode, bool overflow )
       histMC_gamma->Scale( histnorm );
       histMC_DY->Scale( histnorm );
       histMC_top->Scale( histnorm );
+      histMC_top_dileptonic->Scale( histnorm );
+      histMC_top_hadronic->Scale( histnorm );
+      histMC_top_single->Scale( histnorm );
       histMC_EWK->Scale( histnorm );
 
       bool log_axis = (hname != "jet_eta") and (hname != "pchi2") and (hname != "pchi2_old");
@@ -1716,18 +1737,31 @@ void Fitter::PrintHists( const char* filename, string stackmode, bool overflow )
          histMC_EWK->Draw("same HIST");
       }
       if( stackmode.compare("Ttbar1lept") == 0 ){
-         histMC_top->SetLineColor(1);
-         histMC_top->SetFillColor(kYellow-9);
+         histMC_top_dileptonic->SetLineColor(1);
+         histMC_top_dileptonic->SetFillColor(kYellow-9);
+         histMC_top_hadronic->SetLineColor(1);
+         histMC_top_hadronic->SetFillColor(kYellow-7);
+         histMC_top_single->SetLineColor(1);
+         histMC_top_single->SetFillColor(kYellow-3);
          histMC_DY->SetLineColor(1);
          histMC_DY->SetFillColor(kRed-10);
          histMC_EWK->SetLineColor(1);
          histMC_EWK->SetFillColor(kCyan-10);
 
-         histMC_top->Add( histMC_DY );
-         histMC_top->Add( histMC_EWK );
+         histMC_top_dileptonic->Add( histMC_top_hadronic );
+         histMC_top_dileptonic->Add( histMC_top_single );
+         histMC_top_dileptonic->Add( histMC_DY );
+         histMC_top_dileptonic->Add( histMC_EWK );
+         histMC_top_hadronic->Add( histMC_top_single );
+         histMC_top_hadronic->Add( histMC_DY );
+         histMC_top_hadronic->Add( histMC_EWK );
+         histMC_top_single->Add( histMC_DY );
+         histMC_top_single->Add( histMC_EWK );
          histMC_DY->Add( histMC_EWK );
 
-         histMC_top->Draw("same HIST");
+         histMC_top_dileptonic->Draw("same HIST");
+         histMC_top_hadronic->Draw("same HIST");
+         histMC_top_single->Draw("same HIST");
          histMC_DY->Draw("same HIST");
          histMC_EWK->Draw("same HIST");
       }
@@ -1794,7 +1828,9 @@ void Fitter::PrintHists( const char* filename, string stackmode, bool overflow )
       }
       if( stackmode.compare("Ttbar1lept") == 0 ){
          leg->AddEntry(histMC, "t#bar{t} Semi-Leptonic", "f");
-         leg->AddEntry(histMC_top, "Other Top", "f");
+         leg->AddEntry(histMC_top_dileptonic, "Dileptonic t#bar{t}", "f");
+         leg->AddEntry(histMC_top_hadronic, "Hadronic t#bar{t}", "f");
+         leg->AddEntry(histMC_top_single, "Single Top", "f");
          leg->AddEntry(histMC_DY, "DY", "f");
          leg->AddEntry(histMC_EWK, "EWK", "f");
       }

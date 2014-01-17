@@ -232,6 +232,9 @@ class Fitter{
       map<string, TH1*> histsMC_QCD_;
       map<string, TH1*> histsMC_gamma_;
       map<string, TH1*> histsMC_DY_;
+      map<string, TH1*> histsMC_top_dileptonic_;
+      map<string, TH1*> histsMC_top_hadronic_;
+      map<string, TH1*> histsMC_top_single_;
 
    private:
       double Min2LL(const double*);
