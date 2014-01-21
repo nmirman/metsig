@@ -218,6 +218,7 @@ int main(int argc, char* argv[]){
    }
 
    // get size of datasets
+   cout << endl;
    for( vector<Dataset>::iterator data = datasets.begin(); data != datasets.end(); data++ ){
       TChain tree("events");
       for( vector<string>::iterator file = data->filenames.begin();

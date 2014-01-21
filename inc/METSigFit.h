@@ -15,7 +15,7 @@ using namespace std;
 
 struct event {
 
-   string channel;
+   string process;
 
    int nvertices;
    double weight;
@@ -87,7 +87,7 @@ struct event {
    */
 
    event(){
-   channel = "";
+   process = "";
 
    nvertices = 0;
    weight = 0;

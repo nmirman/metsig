@@ -1,4 +1,4 @@
 #$ -S /bin/bash
 
 cd $PBS_O_WORKDIR
-./EvalSig
+./EvalSig -p Ttbar1lept -o plots20140121/plotsTtbar_nozerobin.root

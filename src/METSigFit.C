@@ -188,9 +188,9 @@ const double Fitter::sigmaPhi[10][5]={{926.978, 2.52747, 0.0304001, -926.224, -1
 
 void Fitter::ReadNtuple(string path, vector<string>& filenames, 
       vector<event>& eventref_temp, const double fracevents,
-      const bool isMC, string channel, const bool do_resp_correction, 
+      const bool isMC, string process, const bool do_resp_correction, 
       const int start_evt_num, const int end_evt_num , const double jvar){
-   cout << "---> ReadNtuple " << channel << endl;
+   cout << "---> ReadNtuple " << process << endl;
 
    float gi_xsec=0;
    float gi_eff=0;
@@ -363,7 +363,7 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
 
       event evtemp;
 
-      evtemp.channel = channel;
+      evtemp.process = process;
       evtemp.weight = 1.0;
 
       // MC cross-sections (pb)
@@ -430,85 +430,87 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
       double scale = 1.0;
       if( isMC ){
 
-         if( channel.compare("DYJetsToLL") == 0 ) evtemp.weight *= xsec_dyjetstoll/nevts_dyjetstoll;
-         else if( channel.compare("DYJetsToLL_M10To50") == 0 )
+         if( process.compare("DYJetsToLL") == 0 ) evtemp.weight *= xsec_dyjetstoll/nevts_dyjetstoll;
+         else if( process.compare("DYJetsToLL_M-50") == 0 )
+            evtemp.weight *= xsec_dyjetstoll/nevts_dyjetstoll;
+         else if( process.compare("DYJetsToLL_M-10To50") == 0 )
             evtemp.weight *= xsec_dyjetstoll_m10to50/nevts_dyjetstoll_m10to50;
-         else if( channel.compare("TTJets") == 0 ) evtemp.weight *= xsec_ttjets/nevts_ttjets;
-         else if( channel.compare("TTJets_Hadronic") == 0 )
+         else if( process.compare("TTJets") == 0 ) evtemp.weight *= xsec_ttjets/nevts_ttjets;
+         else if( process.compare("TTJets_Hadronic") == 0 )
             evtemp.weight *= xsec_ttjets_0lept/nevts_ttjets_0lept;
-         else if( channel.compare("TTJets_SemiLept") == 0 )
+         else if( process.compare("TTJets_SemiLept") == 0 )
             evtemp.weight *= xsec_ttjets_1lept/nevts_ttjets_1lept;
-         else if( channel.compare("TTJets_FullLept") == 0 )
+         else if( process.compare("TTJets_FullLept") == 0 )
             evtemp.weight *= xsec_ttjets_2lept/nevts_ttjets_2lept;
-         else if( channel.compare("QCD_15_30") == 0 )
+         else if( process.compare("QCD_15_30") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_15_30;
-         else if( channel.compare("QCD_30_50") == 0 )
+         else if( process.compare("QCD_30_50") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_30_50;
-         else if( channel.compare("QCD_50_80") == 0 )
+         else if( process.compare("QCD_50_80") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_50_80;
-         else if( channel.compare("QCD_80_120") == 0 )
+         else if( process.compare("QCD_80_120") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_80_120;
-         else if( channel.compare("QCD_120_170") == 0 )
+         else if( process.compare("QCD_120_170") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_120_170;
-         else if( channel.compare("QCD_170_300") == 0 )
+         else if( process.compare("QCD_170_300") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_170_300;
-         else if( channel.compare("QCD_300_470") == 0 )
+         else if( process.compare("QCD_300_470") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_300_470;
-         else if( channel.compare("QCD_470_600") == 0 )
+         else if( process.compare("QCD_470_600") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_470_600;
-         else if( channel.compare("QCD_600_800") == 0 )
+         else if( process.compare("QCD_600_800") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_600_800;
-         else if( channel.compare("QCD_800_1000") == 0 )
+         else if( process.compare("QCD_800_1000") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_800_1000;
-         else if( channel.compare("QCD_1000_1400") == 0 )
+         else if( process.compare("QCD_1000_1400") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_1000_1400;
-         else if( channel.compare("QCD_EMEnriched_20_30") == 0 )
+         else if( process.compare("QCD_EMEnriched_20_30") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_em_20_30;
-         else if( channel.compare("QCD_EMEnriched_30_80") == 0 )
+         else if( process.compare("QCD_EMEnriched_30_80") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_em_30_80;
-         else if( channel.compare("QCD_EMEnriched_80_170") == 0 )
+         else if( process.compare("QCD_EMEnriched_80_170") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_em_80_170;
-         else if( channel.compare("QCD_EMEnriched_170_250") == 0 )
+         else if( process.compare("QCD_EMEnriched_170_250") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_em_170_250;
-         else if( channel.compare("QCD_EMEnriched_250_350") == 0 )
+         else if( process.compare("QCD_EMEnriched_250_350") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_em_250_350;
-         else if( channel.compare("QCD_EMEnriched_350") == 0 )
+         else if( process.compare("QCD_EMEnriched_350") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_em_350;
-         else if( channel.compare("QCD_BCtoE_20_30") == 0 )
+         else if( process.compare("QCD_BCtoE_20_30") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_bc_20_30;
-         else if( channel.compare("QCD_BCtoE_30_80") == 0 )
+         else if( process.compare("QCD_BCtoE_30_80") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_bc_30_80;
-         else if( channel.compare("QCD_BCtoE_80_170") == 0 )
+         else if( process.compare("QCD_BCtoE_80_170") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_bc_80_170;
-         else if( channel.compare("QCD_BCtoE_170_250") == 0 )
+         else if( process.compare("QCD_BCtoE_170_250") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_bc_170_250;
-         else if( channel.compare("QCD_BCtoE_250_350") == 0 )
+         else if( process.compare("QCD_BCtoE_250_350") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_bc_250_350;
-         else if( channel.compare("Gamma_0_15") == 0 )
+         else if( process.compare("Gamma_0_15") == 0 )
             evtemp.weight *= scale*gi_xsec/nevts_gamma_0_15;
-         else if( channel.compare("Gamma_15_30") == 0 )
+         else if( process.compare("Gamma_15_30") == 0 )
             evtemp.weight *= scale*gi_xsec/nevts_gamma_15_30;
-         else if( channel.compare("Gamma_30_50") == 0 )
+         else if( process.compare("Gamma_30_50") == 0 )
             evtemp.weight *= scale*gi_xsec/nevts_gamma_30_50;
-         else if( channel.compare("Gamma_50_80") == 0 )
+         else if( process.compare("Gamma_50_80") == 0 )
             evtemp.weight *= scale*gi_xsec/nevts_gamma_50_80;
-         else if( channel.compare("Gamma_80_120") == 0 )
+         else if( process.compare("Gamma_80_120") == 0 )
             evtemp.weight *= scale*gi_xsec/nevts_gamma_80_120;
-         else if( channel.compare("Gamma_120_170") == 0 )
+         else if( process.compare("Gamma_120_170") == 0 )
             evtemp.weight *= scale*gi_xsec/nevts_gamma_120_170;
-         else if( channel.compare("Gamma_170_300") == 0 )
+         else if( process.compare("Gamma_170_300") == 0 )
             evtemp.weight *= scale*gi_xsec/nevts_gamma_170_300;
-         else if( channel.compare("Gamma_300_470") == 0 )
+         else if( process.compare("Gamma_300_470") == 0 )
             evtemp.weight *= scale*gi_xsec/nevts_gamma_300_470;
-
-         else if( channel.compare("WW") == 0 ) evtemp.weight *= xsec_ww/nevts_ww;
-         else if( channel.compare("WZ") == 0 ) evtemp.weight *= xsec_wz/nevts_wz;
-         else if( channel.compare("ZZ") == 0 ) evtemp.weight *= xsec_zz/nevts_zz;
-         else if( channel.compare("Tbar_tW-channel") == 0 ) evtemp.weight *= xsec_tbar_tw/nevts_tbar_tw;
-         else if( channel.compare("T_tW-channel") == 0 ) evtemp.weight *= xsec_t_tw/nevts_t_tw;
-         else if( channel.compare("WJetsToLNu") == 0 )
+         else if( process.compare("WW") == 0 ) evtemp.weight *= xsec_ww/nevts_ww;
+         else if( process.compare("WZ") == 0 ) evtemp.weight *= xsec_wz/nevts_wz;
+         else if( process.compare("ZZ") == 0 ) evtemp.weight *= xsec_zz/nevts_zz;
+         else if( process.compare("Tbar_tW-channel") == 0 )
+            evtemp.weight *= xsec_tbar_tw/nevts_tbar_tw;
+         else if( process.compare("T_tW-channel") == 0 ) evtemp.weight *= xsec_t_tw/nevts_t_tw;
+         else if( process.compare("WJetsToLNu") == 0 )
             evtemp.weight *= xsec_wjetstolnu/nevts_wjetstolnu;
-         else cout << "No Xsection for channel " << channel << endl;
+         else cout << "No Xsection for process " << process << endl;
 
          evtemp.weight *= double(nevts_dyjetstoll)/xsec_dyjetstoll;
          evtemp.weight *= puMyWeight;
@@ -1327,129 +1329,130 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
    map<string, TH1*> hists_;
    map<string, TH2*> profs_;
 
-   if( iter_begin->channel.compare("Data") == 0 ){
+   if( iter_begin->process.compare("Data") == 0 ){
       hists_ = histsData_;
       profs_ = profsData_;
    } else {
       profs_ = profsMC_;
       if( stackmode.compare("Zmumu") == 0 ){
 
-         if( iter_begin->channel.compare("DYJetsToLL") == 0 ) hists_ = histsMC_signal_;
-         else if( iter_begin->channel.compare("TTJets") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->channel.compare("WW") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->channel.compare("WZ") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->channel.compare("ZZ") == 0 ) hists_ = histsMC_EWK_;
-         else cout << "Histogram fill error, channel " << iter_begin->channel << endl;
+         if( iter_begin->process.compare("DYJetsToLL") == 0 ) hists_ = histsMC_signal_;
+         else if( iter_begin->process.compare("TTJets") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->process.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->process.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->process.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
+         else if( iter_begin->process.compare("WW") == 0 ) hists_ = histsMC_EWK_;
+         else if( iter_begin->process.compare("WZ") == 0 ) hists_ = histsMC_EWK_;
+         else if( iter_begin->process.compare("ZZ") == 0 ) hists_ = histsMC_EWK_;
+         else cout << "Histogram fill error, process " << iter_begin->process << endl;
 
       }
       if( stackmode.compare("Wenu") == 0 or stackmode.compare("Wenu_loose") == 0 ){
 
-         if( iter_begin->channel.compare("WJetsToLNu") == 0 ) hists_ = histsMC_signal_;
-         else if( iter_begin->channel.compare("DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
-         else if( iter_begin->channel.compare("DYJetsToLL_M10To50") == 0 ) hists_ = histsMC_DY_;
-         else if( iter_begin->channel.compare("TTJets") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("QCD_EMEnriched_20_30") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_EMEnriched_30_80") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_EMEnriched_80_170") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_EMEnriched_170_250") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_EMEnriched_250_350") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_EMEnriched_350") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_BCtoE_20_30") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_BCtoE_30_80") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_BCtoE_80_170") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_BCtoE_170_250") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_BCtoE_250_350") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("Gamma_0_15") == 0 ) hists_ = histsMC_gamma_;
-         else if( iter_begin->channel.compare("Gamma_15_30") == 0 ) hists_ = histsMC_gamma_;
-         else if( iter_begin->channel.compare("Gamma_30_50") == 0 ) hists_ = histsMC_gamma_;
-         else if( iter_begin->channel.compare("Gamma_50_80") == 0 )  hists_ = histsMC_gamma_;
-         else if( iter_begin->channel.compare("Gamma_80_120") == 0 ) hists_ = histsMC_gamma_;
-         else if( iter_begin->channel.compare("Gamma_120_170") == 0 ) hists_ = histsMC_gamma_;  
-         else if( iter_begin->channel.compare("Gamma_170_300") == 0 ) hists_ = histsMC_gamma_;  
-         else if( iter_begin->channel.compare("Gamma_300_470") == 0 ) hists_ = histsMC_gamma_;  
-         else if( iter_begin->channel.compare("WW") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->channel.compare("WZ") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->channel.compare("ZZ") == 0 ) hists_ = histsMC_EWK_;
-         else cout << "Histogram fill error, channel " << iter_begin->channel << endl;
+         if( iter_begin->process.compare("WJetsToLNu") == 0 ) hists_ = histsMC_signal_;
+         else if( iter_begin->process.compare("DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
+         else if( iter_begin->process.compare("DYJetsToLL_M-10To50") == 0 ) hists_ = histsMC_DY_;
+         else if( iter_begin->process.compare("TTJets") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->process.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->process.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->process.compare("QCD_EMEnriched_20_30") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_EMEnriched_30_80") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_EMEnriched_80_170") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_EMEnriched_170_250") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_EMEnriched_250_350") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_EMEnriched_350") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_BCtoE_20_30") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_BCtoE_30_80") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_BCtoE_80_170") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_BCtoE_170_250") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_BCtoE_250_350") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("Gamma_0_15") == 0 ) hists_ = histsMC_gamma_;
+         else if( iter_begin->process.compare("Gamma_15_30") == 0 ) hists_ = histsMC_gamma_;
+         else if( iter_begin->process.compare("Gamma_30_50") == 0 ) hists_ = histsMC_gamma_;
+         else if( iter_begin->process.compare("Gamma_50_80") == 0 )  hists_ = histsMC_gamma_;
+         else if( iter_begin->process.compare("Gamma_80_120") == 0 ) hists_ = histsMC_gamma_;
+         else if( iter_begin->process.compare("Gamma_120_170") == 0 ) hists_ = histsMC_gamma_;  
+         else if( iter_begin->process.compare("Gamma_170_300") == 0 ) hists_ = histsMC_gamma_;  
+         else if( iter_begin->process.compare("Gamma_300_470") == 0 ) hists_ = histsMC_gamma_;  
+         else if( iter_begin->process.compare("WW") == 0 ) hists_ = histsMC_EWK_;
+         else if( iter_begin->process.compare("WZ") == 0 ) hists_ = histsMC_EWK_;
+         else if( iter_begin->process.compare("ZZ") == 0 ) hists_ = histsMC_EWK_;
+         else cout << "Histogram fill error, process " << iter_begin->process << endl;
 
       }
       if( stackmode.compare("Dijet") == 0 ){
 
-         if( iter_begin->channel.find("QCD") != string::npos ) hists_ = histsMC_signal_;
-         else if( iter_begin->channel.compare("DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
-         else if( iter_begin->channel.compare("TTJets") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->channel.compare("WW") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->channel.compare("WZ") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->channel.compare("ZZ") == 0 ) hists_ = histsMC_EWK_;
-         else cout << "Histogram fill error, channel " << iter_begin->channel << endl;
+         if( iter_begin->process.find("QCD") != string::npos ) hists_ = histsMC_signal_;
+         else if( iter_begin->process.compare("DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
+         else if( iter_begin->process.compare("TTJets") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->process.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->process.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->process.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
+         else if( iter_begin->process.compare("WW") == 0 ) hists_ = histsMC_EWK_;
+         else if( iter_begin->process.compare("WZ") == 0 ) hists_ = histsMC_EWK_;
+         else if( iter_begin->process.compare("ZZ") == 0 ) hists_ = histsMC_EWK_;
+         else cout << "Histogram fill error, process " << iter_begin->process << endl;
 
       }
       if( stackmode.compare("Ttbar0lept") == 0){
 
-         if( iter_begin->channel.compare("TTJets_Hadronic") == 0 ) hists_ = histsMC_signal_;
-         else if( iter_begin->channel.compare("TTJets_FullLept") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("TTJets_SemiLept") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
-         else if( iter_begin->channel.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->channel.compare("QCD_15_30") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_30_50") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_50_80") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_80_120") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_120_170") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_170_300") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_300_470") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_470_600") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_600_800") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_800_1000") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_1000_1400") == 0 ) hists_ = histsMC_QCD_;
-         else cout << "Histogram fill error, channel " << iter_begin->channel << endl;
+         if( iter_begin->process.compare("TTJets_Hadronic") == 0 ) hists_ = histsMC_signal_;
+         else if( iter_begin->process.compare("TTJets_FullLept") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->process.compare("TTJets_SemiLept") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->process.compare("DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
+         else if( iter_begin->process.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->process.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->process.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
+         else if( iter_begin->process.compare("QCD_15_30") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_30_50") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_50_80") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_80_120") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_120_170") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_170_300") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_300_470") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_470_600") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_600_800") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_800_1000") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_1000_1400") == 0 ) hists_ = histsMC_QCD_;
+         else cout << "Histogram fill error, process " << iter_begin->process << endl;
 
       }
       if( stackmode.compare("Ttbar1lept") == 0 ){
 
-         if( iter_begin->channel.compare("TTJets_SemiLept") == 0 ) hists_ = histsMC_signal_;
-         else if( iter_begin->channel.compare("TTJets_FullLept") == 0 ) hists_ = histsMC_top_dileptonic_;
-         else if( iter_begin->channel.compare("TTJets_Hadronic") == 0 ) hists_ = histsMC_top_hadronic_;
-         else if( iter_begin->channel.compare("Tbar_tW") == 0 ) hists_ = histsMC_top_single_;
-         else if( iter_begin->channel.compare("T_tW") == 0 ) hists_ = histsMC_top_single_;
-         else if( iter_begin->channel.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->channel.compare("DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
-         else if( iter_begin->channel.compare("DYJetsToLL_M10To50") == 0 ) hists_ = histsMC_DY_;
-         else if( iter_begin->channel.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("QCD_EMEnriched_20_30") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_EMEnriched_30_80") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_EMEnriched_80_170") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_EMEnriched_170_250") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_EMEnriched_250_350") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_EMEnriched_350") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_BCtoE_20_30") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_BCtoE_30_80") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_BCtoE_80_170") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_BCtoE_170_250") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("QCD_BCtoE_250_350") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->channel.compare("Gamma_0_15") == 0 ) hists_ = histsMC_gamma_;
-         else if( iter_begin->channel.compare("Gamma_15_30") == 0 ) hists_ = histsMC_gamma_;
-         else if( iter_begin->channel.compare("Gamma_30_50") == 0 ) hists_ = histsMC_gamma_;
-         else if( iter_begin->channel.compare("Gamma_50_80") == 0 )  hists_ = histsMC_gamma_;
-         else if( iter_begin->channel.compare("Gamma_80_120") == 0 ) hists_ = histsMC_gamma_;
-         else if( iter_begin->channel.compare("Gamma_120_170") == 0 ) hists_ = histsMC_gamma_;  
-         else if( iter_begin->channel.compare("Gamma_170_300") == 0 ) hists_ = histsMC_gamma_;  
-         else if( iter_begin->channel.compare("Gamma_300_470") == 0 ) hists_ = histsMC_gamma_;  
-         else if( iter_begin->channel.compare("WW") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->channel.compare("WZ") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->channel.compare("ZZ") == 0 ) hists_ = histsMC_EWK_;
-         else cout << "Histogram fill error, channel " << iter_begin->channel << endl;
+         if( iter_begin->process.compare("TTJets_SemiLept") == 0 ) hists_ = histsMC_signal_;
+         else if( iter_begin->process.compare("TTJets_FullLept") == 0 ) hists_ = histsMC_top_dileptonic_;
+         else if( iter_begin->process.compare("TTJets_Hadronic") == 0 ) hists_ = histsMC_top_hadronic_;
+         else if( iter_begin->process.compare("Tbar_tW") == 0 ) hists_ = histsMC_top_single_;
+         else if( iter_begin->process.compare("T_tW") == 0 ) hists_ = histsMC_top_single_;
+         else if( iter_begin->process.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
+         else if( iter_begin->process.compare("DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
+         else if( iter_begin->process.compare("DYJetsToLL_M-50") == 0 ) hists_ = histsMC_DY_;
+         else if( iter_begin->process.compare("DYJetsToLL_M-10To50") == 0 ) hists_ = histsMC_DY_;
+         else if( iter_begin->process.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->process.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->process.compare("QCD_EMEnriched_20_30") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_EMEnriched_30_80") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_EMEnriched_80_170") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_EMEnriched_170_250") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_EMEnriched_250_350") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_EMEnriched_350") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_BCtoE_20_30") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_BCtoE_30_80") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_BCtoE_80_170") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_BCtoE_170_250") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("QCD_BCtoE_250_350") == 0 ) hists_ = histsMC_QCD_;
+         else if( iter_begin->process.compare("Gamma_0_15") == 0 ) hists_ = histsMC_gamma_;
+         else if( iter_begin->process.compare("Gamma_15_30") == 0 ) hists_ = histsMC_gamma_;
+         else if( iter_begin->process.compare("Gamma_30_50") == 0 ) hists_ = histsMC_gamma_;
+         else if( iter_begin->process.compare("Gamma_50_80") == 0 )  hists_ = histsMC_gamma_;
+         else if( iter_begin->process.compare("Gamma_80_120") == 0 ) hists_ = histsMC_gamma_;
+         else if( iter_begin->process.compare("Gamma_120_170") == 0 ) hists_ = histsMC_gamma_;  
+         else if( iter_begin->process.compare("Gamma_170_300") == 0 ) hists_ = histsMC_gamma_;  
+         else if( iter_begin->process.compare("Gamma_300_470") == 0 ) hists_ = histsMC_gamma_;  
+         else if( iter_begin->process.compare("WW") == 0 ) hists_ = histsMC_EWK_;
+         else if( iter_begin->process.compare("WZ") == 0 ) hists_ = histsMC_EWK_;
+         else if( iter_begin->process.compare("ZZ") == 0 ) hists_ = histsMC_EWK_;
+         else cout << "Histogram fill error, process " << iter_begin->process << endl;
 
       }
 
