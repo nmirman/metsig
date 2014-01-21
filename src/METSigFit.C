@@ -1457,6 +1457,8 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
 
    for( vector<event>::iterator ev = iter_begin; ev < iter_end; ev++ ){
 
+      if( TMath::Prob(ev->sig,2) < 0.01 ) continue;
+
       // muons
       for( int j=0; j < int(ev->muon_pt.size()); j++){
          hists_["muon_pt"]->Fill( ev->muon_pt[j] , ev->weight );
