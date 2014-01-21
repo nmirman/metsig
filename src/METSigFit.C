@@ -6,10 +6,12 @@
 #include "TTree.h"
 #include "TChain.h"
 #include "TFile.h"
+#include "TFileCollection.h"
 #include "TCanvas.h"
 #include "TH2.h"
 #include "TROOT.h"
 #include "TStyle.h"
+#include "TSystem.h"
 #include "TVector2.h"
 #include "TRandom3.h"
 #include "TProfile.h"
@@ -184,7 +186,8 @@ const double Fitter::sigmaPhi[10][5]={{926.978, 2.52747, 0.0304001, -926.224, -1
    {   0.765787, -3.90638e-06, -4.70224e-08,   0.11831,      -1.4675},
    {    259.189,   0.00132792,    -0.311411,  -258.647,            0}};
 
-void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, const double fracevents,
+void Fitter::ReadNtuple(string path, vector<string>& filenames, 
+      vector<event>& eventref_temp, const double fracevents,
       const bool isMC, string channel, const bool do_resp_correction, 
       const int start_evt_num, const int end_evt_num , const double jvar){
    cout << "---> ReadNtuple " << channel << endl;
@@ -255,12 +258,12 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
    float genj_hadEnergy[1000];
    float genj_invEnergy[1000];
 
-   //TFile *file = TFile::Open(filename);
-   //if( !file ){ return; }
 
-   //TTree *tree = (TTree*)file->Get("events");
    TChain *tree = new TChain("events");
-   tree->Add( filename );
+   for( vector<string>::iterator file = filenames.begin(); file != filenames.end(); file++){
+      TString fn = path + "/" + (*file);
+      tree->Add( fn );
+   }
 
    tree->SetBranchAddress("v_size", &v_size);
    tree->SetBranchAddress("met_pt", met_pt);
@@ -501,8 +504,8 @@ void Fitter::ReadNtuple(const char* filename, vector<event>& eventref_temp, cons
          else if( channel.compare("WW") == 0 ) evtemp.weight *= xsec_ww/nevts_ww;
          else if( channel.compare("WZ") == 0 ) evtemp.weight *= xsec_wz/nevts_wz;
          else if( channel.compare("ZZ") == 0 ) evtemp.weight *= xsec_zz/nevts_zz;
-         else if( channel.compare("Tbar_tW") == 0 ) evtemp.weight *= xsec_tbar_tw/nevts_tbar_tw;
-         else if( channel.compare("T_tW") == 0 ) evtemp.weight *= xsec_t_tw/nevts_t_tw;
+         else if( channel.compare("Tbar_tW-channel") == 0 ) evtemp.weight *= xsec_tbar_tw/nevts_tbar_tw;
+         else if( channel.compare("T_tW-channel") == 0 ) evtemp.weight *= xsec_t_tw/nevts_t_tw;
          else if( channel.compare("WJetsToLNu") == 0 )
             evtemp.weight *= xsec_wjetstolnu/nevts_wjetstolnu;
          else cout << "No Xsection for channel " << channel << endl;
@@ -1333,8 +1336,8 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
 
          if( iter_begin->channel.compare("DYJetsToLL") == 0 ) hists_ = histsMC_signal_;
          else if( iter_begin->channel.compare("TTJets") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("Tbar_tW") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("T_tW") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->channel.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->channel.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_;
          else if( iter_begin->channel.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
          else if( iter_begin->channel.compare("WW") == 0 ) hists_ = histsMC_EWK_;
          else if( iter_begin->channel.compare("WZ") == 0 ) hists_ = histsMC_EWK_;
@@ -1348,8 +1351,8 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
          else if( iter_begin->channel.compare("DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
          else if( iter_begin->channel.compare("DYJetsToLL_M10To50") == 0 ) hists_ = histsMC_DY_;
          else if( iter_begin->channel.compare("TTJets") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("Tbar_tW") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("T_tW") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->channel.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->channel.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_;
          else if( iter_begin->channel.compare("QCD_EMEnriched_20_30") == 0 ) hists_ = histsMC_QCD_;
          else if( iter_begin->channel.compare("QCD_EMEnriched_30_80") == 0 ) hists_ = histsMC_QCD_;
          else if( iter_begin->channel.compare("QCD_EMEnriched_80_170") == 0 ) hists_ = histsMC_QCD_;
@@ -1380,8 +1383,8 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
          if( iter_begin->channel.find("QCD") != string::npos ) hists_ = histsMC_signal_;
          else if( iter_begin->channel.compare("DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
          else if( iter_begin->channel.compare("TTJets") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("Tbar_tW") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("T_tW") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->channel.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->channel.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_;
          else if( iter_begin->channel.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
          else if( iter_begin->channel.compare("WW") == 0 ) hists_ = histsMC_EWK_;
          else if( iter_begin->channel.compare("WZ") == 0 ) hists_ = histsMC_EWK_;
@@ -1395,8 +1398,8 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
          else if( iter_begin->channel.compare("TTJets_FullLept") == 0 ) hists_ = histsMC_top_;
          else if( iter_begin->channel.compare("TTJets_SemiLept") == 0 ) hists_ = histsMC_top_;
          else if( iter_begin->channel.compare("DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
-         else if( iter_begin->channel.compare("Tbar_tW") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->channel.compare("T_tW") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->channel.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->channel.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_;
          else if( iter_begin->channel.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
          else if( iter_begin->channel.compare("QCD_15_30") == 0 ) hists_ = histsMC_QCD_;
          else if( iter_begin->channel.compare("QCD_30_50") == 0 ) hists_ = histsMC_QCD_;
@@ -1422,6 +1425,8 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
          else if( iter_begin->channel.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
          else if( iter_begin->channel.compare("DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
          else if( iter_begin->channel.compare("DYJetsToLL_M10To50") == 0 ) hists_ = histsMC_DY_;
+         else if( iter_begin->channel.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->channel.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_;
          else if( iter_begin->channel.compare("QCD_EMEnriched_20_30") == 0 ) hists_ = histsMC_QCD_;
          else if( iter_begin->channel.compare("QCD_EMEnriched_30_80") == 0 ) hists_ = histsMC_QCD_;
          else if( iter_begin->channel.compare("QCD_EMEnriched_80_170") == 0 ) hists_ = histsMC_QCD_;
@@ -1527,9 +1532,6 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
       profs_["sig_met"]->Fill( ev->met, ev->sig, ev->weight );
 
    }
-
-   cout << "hist mean = " << hists_["met"]->GetMean() << ", rms = "
-      << hists_["met"]->GetRMS() << endl;
 
 }
 

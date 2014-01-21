@@ -153,7 +153,7 @@ class Fitter{
       Fitter(double=1);
       ~Fitter();
 
-      void ReadNtuple(const char[], vector<event>&, const double, const bool,
+      void ReadNtuple(string, vector<string>&, vector<event>&, const double, const bool,
             string, const bool=false, const int=-1, const int=-1, const double=0);
       //void MatchMCjets(vector<event>&);
       void RunMinimizer(vector<event>&);
