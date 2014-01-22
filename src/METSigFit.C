@@ -1351,6 +1351,7 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
 
          if( iter_begin->process.compare("WJetsToLNu") == 0 ) hists_ = histsMC_signal_;
          else if( iter_begin->process.compare("DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
+         else if( iter_begin->process.compare("DYJetsToLL_M-50") == 0 ) hists_ = histsMC_DY_;
          else if( iter_begin->process.compare("DYJetsToLL_M-10To50") == 0 ) hists_ = histsMC_DY_;
          else if( iter_begin->process.compare("TTJets") == 0 ) hists_ = histsMC_top_;
          else if( iter_begin->process.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
