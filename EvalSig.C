@@ -203,6 +203,9 @@ int main(int argc, char* argv[]){
       if( channel.compare("Ttbar0lept") == 0 ){
          date = "20130913";
       }
+      if( channel.compare("Ttbar1lept") == 0 and !(data.isMC) ){
+         date = "20140121";
+      }
 
       // vector of filenames
       string file;
