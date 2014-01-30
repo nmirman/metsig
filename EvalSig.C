@@ -122,6 +122,7 @@ int main(int argc, char* argv[]){
 
          case 'v':
             jec_var = atof(optarg);
+            break;
 
          case 'q':
             file_catalog = optarg;

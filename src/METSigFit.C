@@ -1429,8 +1429,8 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
          else if( iter_begin->process.compare("DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
          else if( iter_begin->process.compare("DYJetsToLL_M-50") == 0 ) hists_ = histsMC_DY_;
          else if( iter_begin->process.compare("DYJetsToLL_M-10To50") == 0 ) hists_ = histsMC_DY_;
-         else if( iter_begin->process.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->process.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->process.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_single_;
+         else if( iter_begin->process.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_single_;
          else if( iter_begin->process.compare("QCD_EMEnriched_20_30") == 0 ) hists_ = histsMC_QCD_;
          else if( iter_begin->process.compare("QCD_EMEnriched_30_80") == 0 ) hists_ = histsMC_QCD_;
          else if( iter_begin->process.compare("QCD_EMEnriched_80_170") == 0 ) hists_ = histsMC_QCD_;
@@ -1746,9 +1746,9 @@ void Fitter::PrintHists( const char* filename, string stackmode, bool overflow )
          histMC_top_dileptonic->SetLineColor(1);
          histMC_top_dileptonic->SetFillColor(kYellow-9);
          histMC_top_hadronic->SetLineColor(1);
-         histMC_top_hadronic->SetFillColor(kYellow-7);
+         histMC_top_hadronic->SetFillColor(kYellow-3);
          histMC_top_single->SetLineColor(1);
-         histMC_top_single->SetFillColor(kYellow-3);
+         histMC_top_single->SetFillColor(kOrange-4);
          histMC_DY->SetLineColor(1);
          histMC_DY->SetFillColor(kRed-10);
          histMC_EWK->SetLineColor(1);

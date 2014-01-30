@@ -7,9 +7,12 @@
 #include "TCanvas.h"
 #include "TFile.h"
 #include "TTree.h"
+#include "TChain.h"
 #include "TLorentzVector.h"
 
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <unistd.h>
 using namespace std;
 
@@ -18,16 +21,20 @@ struct Dataset {
    string path;
    string date;
    string channel;
-   string filename;
+   string dirname;
    string process;
    bool isMC;
    int size;
 
+   vector<string> filenames;
+
    // constructor
-   Dataset( string f, string p, bool i) : filename(f), process(p), isMC(i) {}
+   Dataset( string f="", string p="", bool i=0) : dirname(f), process(p), isMC(i) {}
 };
 
 int main(int argc, char* argv[]){
+   
+   freopen ("stderr.txt","w",stderr);
 
    // setup fit results tree
    double jetbinpt=0, psig_nvert_corr=0, psig_qt_corr=0,
@@ -122,46 +129,90 @@ int main(int argc, char* argv[]){
    // ######################### BEGIN FIT #########################
    //
 
+
+
    //
    // get all ntuples
    //
 
-   // data
-   datasets.push_back( Dataset("Run2012A-22Jan2013/", "Data", false) );
-   datasets.push_back( Dataset("Run2012B-part1-22Jan2013/", "Data", false) );
-   datasets.push_back( Dataset("Run2012B-part2-22Jan2013/", "Data", false) );
-   datasets.push_back( Dataset("Run2012B-part3-22Jan2013/", "Data", false) );
-   datasets.push_back( Dataset("Run2012B-part4-22Jan2013/", "Data", false) );
-   datasets.push_back( Dataset("Run2012C-part1-22Jan2013/", "Data", false) );
-   datasets.push_back( Dataset("Run2012C-part2-22Jan2013/", "Data", false) );
-   datasets.push_back( Dataset("Run2012C-part3-22Jan2013/", "Data", false) );
-   datasets.push_back( Dataset("Run2012C-part4-22Jan2013/", "Data", false) );
-   datasets.push_back( Dataset("Run2012D-part1-22Jan2013/", "Data", false) );
-   datasets.push_back( Dataset("Run2012D-part2-22Jan2013/", "Data", false) );
-   datasets.push_back( Dataset("Run2012D-part3-22Jan2013/", "Data", false) );
-   datasets.push_back( Dataset("Run2012D-part4-22Jan2013/", "Data", false) );
 
-   // mc
-   datasets.push_back( Dataset("DYJetsToLL/", "DYJetsToLL", true) );
-   datasets.push_back( Dataset("TTJets/", "TTJets", true) );
-   datasets.push_back( Dataset("Tbar_tW-channel/", "Tbar_tW", true) );
-   datasets.push_back( Dataset("T_tW-channel/", "T_tW", true) );
-   datasets.push_back( Dataset("WJetsToLNu/", "WJetsToLNu", true) );
-   datasets.push_back( Dataset("WW/", "WW", true) );
-   datasets.push_back( Dataset("WZ/", "WZ", true) );
-   datasets.push_back( Dataset("ZZ/", "ZZ", true) );
+   ifstream inFile;
+   inFile.open("file_catalog.txt"/*file_catalog.c_str()*/);
 
-   for( vector<Dataset>::iterator data = datasets.begin(); data != datasets.end(); data++ ){
-      data->path = "/mnt/xrootd/user/nmirman/Ntuples/METsig";
-      data->date = "20130830";
-      data->channel = "Zmumu";
-      if( data->isMC ) data->date = "20130913";
+   while(!inFile.eof()){
+
+      Dataset data;
+      string xrdopt = "cache";
+      data.path = "root://osg-se.cac.cornell.edu//xrootd/"
+         +xrdopt+"/cms/store/user/nmirman/Ntuples/METsig";
+      string channel = "Zmumu";
+
+      // get line from file
+      string line;
+      getline(inFile,line);
+      stringstream stream(line);
+
+      // get ntuple attributes
+      stream >> data.channel;
+      stream >> data.date;
+      stream >> data.dirname;
+
+      data.process = data.dirname;
+      data.isMC = true;
+      if( data.dirname.find("Run") != string::npos ){
+         data.isMC = false;
+         data.process = "Data";
+      }
+
+      string date = "20130830";
+      if( channel.compare("Zmumu") == 0 and data.isMC ){
+         date = "20130913";
+      }
+      if( channel.compare("Wenu") == 0 ){
+         date = "20130916";
+      }
+      if( channel.compare("Dijet") == 0 and data.isMC ){
+         date = "20130913";
+      }
+      if( channel.compare("Ttbar0lept") == 0 ){
+         date = "20130913";
+      }
+      if( channel.compare("Ttbar1lept") == 0 and !(data.isMC) ){
+         date = "20140121";
+      }
+
+      // vector of filenames
+      string file;
+      while( stream >> file ){
+         data.filenames.push_back( file );
+      }
+
+      // add to datasets
+      if( channel.compare(data.channel) == 0 and date.compare(data.date) == 0 )
+         datasets.push_back( data );
+
    }
+
+   // get size of datasets
+   cout << endl;
+   for( vector<Dataset>::iterator data = datasets.begin(); data != datasets.end(); data++ ){
+      TChain chain("events");
+      for( vector<string>::iterator file = data->filenames.begin();
+            file != data->filenames.end(); file++){
+         TString fn = data->path+"/"+data->channel+"/"+data->date+"/"+data->dirname+"/"+(*file);
+         chain.Add( fn );
+      }
+      data->size = chain.GetEntries();
+      cout << data->channel << " " << data->date << " " << data->dirname
+         << ": " << data->size << " events" << endl;
+   }
+   cout << endl;
+
 
    //
    // loop through data and mc, run fit, fill histograms
    //
-   for(int i=1; i < 2; i++){
+   for(int i=0; i < 2; i++){
 
       if(i==0){
          cout << "\n ############################ " << endl;
@@ -181,12 +232,12 @@ int main(int argc, char* argv[]){
          if( i==0 and data->isMC ) continue;
          if( i==1 and !(data->isMC) ) continue;
 
-         string fullname = data->path+"/"+data->channel+"/"+data->date+"/"+data->filename;
-         string xrdname = fullname;
-         xrdname.replace(xrdname.begin(),xrdname.begin()+11,
-               "root://osg-se.cac.cornell.edu//xrootd/path/cms/store");
-         //fitter.ReadNtuple( fullname.c_str(), xrdname.c_str(), eventvec, numevents,
-         //      data->isMC, data->process, do_resp_correction );
+         string fullname = data->path+"/"+data->channel+"/"+data->date+"/"+data->dirname;
+         //string xrdname = fullname;
+         //xrdname.replace(xrdname.begin(),xrdname.begin()+11,
+         //      "root://osg-se.cac.cornell.edu//xrootd/path/cms/store");
+         fitter.ReadNtuple( fullname.c_str(), data->filenames, eventvec, numevents,
+               data->isMC, data->process, do_resp_correction, -1/*start*/, -1/*end*/, 0/*jec_varmc*/ );
       }
 
       cout << "\nDATASET SIZE: " << eventvec.size() << " EVENTS\n" << endl;

@@ -1,4 +1,4 @@
 #$ -S /bin/bash
 
 cd $PBS_O_WORKDIR
-./EvalSig -p Wenu -o plots20140121/plotsWenu_nozerobin.root
+./EvalSig -p Ttbar1lept -m -v 1 -o plots20140130/plotsTtbar_nosmear_up.root
