@@ -65,11 +65,12 @@ int main(int argc, char* argv[]){
    double rebin = 1;
    bool fullshape = false;
    double jec_var = 0;
+   double stat_var = 0;
 
    string xrdopt = "path";
    string file_catalog = "file_catalog.txt";
 
-   while( (c = getopt(argc, argv, "n:p:o:t:b:v:q:fhscbmrdw")) != -1 ) {
+   while( (c = getopt(argc, argv, "n:p:o:t:b:v:u:q:fhscbmrdw")) != -1 ) {
       switch(c)
       {
          case 'n' :
@@ -124,6 +125,10 @@ int main(int argc, char* argv[]){
             jec_var = atof(optarg);
             break;
 
+         case 'u':
+            stat_var = atof(optarg);
+            break;
+
          case 'q':
             file_catalog = optarg;
             break;
@@ -145,6 +150,7 @@ int main(int argc, char* argv[]){
             cout << "\t-b <number>\t Rebin -- divide bins by number.\n";
             cout << "\t-f\t          Compute Significance with full jet resolution shapes.\n";
             cout << "\t-v\t          Scale up (1) or down (-1) by JEC uncertainty.\n";
+            cout << "\t-u\t          Scale up (1) or down (-1) by statistical uncertainty.\n";
             cout << "\t-q\t          Filename containing ntuple filenames.\n";
             cout << "\t-h\t          Display this menu.\n";
             return -1;
@@ -254,6 +260,11 @@ int main(int argc, char* argv[]){
    double parData_down [] = {1.15061,1.07776,1.04204,1.12509,1.56414,0.0,0.548758};
    //double parMC_down [] = {1.05347,0.975375,0.957986,0.97269,1.28106,-1.10982,0.52039};
    double parMC_down [] = {1.03122,0.951483,0.930119,0.92954,1.17063,-2.51767,0.486471};
+
+   double parMC_staterr [] = {0.0071,0.0064,0.0062,0.0093,0.0056,0.075,0.00036};
+   if( stat_var != 0 ){
+      for(int i=0; i < 7; i++) parMC[i] += stat_var*parMC_staterr[i];
+   }
 
    fitter.met_type = met_type;
 
