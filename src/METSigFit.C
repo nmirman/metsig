@@ -60,13 +60,14 @@ Fitter::Fitter(double b /*=1*/){
 
    // data hists for plotting
    rebin = b;
-   histsData_["muon_pt"] = new TH1D("muon_pt_Data", "Muon p_{T}", 50/b, 0, 200);
+   histsData_["lepton_pt"] = new TH1D("lepton_pt_Data", "Muon p_{T}", 50/b, 0, 200);
    histsData_["muon_invmass"] = new TH1D("muon_invmass_Data", "M_{#mu#mu}", 50/b, 0, 200);
    histsData_["njets"  ] = new TH1D("njets_Data", "N jets", 100/b, 0, 100);
    histsData_["jet_pt" ] = new TH1D("jet_pt_Data", "Jet p_{T}", 50/b, 0, 200);
    histsData_["jet1_pt"] = new TH1D("jet1_pt_Data", "Jet 1 p_{T}", 50/b, 0, 200);
    histsData_["jet_eta" ] = new TH1D("jet_eta_Data", "Jet #eta, p_{T} > 30 GeV", 50/b, -5, 5);
    histsData_["pjet_size"  ] = new TH1D("pjet_size_Data", "N jets", 50/b, 0, 500);
+   histsData_["pjet_scalpt"] = new TH1D("pjet_scalpt_Data", "Pseudojet Scalar p_{T} ", 200/b, 0, 2000);
    histsData_["pjet_scalptL123"] = new TH1D("pjet_scalptL123_Data", "Pseudojet Scalar p_{T} (L123-corrected)", 200/b, 0, 2000);
    histsData_["pjet_vectptL123"] = new TH1D("pjet_vectptL123_Data", "Pseudojet Scalar p_{T} (L123-corrected)", 50/b, 0, 200);
    histsData_["pjet_scalptT1"] = new TH1D("pjet_scalptT1_Data", "Pseudojet Scalar p_{T} (T1-corrected)", 200/b, 0, 2000);
@@ -192,72 +193,11 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
       const int start_evt_num, const int end_evt_num , const double jvar){
    cout << "---> ReadNtuple " << process << endl;
 
-   float gi_xsec=0;
-   float gi_eff=0;
-
-   int v_size;
-   float met_pt[5];
-   float met_px[5];
-   float met_py[5];
-   float metsig2011[5];
-
-   int pfj_size=0;
-   float pfj_pt[1000];
-   float pfj_phi[1000];
-   float pfj_eta[1000];
-
-   int mu_size=0;
-   float mu_pt[100];
-   float mu_px[100];
-   float mu_py[100];
-   float mu_pz[100];
-   float mu_e[100];
-   float mu_phi[100];
-   float mu_eta[100];
-   int mu_isGlobal[100];
-   float mu_chi2[100];
-   int mu_muonHits[100];
-   int mu_nMatches[100];
-   float mu_dxy[100];
-   int mu_pixelHits[100];
-   int mu_numberOfValidTrackerLayers[100];
-   float mu_dr03TkSumPt[100];
-   float mu_dr03EcalRecHitSumEt[100];
-   float mu_dr03HcalTowerSumEt[100];
-
-   int elec_size=0;
-   float elec_pt[100];
-   float elec_px[100];
-   float elec_py[100];
-   float elec_pz[100];
-   float elec_e[100];
-   float elec_phi[100];
-   float elec_eta[100];
-
-   float pfj_l1[1000];
-   float pfj_l1l2l3[1000];
-
-   float pfj_jetres_par0[1000];
-   float pfj_jetres_par1[1000];
-   float pfj_jetres_par2[1000];
-   float pfj_jetres_par3[1000];
-   float pfj_jetres_par4[1000];
-   float pfj_jetres_par5[1000];
-   float pfj_jetres_par6[1000];
-
-   float pfj_jec_unc[1000];
-
-   float puMyWeight = 1;
-
-   int genj_size=0;
-   float genj_pt[1000];
-   float genj_phi[1000];
-   float genj_eta[1000];
-   float genj_energy[1000];
-   float genj_emEnergy[1000];
-   float genj_hadEnergy[1000];
-   float genj_invEnergy[1000];
-
+   std::vector<double> *lep_pt=0, *lep_energy=0, *lep_phi=0, *lep_eta=0;
+   std::vector<double> *jet_pt=0, *jet_energy=0, *jet_phi=0, *jet_eta=0;
+   std::vector<double> *jet_sigmapt=0, *jet_sigmaphi=0;
+   double met_pt=0, met_energy=0, met_phi=0, met_eta=0, met_sumpt=0;
+   int nvertices=0;
 
    TChain *tree = new TChain("events");
    for( vector<string>::iterator file = filenames.begin(); file != filenames.end(); file++){
@@ -265,72 +205,25 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
       tree->Add( fn );
    }
 
-   tree->SetBranchAddress("v_size", &v_size);
-   tree->SetBranchAddress("met_pt", met_pt);
-   tree->SetBranchAddress("met_px", met_px);
-   tree->SetBranchAddress("met_py", met_py);
-   tree->SetBranchAddress("met_sig", metsig2011);
+   tree->SetBranchAddress("lep_pt", &lep_pt);
+   tree->SetBranchAddress("lep_energy", &lep_energy);
+   tree->SetBranchAddress("lep_phi", &lep_phi);
+   tree->SetBranchAddress("lep_eta", &lep_eta);
 
-   tree->SetBranchAddress("pfj_size", &pfj_size);
-   tree->SetBranchAddress("pfj_pt", pfj_pt);
-   tree->SetBranchAddress("pfj_phi", pfj_phi);
-   tree->SetBranchAddress("pfj_eta", pfj_eta);
+   tree->SetBranchAddress("jet_pt", &jet_pt);
+   tree->SetBranchAddress("jet_energy", &jet_energy);
+   tree->SetBranchAddress("jet_phi", &jet_phi);
+   tree->SetBranchAddress("jet_eta", &jet_eta);
+   tree->SetBranchAddress("jet_sigmapt", &jet_sigmapt);
+   tree->SetBranchAddress("jet_sigmaphi", &jet_sigmaphi);
 
-   tree->SetBranchAddress("mu_size", &mu_size);
-   tree->SetBranchAddress("mu_pt", mu_pt);
-   tree->SetBranchAddress("mu_px", mu_px);
-   tree->SetBranchAddress("mu_py", mu_py);
-   tree->SetBranchAddress("mu_pz", mu_pz);
-   tree->SetBranchAddress("mu_e", mu_e);
-   tree->SetBranchAddress("mu_phi", mu_phi);
-   tree->SetBranchAddress("mu_eta", mu_eta);
+   tree->SetBranchAddress("met_pt", &met_pt);
+   tree->SetBranchAddress("met_energy", &met_energy);
+   tree->SetBranchAddress("met_phi", &met_phi);
+   tree->SetBranchAddress("met_eta", &met_eta);
+   tree->SetBranchAddress("met_sumpt", &met_sumpt);
 
-   tree->SetBranchAddress("mu_isGlobal", &mu_isGlobal);
-   tree->SetBranchAddress("mu_chi2", &mu_chi2);
-   tree->SetBranchAddress("mu_muonHits", &mu_muonHits);
-   tree->SetBranchAddress("mu_nMatches", &mu_nMatches);
-   tree->SetBranchAddress("mu_dxy", &mu_dxy);
-   tree->SetBranchAddress("mu_pixelHits", &mu_pixelHits);
-   tree->SetBranchAddress("mu_numberOfValidTrackerLayers", &mu_numberOfValidTrackerLayers);
-   tree->SetBranchAddress("mu_dr03TkSumPt", &mu_dr03TkSumPt);
-   tree->SetBranchAddress("mu_dr03EcalRecHitSumEt", &mu_dr03EcalRecHitSumEt);
-   tree->SetBranchAddress("mu_dr03HcalTowerSumEt", &mu_dr03HcalTowerSumEt);
-
-   tree->SetBranchAddress("elec_size", &elec_size);
-   tree->SetBranchAddress("elec_pt", elec_pt);
-   tree->SetBranchAddress("elec_px", elec_px);
-   tree->SetBranchAddress("elec_py", elec_py);
-   tree->SetBranchAddress("elec_pz", elec_pz);
-   tree->SetBranchAddress("elec_e", elec_e);
-   tree->SetBranchAddress("elec_phi", elec_phi);
-   tree->SetBranchAddress("elec_eta", elec_eta);
-
-   tree->SetBranchAddress("pfj_l1", pfj_l1);
-   tree->SetBranchAddress("pfj_l1l2l3", pfj_l1l2l3);
-
-   tree->SetBranchAddress("pfj_jetres_par0", pfj_jetres_par0);
-   tree->SetBranchAddress("pfj_jetres_par1", pfj_jetres_par1);
-   tree->SetBranchAddress("pfj_jetres_par2", pfj_jetres_par2);
-   tree->SetBranchAddress("pfj_jetres_par3", pfj_jetres_par3);
-   tree->SetBranchAddress("pfj_jetres_par4", pfj_jetres_par4);
-   tree->SetBranchAddress("pfj_jetres_par5", pfj_jetres_par5);
-   tree->SetBranchAddress("pfj_jetres_par6", pfj_jetres_par6);
-
-   tree->SetBranchAddress("pfj_jec_unc", pfj_jec_unc);
-
-   if(isMC){
-      tree->SetBranchAddress("gi_xsec", &gi_xsec);
-      tree->SetBranchAddress("gi_eff", &gi_eff);
-      tree->SetBranchAddress("puMyWeight", &puMyWeight);
-      tree->SetBranchAddress("genj_size", &genj_size);
-      tree->SetBranchAddress("genj_pt", genj_pt);
-      tree->SetBranchAddress("genj_phi", genj_phi);
-      tree->SetBranchAddress("genj_eta", genj_eta);
-      tree->SetBranchAddress("genj_energy", genj_energy);
-      tree->SetBranchAddress("genj_emEnergy", genj_emEnergy);
-      tree->SetBranchAddress("genj_hadEnergy", genj_hadEnergy);
-      tree->SetBranchAddress("genj_invEnergy", genj_invEnergy);
-   }
+   tree->SetBranchAddress("nvertices", &nvertices);
 
    cout << " -----> fill event vector" << endl;
 
@@ -349,17 +242,6 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
 
       tree->GetEntry(ev);
       if( ev % 100000 == 0 and ev > 0) cout << "    -----> getting entry " << ev << endl;
-
-      int pjet_size_temp = 0;
-      double pjet_scalptL123_temp = 0;
-      double pjet_pxL123_temp = 0;
-      double pjet_pyL123_temp = 0;
-      double pjet_scalptT1_temp = 0;
-      double pjet_pxT1_temp = 0;
-      double pjet_pyT1_temp = 0;
-      double pjet_pxpx_temp = 0;
-      double pjet_pypy_temp = 0;
-      double pjet_pxpy_temp = 0;
 
       event evtemp;
 
@@ -383,9 +265,14 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
       double xsec_wjetstolnu           = 37509.0;
 
       // MC sample size (events), obtained from DAS.
-      int nevts_dyjetstoll          = 30459503;
+      int nevts_dyjetstoll          = 298504;
+      int nevts_ttjets              = 4995842;
+      int nevts_ww                  = 994416;
+      int nevts_wz                  = 996920;
+      int nevts_zz                  = 998848;
+      int nevts_wjetstolnu          = 24162881;
+      /*
       int nevts_dyjetstoll_m10to50  = 7132223;
-      int nevts_ttjets              = 6923750;
       int nevts_ttjets_0lept        = 31223821;
       int nevts_ttjets_1lept        = 25424818;
       int nevts_ttjets_2lept        = 12119013;
@@ -419,29 +306,27 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
       int nevts_gamma_120_170       = 2000043;
       int nevts_gamma_170_300       = 2000069;
       int nevts_gamma_300_470       = 2000130;
-      int nevts_ww                  = 10000431;
-      int nevts_wz                  = 10000283;
-      int nevts_zz                  = 9799908;
-      int nevts_tbar_tw             = 493460;
-      int nevts_t_tw                = 497658;
-      int nevts_wjetstolnu          = 57709905;
+      */
+      //int nevts_tbar_tw             = 493460;
+      //int nevts_t_tw                = 497658;
 
-      double xsec = gi_xsec*gi_eff;
+      double xsec = 1.0;//gi_xsec*gi_eff;
       double scale = 1.0;
       if( isMC ){
 
          if( process.compare("DYJetsToLL") == 0 ) evtemp.weight *= xsec_dyjetstoll/nevts_dyjetstoll;
          else if( process.compare("DYJetsToLL_M-50") == 0 )
             evtemp.weight *= xsec_dyjetstoll/nevts_dyjetstoll;
-         else if( process.compare("DYJetsToLL_M-10To50") == 0 )
-            evtemp.weight *= xsec_dyjetstoll_m10to50/nevts_dyjetstoll_m10to50;
+         //else if( process.compare("DYJetsToLL_M-10To50") == 0 )
+         //   evtemp.weight *= xsec_dyjetstoll_m10to50/nevts_dyjetstoll_m10to50;
          else if( process.compare("TTJets") == 0 ) evtemp.weight *= xsec_ttjets/nevts_ttjets;
-         else if( process.compare("TTJets_Hadronic") == 0 )
-            evtemp.weight *= xsec_ttjets_0lept/nevts_ttjets_0lept;
-         else if( process.compare("TTJets_SemiLept") == 0 )
-            evtemp.weight *= xsec_ttjets_1lept/nevts_ttjets_1lept;
-         else if( process.compare("TTJets_FullLept") == 0 )
-            evtemp.weight *= xsec_ttjets_2lept/nevts_ttjets_2lept;
+         //else if( process.compare("TTJets_Hadronic") == 0 )
+         //   evtemp.weight *= xsec_ttjets_0lept/nevts_ttjets_0lept;
+         //else if( process.compare("TTJets_SemiLept") == 0 )
+         //   evtemp.weight *= xsec_ttjets_1lept/nevts_ttjets_1lept;
+         //else if( process.compare("TTJets_FullLept") == 0 )
+         //   evtemp.weight *= xsec_ttjets_2lept/nevts_ttjets_2lept;
+         /*
          else if( process.compare("QCD_15_30") == 0 )
             evtemp.weight *= scale*xsec/nevts_qcd_15_30;
          else if( process.compare("QCD_30_50") == 0 )
@@ -502,154 +387,40 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
             evtemp.weight *= scale*gi_xsec/nevts_gamma_170_300;
          else if( process.compare("Gamma_300_470") == 0 )
             evtemp.weight *= scale*gi_xsec/nevts_gamma_300_470;
+            */
          else if( process.compare("WW") == 0 ) evtemp.weight *= xsec_ww/nevts_ww;
          else if( process.compare("WZ") == 0 ) evtemp.weight *= xsec_wz/nevts_wz;
          else if( process.compare("ZZ") == 0 ) evtemp.weight *= xsec_zz/nevts_zz;
-         else if( process.compare("Tbar_tW-channel") == 0 )
-            evtemp.weight *= xsec_tbar_tw/nevts_tbar_tw;
-         else if( process.compare("T_tW-channel") == 0 ) evtemp.weight *= xsec_t_tw/nevts_t_tw;
+         //else if( process.compare("Tbar_tW-channel") == 0 )
+         //   evtemp.weight *= xsec_tbar_tw/nevts_tbar_tw;
+         //else if( process.compare("T_tW-channel") == 0 ) evtemp.weight *= xsec_t_tw/nevts_t_tw;
          else if( process.compare("WJetsToLNu") == 0 )
             evtemp.weight *= xsec_wjetstolnu/nevts_wjetstolnu;
          else cout << "No Xsection for process " << process << endl;
 
-         evtemp.weight *= double(nevts_dyjetstoll)/xsec_dyjetstoll;
-         evtemp.weight *= puMyWeight;
       }
 
-      // vertices
-      evtemp.nvertices = v_size;
+      // nvertices
+      evtemp.nvertices = nvertices;
 
-      // old metsig
-      evtemp.metsig2011 = metsig2011[0];
-
-      // muons
-      for( int i=0; i < mu_size; i++){
-         evtemp.muon_pt.push_back( mu_pt[i] );
-         evtemp.muon_phi.push_back( mu_phi[i] );
-      }
-
-      // electrons
-      for( int i=0; i < elec_size; i++){
-         evtemp.electron_pt.push_back( elec_pt[i] );
-         evtemp.electron_phi.push_back( elec_phi[i] );
-      }
+      // leptons
+      evtemp.lepton_pt = *lep_pt;
+      evtemp.lepton_phi = *lep_phi;
 
       // jets
-      double dpx = 0;
-      double dpy = 0;
-      for( int i=0; i < pfj_size; i++){
-
-         double jec_unc = 0;
-         //if( jvar == 1 or jvar == -1 ) jec_unc = jvar*pfj_jec_unc[i];
-         jec_unc = jvar*pfj_jec_unc[i];
-
-         double pfj_l123 = pfj_l1l2l3[i] + jec_unc;
-
-         double jet_ptL123_temp = (pfj_pt[i]*pfj_l123 > jetcorrpt)
-            ? pfj_pt[i]*pfj_l123 : pfj_pt[i];
-         double jet_ptT1_temp = (pfj_pt[i]*pfj_l123 > jetcorrpt)
-            ? pfj_pt[i]*(pfj_l123 + 1 - pfj_l1[i]) : pfj_pt[i];
-
-         // unclustered energy uncertainty
-         /*
-         if( jvar == 2 ){ 
-            jet_ptL123_temp *= 1.1;
-            jet_ptT1_temp *= 1.1;
-         }
-         if( jvar == 3 ){ 
-            jet_ptL123_temp *= 0.9;
-            jet_ptT1_temp *= 0.9;
-         }
-         */
-
-         // find dp after correction
-         double jet_ptL123_nocorr = (pfj_pt[i]*pfj_l1l2l3[i] > jetcorrpt)
-            ? pfj_pt[i]*pfj_l1l2l3[i] : pfj_pt[i];
-         double jet_ptT1_nocorr = (pfj_pt[i]*pfj_l1l2l3[i] > jetcorrpt)
-            ? pfj_pt[i]*(pfj_l1l2l3[i] + 1 - pfj_l1[i]) : pfj_pt[i];
-
-         if( jvar != 0 ){
-            dpx += (jet_ptT1_temp - jet_ptT1_nocorr)*cos( pfj_phi[i] );
-            dpy += (jet_ptT1_temp - jet_ptT1_nocorr)*sin( pfj_phi[i] );
-         }
-
-         if( jet_ptL123_temp > jetbinpt ){
-            // clustered jets
-
-            evtemp.jet_phi.push_back( pfj_phi[i] );
-            evtemp.jet_eta.push_back( pfj_eta[i] );
-            evtemp.jet_ptUncor.push_back( pfj_pt[i] );
-
-            evtemp.jet_ptL123.push_back( jet_ptL123_temp );
-            evtemp.jet_ptT1.push_back( jet_ptT1_temp );
-
-            /*
-            evtemp.jet_res_par0.push_back(pfj_jetres_par0[i]);
-            evtemp.jet_res_par1.push_back(pfj_jetres_par1[i]);
-            evtemp.jet_res_par2.push_back(pfj_jetres_par2[i]);
-            evtemp.jet_res_par3.push_back(pfj_jetres_par3[i]);
-            evtemp.jet_res_par4.push_back(pfj_jetres_par4[i]);
-            evtemp.jet_res_par5.push_back(pfj_jetres_par5[i]);
-            evtemp.jet_res_par6.push_back(pfj_jetres_par6[i]);
-            */
-
-         } else {
-            // pseudojet with unclustered energy
-
-            pjet_scalptL123_temp += jet_ptL123_temp;
-            pjet_pxL123_temp += jet_ptL123_temp*cos(pfj_phi[i]);
-            pjet_pyL123_temp += jet_ptL123_temp*sin(pfj_phi[i]);
-
-            pjet_scalptT1_temp += jet_ptT1_temp;
-            pjet_pxT1_temp += jet_ptT1_temp*cos(pfj_phi[i]);
-            pjet_pyT1_temp += jet_ptT1_temp*sin(pfj_phi[i]);
-
-            pjet_size_temp++;
-
-            pjet_pxpx_temp += pow(jet_ptL123_temp*cos(pfj_phi[i]),2);
-            pjet_pypy_temp += pow(jet_ptL123_temp*sin(pfj_phi[i]),2);
-            pjet_pxpy_temp += pow(jet_ptL123_temp,2)*cos(pfj_phi[i])*sin(pfj_phi[i]);
-
-         }
-
-      } // pfj loop
-
-      // pseudojet
-      evtemp.pjet_phiL123 = atan2( pjet_pyL123_temp, pjet_pxL123_temp );
-      evtemp.pjet_scalptL123 = pjet_scalptL123_temp;
-      evtemp.pjet_vectptL123 = sqrt( pow(pjet_pxL123_temp,2) + pow(pjet_pyL123_temp,2) );
-
-      evtemp.pjet_phiT1 = atan2( pjet_pyT1_temp, pjet_pxT1_temp );
-      evtemp.pjet_scalptT1 = pjet_scalptT1_temp;
-      evtemp.pjet_vectptT1 = sqrt( pow(pjet_pxT1_temp,2) + pow(pjet_pyT1_temp,2) );
-
-      evtemp.pjet_size = pjet_size_temp;
+      evtemp.jet_pt = *jet_pt;
+      evtemp.jet_phi = *jet_phi;
+      evtemp.jet_eta = *jet_eta;
+      evtemp.jet_sigmapt = *jet_sigmapt;
+      evtemp.jet_sigmaphi = *jet_sigmaphi;
 
       // met
-      double metcorr_x = 0;
-      double metcorr_y = 0;
-      if( isMC ){ // phi correction
-         metcorr_x = 0.162861 - 0.0238517*v_size;
-         metcorr_y = 0.360860 - 0.130335*v_size;
-      }else{
-         metcorr_x = 0.0483642 + 0.248870*v_size;
-         metcorr_y = -0.150135 - 0.0827917*v_size;
-      }
-      for(int i=0; i < 5; i++){
-         evtemp.pfmet_px[i] = met_px[i];
-         evtemp.pfmet_py[i] = met_py[i];
-         if( jvar != 0 ){
-            evtemp.pfmet_px[i] -= dpx;
-            evtemp.pfmet_py[i] -= dpy;
-         }
-      }
-      
-      // met smearing
-      evtemp.met_varx = 0.0;
-      evtemp.met_vary = 0.0;
-      evtemp.met_rho = 0.0;
+      evtemp.met_pt = met_pt;
+      evtemp.met_phi = met_phi;
 
-      // fill event vector
+      // pseudo-jet
+      evtemp.pjet_scalpt = met_sumpt;
+
       eventref_temp.push_back( evtemp );
 
    } // event loop
@@ -666,6 +437,7 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
 
 void Fitter::ResponseCorrection(vector<event>& eventvec) {
 
+   /*
 	vector<event>* eventref=&eventvec;
 	TProfile* presp_qt = new TProfile ("presp_qt_temp",
 			"Response = |<u_{#parallel}>|/q_{T} vs. q_{T};q_{T} (GeV);Response", 25, 0, 100);
@@ -696,6 +468,7 @@ void Fitter::ResponseCorrection(vector<event>& eventvec) {
 		ev->pjet_vectptT1*=pt_mult;
 		ev->pjet_scalptT1*=pt_mult;
 	}
+   */
 }
 
 void Fitter::RunMinimizer(vector<event>& eventref_temp){
@@ -760,123 +533,57 @@ double Fitter::Min2LL(const double *x){
 
 void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
 
-   // random number engine for MET-smearing
-   ROOT::Math::Random<ROOT::Math::GSLRngMT> GSLr;
-
-   int count = 0;
-   // event loop
    for( vector<event>::iterator ev = eventref_temp.begin(); ev < eventref_temp.end(); ev++){
 
-      double met_x=0;
-      double met_y=0;
-      double cov_xx=0;
-      double cov_xy=0;
-      double cov_yy=0;
-      double cov_xx_highpt=0;
-      double cov_xx_pjet=0;
+      // metsig covariance
+      double cov_xx = 0;
+      double cov_xy = 0;
+      double cov_yy = 0;
 
-      // clustered jets
-      for(int i=0; i < int(ev->jet_ptUncor.size()); i++){
-
-         float feta = fabs(ev->jet_eta[i]);
+      // jets
+      for(unsigned int i=0; i < ev->jet_pt.size(); i++){
+         double jpt = ev->jet_pt[i];
+         double jeta = ev->jet_eta[i];
+         double feta = fabs(jeta);
          double c = cos(ev->jet_phi[i]);
          double s = sin(ev->jet_phi[i]);
 
-         met_x -= c*(ev->jet_ptT1[i]);
-         met_y -= s*(ev->jet_ptT1[i]);
-
-         double dpt=0;
-         double dph=0;
-
-         // resolutions for two jet categories
-         if( true || ev->jet_ptL123[i] > jetbinpt ){ //dummy true
-
-            int index=-1;
-            if(feta<0.5) index=0;
-            else if(feta<1.1) index=1;
-            else if(feta<1.7) index=2;
-            else if(feta<2.3) index=3;
-            else{
-               index=4;
-            }
-
-            // CMS 2010 Resolutions -- parameterized by L123 corrected pt
-            dpt = x[index] * (ev->jet_ptT1[i]) * dpt_(ev->jet_ptL123[i], ev->jet_eta[i]);
-            dph =            (ev->jet_ptT1[i]) * dph_(ev->jet_ptL123[i], ev->jet_eta[i]);
-
-         }else{
-            cout << "ERROR: JET PT OUT OF RANGE" << endl;
+         int index=-1;
+         if(feta<0.5) index=0;
+         else if(feta<1.1) index=1;
+         else if(feta<1.7) index=2;
+         else if(feta<2.3) index=3;
+         else{
+            index=4;
          }
+
+         double dpt = x[index]*jpt*ev->jet_sigmapt[i];
+         double dph =          jpt*ev->jet_sigmaphi[i];
 
          double dtt = dpt*dpt;
          double dff = dph*dph;
          cov_xx += dtt*c*c + dff*s*s;
          cov_xy += (dtt-dff)*c*s;
          cov_yy += dff*c*c + dtt*s*s;
-
-         cov_xx_highpt += dtt*c*c + dff*s*s;
       }
 
-      // muons -- assume zero resolutions
-      for(int i=0; i < int(ev->muon_pt.size()); i++){
-         met_x -= cos(ev->muon_phi[i])*(ev->muon_pt[i]);
-         met_y -= sin(ev->muon_phi[i])*(ev->muon_pt[i]);
-      }
-
-      // electrons -- assume zero resolutions
-      for(int i=0; i < int(ev->electron_pt.size()); i++){
-         met_x -= cos(ev->electron_phi[i])*(ev->electron_pt[i]);
-         met_y -= sin(ev->electron_phi[i])*(ev->electron_pt[i]);
-      }
-
-      // unclustered energy -- parameterize by scalar sum of ET
-      double c = cos(ev->pjet_phiT1);
-      double s = sin(ev->pjet_phiT1);
-
-      met_x -= c*(ev->pjet_vectptT1);
-      met_y -= s*(ev->pjet_vectptT1);
-
-      double ctt = x[5]*x[5] + x[6]*x[6]*(ev->pjet_scalptL123);
-
+      // pseudo-jet
+      double ctt = x[5]*x[5] + x[6]*x[6]*(ev->pjet_scalpt);
       cov_xx += ctt;
       cov_yy += ctt;
 
-      cov_xx_pjet += ctt;
+      // compute significance
+      double met_x = ev->met_pt * cos(ev->met_phi);
+      double met_y = ev->met_pt * sin(ev->met_phi);
 
       double det = cov_xx*cov_yy - cov_xy*cov_xy;
-
       double ncov_xx = cov_yy / det;
       double ncov_xy = -cov_xy / det;
       double ncov_yy = cov_xx / det;
 
-      ev->pfmet_px[5] = met_x;
-      ev->pfmet_py[5] = met_y;
-
-      if( met_type != -1 ){
-         met_x = ev->pfmet_px[met_type];
-         met_y = ev->pfmet_py[met_type];
-      }
-
-      // smear MC MET
-      double smear_x = 0;
-      double smear_y = 0;
-      double sigma_x = 0;
-      double sigma_y = 0;
-      if( ev->met_varx >= 0.0 and ev->met_vary >= 0.0 and fabs(ev->met_rho) <= 1.0 ){
-
-         sigma_x = sqrt(ev->met_varx);
-         sigma_y = sqrt(ev->met_vary);
-
-         GSLr.Gaussian2D( sigma_x, sigma_y, ev->met_rho, smear_x, smear_y );
-         met_x += smear_x;
-         met_y += smear_y;
-
-      }
-      count++;
-
       double sig = met_x*met_x*ncov_xx + 2*met_x*met_y*ncov_xy + met_y*met_y*ncov_yy;
 
-      ev->met = sqrt( met_x*met_x + met_y*met_y );
+      // load into eventvec
       ev->sig = sig;
       ev->det = det;
 
@@ -884,73 +591,11 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       ev->cov_xy = cov_xy;
       ev->cov_yy = cov_yy;
 
-      ev->cov_xx_highpt = cov_xx_highpt;
-      ev->cov_xx_pjet = cov_xx_pjet;
-
-      // fill qt, ut
-      double qt_x=0, qt_y=0;
-      for(int i=0; i < int(ev->muon_pt.size()); i++){
-         qt_x += ev->muon_pt[i]*cos(ev->muon_phi[i]);
-         qt_y += ev->muon_pt[i]*sin(ev->muon_phi[i]);
-      }
-      double qt = sqrt( qt_x*qt_x + qt_y*qt_y );
-
-      double ut_x = -met_x - qt_x;
-      double ut_y = -met_y - qt_y;
-      double ut = sqrt( ut_x*ut_x + ut_y*ut_y );
-
-      double ut_par = (ut_x*qt_x + ut_y*qt_y)/qt;
-      double ut_perp = (ut_y*qt_x - qt_y*ut_x)/qt;
-
-      ev->qt = qt;
-      ev->qx = qt_x;
-      ev->ut = ut;
-      ev->ut_par = ut_par;
-      ev->ut_perp = ut_perp;
-
+      if( ev->pjet_scalpt < 0 ) cout << ev->pjet_scalpt << endl;
    }
+
+   return;
 }
-/*
-void Fitter::MatchMCjets(vector<event>& eventref_temp){
-   cout << "---> MatchMCjets" << endl;
-
-   for( vector<event>::iterator ev = eventref_temp.begin(); ev < eventref_temp.end(); ev++){
-
-      // loop through reco jets
-      for(int ireco=0; ireco < int(ev->jet_ptUncor.size()); ireco++){
-
-         int matchIndex = -1;
-         double dR = 1000;
-
-         // loop through genjets
-         for(int igen=0; igen < int(ev->genjet_pt.size()); igen++){
-
-            double dphi = TVector2::Phi_mpi_pi( ev->jet_phi[ireco] 
-                  - ev->genjet_phi[igen] );
-            double deta = ev->jet_eta[ireco] 
-               - ev->genjet_eta[igen];
-            double dRtemp = sqrt( deta*deta + dphi*dphi );
-
-            if( dRtemp < dR ){
-               dR = dRtemp;
-               matchIndex = igen;
-            }
-
-         } // genjets
-
-         ev->jet_matchIndex.push_back( matchIndex );
-         ev->jet_matchdR.push_back( dR );
-
-      } // jets
-
-      if( ev->jet_ptUncor.size() != ev->jet_matchIndex.size() ){
-         cout << "ERROR: VECTOR SIZE MISMATCH" << endl;
-      }
-
-   } // event loop
-
-}
-*/
 
 //
 // Yimin's full jet resolution shapes
@@ -1461,20 +1106,29 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
 
    for( vector<event>::iterator ev = iter_begin; ev < iter_end; ev++ ){
 
-      // muons
-      for( int j=0; j < int(ev->muon_pt.size()); j++){
-         hists_["muon_pt"]->Fill( ev->muon_pt[j] , ev->weight );
-      }
-
       // jets
-      hists_["njets"]->Fill( ev->jet_ptL123.size(), ev->weight );
-      for( int j=0; j < int(ev->jet_ptL123.size()); j++){
-         hists_["jet_pt"]->Fill( ev->jet_ptL123[j], ev->weight );
-         if( ev->jet_ptL123[j] > 30 and ev->jet_ptUncor[j] != ev->jet_ptL123[j] ){
+      hists_["njets"]->Fill( ev->jet_pt.size(), ev->weight );
+      for( int j=0; j < int(ev->jet_pt.size()); j++){
+         hists_["jet_pt"]->Fill( ev->jet_pt[j], ev->weight );
+         if( ev->jet_pt[j] > 30 ){
             hists_["jet_eta"]->Fill( ev->jet_eta[j], ev->weight );
          }
       }
-      if( ev->jet_ptL123.size() > 0 ){
+      // leptons
+      for( int j=0; j < int(ev->lepton_pt.size()); j++){
+         hists_["lepton_pt"]->Fill( ev->lepton_pt[j] , ev->weight );
+      }
+      // other observables
+      hists_["nvert"]->Fill( ev->nvertices , ev->weight );
+      hists_["met"]->Fill( ev->met_pt, ev->weight );
+      hists_["sig"]->Fill( ev->sig, ev->weight );
+      hists_["sig_100"]->Fill( ev->sig, ev->weight );
+      hists_["sig_15"]->Fill( ev->sig, ev->weight );
+      hists_["pchi2"]->Fill( TMath::Prob(ev->sig,2), ev->weight );
+      hists_["pjet_scalpt"]->Fill( ev->pjet_scalpt , ev->weight );
+      /*
+
+      if( ev->jet_pt.size() > 0 ){
          hists_["jet1_pt"]->Fill( ev->jet_ptL123[0] , ev->weight );
       }
 
@@ -1486,8 +1140,6 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
       hists_["pjet_size"]->Fill( ev->pjet_size , ev->weight );
       hists_["pjet_phi"]->Fill( ev->pjet_phiL123, ev->weight );
 
-      // other observables
-      hists_["nvert"]->Fill( ev->nvertices , ev->weight );
 
       hists_["qt"]->Fill( ev->qt, ev->weight );
       hists_["qx"]->Fill( ev->qx, ev->weight );
@@ -1496,7 +1148,6 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
       hists_["cov_xx"]->Fill( ev->cov_xx, ev->weight );
       hists_["cov_xy"]->Fill( ev->cov_xy, ev->weight );
       hists_["cov_yy"]->Fill( ev->cov_yy, ev->weight );
-      hists_["met"]->Fill( ev->met, ev->weight );
       hists_["met0_px"]->Fill( ev->pfmet_px[0], ev->weight );
       hists_["met1_px"]->Fill( ev->pfmet_px[1], ev->weight );
       hists_["met2_px"]->Fill( ev->pfmet_px[2], ev->weight );
@@ -1504,12 +1155,8 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
       hists_["met4_px"]->Fill( ev->pfmet_px[4], ev->weight );
       hists_["met5_px"]->Fill( ev->pfmet_px[5], ev->weight );
       hists_["met_200"]->Fill( ev->met, ev->weight );
-      hists_["sig"]->Fill( ev->sig, ev->weight );
-      hists_["sig_100"]->Fill( ev->sig, ev->weight );
-      hists_["sig_15"]->Fill( ev->sig, ev->weight );
       hists_["sig_old"]->Fill( ev->metsig2011, ev->weight );
       hists_["det"]->Fill( ev->det, ev->weight );
-      hists_["pchi2"]->Fill( TMath::Prob(ev->sig,2), ev->weight );
       hists_["pchi2_old"]->Fill( TMath::Prob(ev->metsig2011,2), ev->weight );
       hists_["logpchi2"]->Fill( TMath::Log(TMath::Prob(ev->sig,2)), ev->weight );
 
@@ -1534,7 +1181,7 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
       }
 
       profs_["sig_met"]->Fill( ev->met, ev->sig, ev->weight );
-
+*/
    }
 
 }

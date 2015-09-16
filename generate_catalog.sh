@@ -1,7 +1,7 @@
 #!/bin/bash
 
 fileout="file_catalog.txt"
-basedir="/mnt/xrootd/user/nmirman/Ntuples/METsig"
+basedir="Ntuples"
 
 rm ${fileout}
 

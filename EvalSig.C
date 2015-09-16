@@ -177,8 +177,7 @@ int main(int argc, char* argv[]){
    while(!inFile.eof()){
 
       Dataset data;
-      data.path = "root://osg-se.cac.cornell.edu//xrootd/"
-         +xrdopt+"/cms/store/user/nmirman/Ntuples/METsig";
+      data.path = "Ntuples/";
 
       // get line from file
       string line;
@@ -192,27 +191,12 @@ int main(int argc, char* argv[]){
 
       data.process = data.dirname;
       data.isMC = true;
-      if( data.dirname.find("Run") != string::npos ){
+      if( data.dirname.find("Data") != string::npos ){
          data.isMC = false;
          data.process = "Data";
       }
 
-      string date = "20130830";
-      if( channel.compare("Zmumu") == 0 and data.isMC ){
-         date = "20130913";
-      }
-      if( channel.compare("Wenu") == 0 ){
-         date = "20130916";
-      }
-      if( channel.compare("Dijet") == 0 and data.isMC ){
-         date = "20130913";
-      }
-      if( channel.compare("Ttbar0lept") == 0 ){
-         date = "20130913";
-      }
-      if( channel.compare("Ttbar1lept") == 0 and !(data.isMC) ){
-         date = "20140121";
-      }
+      string date = "20150610";
 
       // vector of filenames
       string file;
@@ -301,6 +285,7 @@ int main(int argc, char* argv[]){
          vector<event> eventvec_sigmaMC;
 
          // met smearing for mc datasets
+         /*
          if( data->isMC and smear_met ){
             eventvec_sigmaMC = eventvec;
 
@@ -322,6 +307,7 @@ int main(int argc, char* argv[]){
                   / sqrt(eventvec[i].met_varx * eventvec[i].met_vary);
             }
          }
+         */
 
          // compute significance
          if( !fullshape ){
@@ -392,9 +378,9 @@ int main(int argc, char* argv[]){
                   }
                }
                // dumb metsig
-               double ht = ev->pjet_scalptL123;
-               for(int i=0; i < int(ev->jet_ptUncor.size()); i++){
-                  ht += ev->jet_ptL123[i];
+               double ht = ev->pjet_scalpt;
+               for(int i=0; i < int(ev->jet_pt.size()); i++){
+                  ht += ev->jet_pt[i];
                }
                double metrht = pow(ev->met,2)/ht;
                for( int i = 0; i < int(data->ROCmetrht.size()); i++ ){

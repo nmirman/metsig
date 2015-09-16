@@ -143,8 +143,7 @@ int main(int argc, char* argv[]){
 
       Dataset data;
       string xrdopt = "cache";
-      data.path = "root://osg-se.cac.cornell.edu//xrootd/"
-         +xrdopt+"/cms/store/user/nmirman/Ntuples/METsig";
+      data.path = "Ntuples/";
       string channel = "Zmumu";
 
       // get line from file
@@ -159,27 +158,12 @@ int main(int argc, char* argv[]){
 
       data.process = data.dirname;
       data.isMC = true;
-      if( data.dirname.find("Run") != string::npos ){
+      if( data.dirname.find("Data") != string::npos ){
          data.isMC = false;
          data.process = "Data";
       }
 
-      string date = "20130830";
-      if( channel.compare("Zmumu") == 0 and data.isMC ){
-         date = "20130913";
-      }
-      if( channel.compare("Wenu") == 0 ){
-         date = "20130916";
-      }
-      if( channel.compare("Dijet") == 0 and data.isMC ){
-         date = "20130913";
-      }
-      if( channel.compare("Ttbar0lept") == 0 ){
-         date = "20130913";
-      }
-      if( channel.compare("Ttbar1lept") == 0 and !(data.isMC) ){
-         date = "20140121";
-      }
+      string date = "20150610";
 
       // vector of filenames
       string file;
