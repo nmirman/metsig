@@ -163,7 +163,7 @@ int main(int argc, char* argv[]){
          data.process = "Data";
       }
 
-      string date = "20150610";
+      string date = "20151027";
 
       // vector of filenames
       string file;
@@ -196,6 +196,8 @@ int main(int argc, char* argv[]){
    //
    // loop through data and mc, run fit, fill histograms
    //
+   double pileup_dist [2][100] = {};
+   double mupt_dist [2][200] = {};
    for(int i=0; i < 2; i++){
 
       if(i==0){
@@ -226,11 +228,65 @@ int main(int argc, char* argv[]){
 
       cout << "\nDATASET SIZE: " << eventvec.size() << " EVENTS\n" << endl;
 
+      // pile up reweighting
+      for( vector<event>::iterator ev = eventvec.begin(); ev != eventvec.end(); ev++ ){
+         if( ev->nvertices < 100 ) pileup_dist[i][ev->nvertices] += ev->weight;
+      }
+      // normalize
+      double norm = 0.0;
+      for(int n=0; n < 100; n++) norm += pileup_dist[i][n];
+      for(int n=0; n < 100; n++) pileup_dist[i][n] /= norm;
+      if( i==1 ){ // MC
+         // find minimum weight
+         double minx = 100;
+         for( int n=0; n < 100; n++){
+            if( pileup_dist[1][n] != 0 ){
+               double x = pileup_dist[0][n] / pileup_dist[1][n];
+               if( x < minx and x > 0 ) minx = x;
+            }
+         }
+         for( vector<event>::iterator ev = eventvec.begin(); ev != eventvec.end(); ev++ ){
+            if( pileup_dist[0][ev->nvertices] != 0 ){
+               ev->weight *= pileup_dist[0][ev->nvertices] / pileup_dist[1][ev->nvertices];
+            }else{
+               ev->weight *= minx;
+            }
+         }
+      }
+      
+      // muon pt reweighting
+      /*
+      for( vector<event>::iterator ev = eventvec.begin(); ev != eventvec.end(); ev++ ){
+         for( int m=0; m < 2; m++ ){
+            int ipt = floor(ev->lepton_pt[m]);
+            if( ipt > 199 ) ipt = 199;
+            mupt_dist[i][ipt] += ev->weight;
+         }
+      }
+      // normalize
+      norm = 0.0;
+      for(int n=0; n < 200; n++) norm += mupt_dist[i][n];
+      for(int n=0; n < 200; n++) mupt_dist[i][n] /= norm;
+      if( i==1 ){ // MC
+         for( vector<event>::iterator ev = eventvec.begin(); ev != eventvec.end(); ev++ ){
+               for( int m=0; m < 2; m++ ){
+                  int ipt = floor(ev->lepton_pt[m]);
+                  if( ipt > 199 ) ipt = 199;
+                  ev->weight *= mupt_dist[0][ipt] / mupt_dist[1][ipt];
+               }
+         }
+      }
+      */
+
       // set type of MET
       fitter.met_type = met_type;
 
       // run fit
-      fitter.RunMinimizer( eventvec );
+      if( i==0 ){
+         fitter.RunMinimizer( eventvec );
+      }else{
+         fitter.FindSignificance(fitter.xmin, eventvec);
+      }
 
       // fill histograms
       fitter.FillHists( eventvec, "Zmumu" ); 

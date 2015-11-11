@@ -330,9 +330,9 @@ int main(int argc, char* argv[]){
             }
          }else{
             if( !(data->isMC) or smear_met ){
-               fitter.FullShapeSig(parData, eventvec);
+               //fitter.FullShapeSig(parData, eventvec);
             }else{
-               fitter.FullShapeSig(parMC, eventvec);
+               //fitter.FullShapeSig(parMC, eventvec);
             }
          }
 
@@ -348,9 +348,9 @@ int main(int argc, char* argv[]){
                   if( data->channel.compare("Ttbar1lept") == 0
                         or data->channel.compare("Ttbar0lept") == 0
                         or data->channel.compare("Dijet") == 0 ){
-                     if( ev->met < data->ROCmet[i].cut ) data->ROCmet[i].pass += ev->weight;
+                     if( ev->met_pt < data->ROCmet[i].cut ) data->ROCmet[i].pass += ev->weight;
                   }else{
-                     if( ev->met > data->ROCmet[i].cut ) data->ROCmet[i].pass += ev->weight;
+                     if( ev->met_pt > data->ROCmet[i].cut ) data->ROCmet[i].pass += ev->weight;
                   }
                }
                // metsig2011
@@ -382,7 +382,7 @@ int main(int argc, char* argv[]){
                for(int i=0; i < int(ev->jet_pt.size()); i++){
                   ht += ev->jet_pt[i];
                }
-               double metrht = pow(ev->met,2)/ht;
+               double metrht = pow(ev->met_pt,2)/ht;
                for( int i = 0; i < int(data->ROCmetrht.size()); i++ ){
                   data->ROCmetrht[i].total += ev->weight;
                   if( data->channel.compare("Ttbar1lept") == 0

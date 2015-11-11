@@ -61,10 +61,11 @@ Fitter::Fitter(double b /*=1*/){
    // data hists for plotting
    rebin = b;
    histsData_["lepton_pt"] = new TH1D("lepton_pt_Data", "Muon p_{T}", 50/b, 0, 200);
+   histsData_["lepton_eta"] = new TH1D("lepton_eta_Data", "Muon #eta", 50/b, -5, 5);
    histsData_["muon_invmass"] = new TH1D("muon_invmass_Data", "M_{#mu#mu}", 50/b, 0, 200);
-   histsData_["njets"  ] = new TH1D("njets_Data", "N jets", 100/b, 0, 100);
+   histsData_["njets"  ] = new TH1D("njets_Data", "N jets", 10/b, 0, 10);
    histsData_["jet_pt" ] = new TH1D("jet_pt_Data", "Jet p_{T}", 50/b, 0, 200);
-   histsData_["jet1_pt"] = new TH1D("jet1_pt_Data", "Jet 1 p_{T}", 50/b, 0, 200);
+   histsData_["jet1_pt"] = new TH1D("jet1_pt_Data", "Jet 1 p_{T}", 50/b, 0, 500);
    histsData_["jet_eta" ] = new TH1D("jet_eta_Data", "Jet #eta, p_{T} > 30 GeV", 50/b, -5, 5);
    histsData_["pjet_size"  ] = new TH1D("pjet_size_Data", "N jets", 50/b, 0, 500);
    histsData_["pjet_scalpt"] = new TH1D("pjet_scalpt_Data", "Pseudojet Scalar p_{T} ", 200/b, 0, 2000);
@@ -73,21 +74,16 @@ Fitter::Fitter(double b /*=1*/){
    histsData_["pjet_scalptT1"] = new TH1D("pjet_scalptT1_Data", "Pseudojet Scalar p_{T} (T1-corrected)", 200/b, 0, 2000);
    histsData_["pjet_vectptT1"] = new TH1D("pjet_vectptT1_Data", "Pseudojet Scalar p_{T} (T1-corrected)", 50/b, 0, 200);
    histsData_["pjet_phi"] = new TH1D("pjet_phi_Data", "Pseudojet Phi", 50/b, -3.5, 3.5);
-   histsData_["qt"] = new TH1D("qt_Data", "q_{T}", 50/b, 0, 200);
+   histsData_["qt"] = new TH1D("qt_Data", "q_{T}", 50/b, 0, 500);
    histsData_["qx"] = new TH1D("qx_Data", "q_{x}", 50/b, -50, 50);
    histsData_["ut_par"] = new TH1D("ut_par_Data", "|u_{T}|_{#parallel}", 50/b, 0, 100);
-   histsData_["nvert"] = new TH1D("nvert_Data", "N Vertices", 50/b, 0, 100);
+   histsData_["nvert"] = new TH1D("nvert_Data", "N Vertices", 50/b, 0, 50);
    histsData_["cov_xx"] = new TH1D("cov_xx_Data", "Cov_{xx}", 50/b, 0, 500);
    histsData_["cov_xy"] = new TH1D("cov_xy_Data", "Cov_{xy}", 50/b, -150, 150);
    histsData_["cov_yy"] = new TH1D("cov_yy_Data", "Cov_{yy}", 50/b, 0, 500);
    histsData_["met"] = new TH1D("met_Data", "Missing E_{T}", 50/b, 0, 100);
-   histsData_["met0_px"] = new TH1D("met0_px_Data", "Missing E_{T}", 50/b, -50, 50);
-   histsData_["met1_px"] = new TH1D("met1_px_Data", "Missing E_{T}", 50/b, -50, 50);
-   histsData_["met2_px"] = new TH1D("met2_px_Data", "Missing E_{T}", 50/b, -50, 50);
-   histsData_["met3_px"] = new TH1D("met3_px_Data", "Missing E_{T}", 50/b, -50, 50);
-   histsData_["met4_px"] = new TH1D("met4_px_Data", "Missing E_{T}", 50/b, -50, 50);
-   histsData_["met5_px"] = new TH1D("met5_px_Data", "Missing E_{T}", 50/b, -50, 50);
    histsData_["met_200"] = new TH1D("met_200_Data", "Missing E_{T}", 50/b, 0, 200);
+   histsData_["met_300"] = new TH1D("met_300_Data", "Missing E_{T}", 30/b, 0, 300);
    histsData_["sig"] = new TH1D("sig_Data", "Significance", 50/b, 0, 500);
    histsData_["sig_100"] = new TH1D("sig_100_Data", "Significance", 50/b, 0, 100);
    histsData_["sig_15"] = new TH1D("sig_15_Data", "Significance", 50/b, 0, 15);
@@ -196,8 +192,11 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
    std::vector<double> *lep_pt=0, *lep_energy=0, *lep_phi=0, *lep_eta=0;
    std::vector<double> *jet_pt=0, *jet_energy=0, *jet_phi=0, *jet_eta=0;
    std::vector<double> *jet_sigmapt=0, *jet_sigmaphi=0;
+   std::vector<bool> *jet_passid=0;
    double met_pt=0, met_energy=0, met_phi=0, met_eta=0, met_sumpt=0;
    int nvertices=0;
+   double mcweight = 1.0;
+   int run = 0;
 
    TChain *tree = new TChain("events");
    for( vector<string>::iterator file = filenames.begin(); file != filenames.end(); file++){
@@ -205,12 +204,16 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
       tree->Add( fn );
    }
 
-   tree->SetBranchAddress("lep_pt", &lep_pt);
-   tree->SetBranchAddress("lep_energy", &lep_energy);
-   tree->SetBranchAddress("lep_phi", &lep_phi);
-   tree->SetBranchAddress("lep_eta", &lep_eta);
+   tree->SetBranchAddress("run", &run);
+   tree->SetBranchAddress("mcweight", &mcweight);
+
+   tree->SetBranchAddress("muon_pt", &lep_pt);
+   tree->SetBranchAddress("muon_energy", &lep_energy);
+   tree->SetBranchAddress("muon_phi", &lep_phi);
+   tree->SetBranchAddress("muon_eta", &lep_eta);
 
    tree->SetBranchAddress("jet_pt", &jet_pt);
+   tree->SetBranchAddress("jet_passid", &jet_passid);
    tree->SetBranchAddress("jet_energy", &jet_energy);
    tree->SetBranchAddress("jet_phi", &jet_phi);
    tree->SetBranchAddress("jet_eta", &jet_eta);
@@ -243,172 +246,74 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
       tree->GetEntry(ev);
       if( ev % 100000 == 0 and ev > 0) cout << "    -----> getting entry " << ev << endl;
 
+      int sgn_weight = mcweight < 0 ? -1.0 : 1.0;
+
       event evtemp;
 
       evtemp.process = process;
-      evtemp.weight = 1.0;
+      evtemp.weight = 1.0*sgn_weight;
 
       // MC cross-sections (pb)
-      // obtained at https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat8TeV
-      // and AN-12-333 on MET in Zmumu channel (8 TeV).
-      double xsec_dyjetstoll           = 3351.97;
-      double xsec_dyjetstoll_m10to50   = 860.5;
-      double xsec_ttjets               = 234;
-      double xsec_ttjets_0lept         = 0.46*234;
-      double xsec_ttjets_1lept         = 0.45*234;
-      double xsec_ttjets_2lept         = 0.09*234;
-      double xsec_ww                   = 54.838;
-      double xsec_wz                   = 33.21;
-      double xsec_zz                   = 8.059;
-      double xsec_tbar_tw              = 11.1;
-      double xsec_t_tw                 = 11.1;
-      double xsec_wjetstolnu           = 37509.0;
+      // obtained at https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat13TeV
+      // and http://arxiv.org/pdf/1105.0020.pdf for WZ, ZZ.
+      double xsec_dyjetstoll           = 2008.4;
+      double xsec_ttjets               = 831.76;
+      /*
+      double xsec_ttjets_0lept         = 0.46*831.76;
+      double xsec_ttjets_1lept         = 0.45*831.76;
+      double xsec_ttjets_2lept         = 0.09*831.76;
+      */
+      double xsec_ww                   = 118.7;
+      double xsec_wz                   = 46.74; 
+      double xsec_zz                   = 15.99;
+      double xsec_wjetstolnu           = 20508.90;
 
       // MC sample size (events), obtained from DAS.
-      int nevts_dyjetstoll          = 298504;
-      int nevts_ttjets              = 4995842;
-      int nevts_ww                  = 994416;
+      // miniAOODv2
+      /*
+      //int nevts_dyjetstoll          = 9042031; //madgraph
+      int nevts_dyjetstoll          = 28747969; //amc@nlo
+      //int nevts_dyjetstoll          = 28825132; //miniAODv1
+      int nevts_ttjets              = 11344206;
+      int nevts_wjetstolnu          = 24184766;
+      int nevts_ww                  = 989608;
       int nevts_wz                  = 996920;
       int nevts_zz                  = 998848;
-      int nevts_wjetstolnu          = 24162881;
-      /*
-      int nevts_dyjetstoll_m10to50  = 7132223;
-      int nevts_ttjets_0lept        = 31223821;
-      int nevts_ttjets_1lept        = 25424818;
-      int nevts_ttjets_2lept        = 12119013;
-      int nevts_qcd_15_30           = 9987968;
-      int nevts_qcd_30_50           = 413184;
-      int nevts_qcd_50_80           = 385398;
-      int nevts_qcd_80_120          = 845280;
-      int nevts_qcd_120_170         = 885762;
-      int nevts_qcd_170_300         = 296948;
-      int nevts_qcd_300_470         = 317900;
-      int nevts_qcd_470_600         = 328952;
-      int nevts_qcd_600_800         = 269784;
-      int nevts_qcd_800_1000        = 318785;
-      int nevts_qcd_1000_1400       = 1964088;
-      int nevts_qcd_em_20_30        = 35040695;
-      int nevts_qcd_em_30_80        = 33088888;
-      int nevts_qcd_em_80_170       = 34542763;
-      int nevts_qcd_em_170_250      = 31697066;
-      int nevts_qcd_em_250_350      = 34611322;
-      int nevts_qcd_em_350          = 34080562;
-      int nevts_qcd_bc_20_30        = 1740229;
-      int nevts_qcd_bc_30_80        = 2048152;
-      int nevts_qcd_bc_80_170       = 1945525;
-      int nevts_qcd_bc_170_250      = 1948112;
-      int nevts_qcd_bc_250_350      = 2026521;
-      int nevts_gamma_0_15          = 2000488;
-      int nevts_gamma_15_30         = 1970745;
-      int nevts_gamma_30_50         = 1993325;
-      int nevts_gamma_50_80         = 1995062;
-      int nevts_gamma_80_120        = 1992627;
-      int nevts_gamma_120_170       = 2000043;
-      int nevts_gamma_170_300       = 2000069;
-      int nevts_gamma_300_470       = 2000130;
       */
-      //int nevts_tbar_tw             = 493460;
-      //int nevts_t_tw                = 497658;
+      // miniAODv1
+      int nevts_dyjetstoll          = 28825132;
+      int nevts_ttjets              = 42730273;
+      int nevts_wjetstolnu          = 24151270;
+      int nevts_ww                  = 994416;
+      int nevts_wz                  = 991232;
+      int nevts_zz                  = 996168;
 
-      double xsec = 1.0;//gi_xsec*gi_eff;
-      double scale = 1.0;
       if( isMC ){
 
+         //evtemp.weight *= 616.9; // pb in dataset
+
          if( process.compare("DYJetsToLL") == 0 ) evtemp.weight *= xsec_dyjetstoll/nevts_dyjetstoll;
-         else if( process.compare("DYJetsToLL_M-50") == 0 )
-            evtemp.weight *= xsec_dyjetstoll/nevts_dyjetstoll;
-         //else if( process.compare("DYJetsToLL_M-10To50") == 0 )
-         //   evtemp.weight *= xsec_dyjetstoll_m10to50/nevts_dyjetstoll_m10to50;
          else if( process.compare("TTJets") == 0 ) evtemp.weight *= xsec_ttjets/nevts_ttjets;
-         //else if( process.compare("TTJets_Hadronic") == 0 )
-         //   evtemp.weight *= xsec_ttjets_0lept/nevts_ttjets_0lept;
-         //else if( process.compare("TTJets_SemiLept") == 0 )
-         //   evtemp.weight *= xsec_ttjets_1lept/nevts_ttjets_1lept;
-         //else if( process.compare("TTJets_FullLept") == 0 )
-         //   evtemp.weight *= xsec_ttjets_2lept/nevts_ttjets_2lept;
-         /*
-         else if( process.compare("QCD_15_30") == 0 )
-            evtemp.weight *= scale*xsec/nevts_qcd_15_30;
-         else if( process.compare("QCD_30_50") == 0 )
-            evtemp.weight *= scale*xsec/nevts_qcd_30_50;
-         else if( process.compare("QCD_50_80") == 0 )
-            evtemp.weight *= scale*xsec/nevts_qcd_50_80;
-         else if( process.compare("QCD_80_120") == 0 )
-            evtemp.weight *= scale*xsec/nevts_qcd_80_120;
-         else if( process.compare("QCD_120_170") == 0 )
-            evtemp.weight *= scale*xsec/nevts_qcd_120_170;
-         else if( process.compare("QCD_170_300") == 0 )
-            evtemp.weight *= scale*xsec/nevts_qcd_170_300;
-         else if( process.compare("QCD_300_470") == 0 )
-            evtemp.weight *= scale*xsec/nevts_qcd_300_470;
-         else if( process.compare("QCD_470_600") == 0 )
-            evtemp.weight *= scale*xsec/nevts_qcd_470_600;
-         else if( process.compare("QCD_600_800") == 0 )
-            evtemp.weight *= scale*xsec/nevts_qcd_600_800;
-         else if( process.compare("QCD_800_1000") == 0 )
-            evtemp.weight *= scale*xsec/nevts_qcd_800_1000;
-         else if( process.compare("QCD_1000_1400") == 0 )
-            evtemp.weight *= scale*xsec/nevts_qcd_1000_1400;
-         else if( process.compare("QCD_EMEnriched_20_30") == 0 )
-            evtemp.weight *= scale*xsec/nevts_qcd_em_20_30;
-         else if( process.compare("QCD_EMEnriched_30_80") == 0 )
-            evtemp.weight *= scale*xsec/nevts_qcd_em_30_80;
-         else if( process.compare("QCD_EMEnriched_80_170") == 0 )
-            evtemp.weight *= scale*xsec/nevts_qcd_em_80_170;
-         else if( process.compare("QCD_EMEnriched_170_250") == 0 )
-            evtemp.weight *= scale*xsec/nevts_qcd_em_170_250;
-         else if( process.compare("QCD_EMEnriched_250_350") == 0 )
-            evtemp.weight *= scale*xsec/nevts_qcd_em_250_350;
-         else if( process.compare("QCD_EMEnriched_350") == 0 )
-            evtemp.weight *= scale*xsec/nevts_qcd_em_350;
-         else if( process.compare("QCD_BCtoE_20_30") == 0 )
-            evtemp.weight *= scale*xsec/nevts_qcd_bc_20_30;
-         else if( process.compare("QCD_BCtoE_30_80") == 0 )
-            evtemp.weight *= scale*xsec/nevts_qcd_bc_30_80;
-         else if( process.compare("QCD_BCtoE_80_170") == 0 )
-            evtemp.weight *= scale*xsec/nevts_qcd_bc_80_170;
-         else if( process.compare("QCD_BCtoE_170_250") == 0 )
-            evtemp.weight *= scale*xsec/nevts_qcd_bc_170_250;
-         else if( process.compare("QCD_BCtoE_250_350") == 0 )
-            evtemp.weight *= scale*xsec/nevts_qcd_bc_250_350;
-         else if( process.compare("Gamma_0_15") == 0 )
-            evtemp.weight *= scale*gi_xsec/nevts_gamma_0_15;
-         else if( process.compare("Gamma_15_30") == 0 )
-            evtemp.weight *= scale*gi_xsec/nevts_gamma_15_30;
-         else if( process.compare("Gamma_30_50") == 0 )
-            evtemp.weight *= scale*gi_xsec/nevts_gamma_30_50;
-         else if( process.compare("Gamma_50_80") == 0 )
-            evtemp.weight *= scale*gi_xsec/nevts_gamma_50_80;
-         else if( process.compare("Gamma_80_120") == 0 )
-            evtemp.weight *= scale*gi_xsec/nevts_gamma_80_120;
-         else if( process.compare("Gamma_120_170") == 0 )
-            evtemp.weight *= scale*gi_xsec/nevts_gamma_120_170;
-         else if( process.compare("Gamma_170_300") == 0 )
-            evtemp.weight *= scale*gi_xsec/nevts_gamma_170_300;
-         else if( process.compare("Gamma_300_470") == 0 )
-            evtemp.weight *= scale*gi_xsec/nevts_gamma_300_470;
-            */
          else if( process.compare("WW") == 0 ) evtemp.weight *= xsec_ww/nevts_ww;
          else if( process.compare("WZ") == 0 ) evtemp.weight *= xsec_wz/nevts_wz;
          else if( process.compare("ZZ") == 0 ) evtemp.weight *= xsec_zz/nevts_zz;
-         //else if( process.compare("Tbar_tW-channel") == 0 )
-         //   evtemp.weight *= xsec_tbar_tw/nevts_tbar_tw;
-         //else if( process.compare("T_tW-channel") == 0 ) evtemp.weight *= xsec_t_tw/nevts_t_tw;
          else if( process.compare("WJetsToLNu") == 0 )
             evtemp.weight *= xsec_wjetstolnu/nevts_wjetstolnu;
          else cout << "No Xsection for process " << process << endl;
 
       }
-
       // nvertices
       evtemp.nvertices = nvertices;
 
       // leptons
       evtemp.lepton_pt = *lep_pt;
       evtemp.lepton_phi = *lep_phi;
+      evtemp.lepton_eta = *lep_eta;
+      evtemp.lepton_energy = *lep_energy;
 
       // jets
       evtemp.jet_pt = *jet_pt;
+      evtemp.jet_passid = *jet_passid;
       evtemp.jet_phi = *jet_phi;
       evtemp.jet_eta = *jet_eta;
       evtemp.jet_sigmapt = *jet_sigmapt;
@@ -419,56 +324,19 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
       evtemp.met_phi = met_phi;
 
       // pseudo-jet
-      evtemp.pjet_scalpt = met_sumpt;
+      evtemp.pjet_scalpt = met_sumpt > 0 ? met_sumpt : 0.0;
 
-      eventref_temp.push_back( evtemp );
+      int njets = 0;
+      for( int j=0; j < int(evtemp.jet_pt.size()); j++){
+         if( fabs(evtemp.jet_eta[j]) < 2.5 and evtemp.jet_pt[j] > 30 ) njets++;
+      }
+      if( njets >=2 ){
+         eventref_temp.push_back( evtemp );
+      }
 
    } // event loop
 
-   if(do_resp_correction) {
-	   cout << " -----> met response correction" << endl;
-	   double xtemp[20]={0};
-	   FindSignificance(xtemp,eventref_temp);
-	   ResponseCorrection(eventref_temp);
-   }
-
    return;
-}
-
-void Fitter::ResponseCorrection(vector<event>& eventvec) {
-
-   /*
-	vector<event>* eventref=&eventvec;
-	TProfile* presp_qt = new TProfile ("presp_qt_temp",
-			"Response = |<u_{#parallel}>|/q_{T} vs. q_{T};q_{T} (GeV);Response", 25, 0, 100);
-
-	for( vector<event>::iterator ev = eventref->begin(); ev < eventref->end(); ev++ ){
-		presp_qt->Fill( ev->qt, -(ev->ut_par)/(ev->qt), ev->weight );
-	}
-
-	TF1* func=new TF1("response curve fit","[0]+[1]*exp([2]*x)");
-	func->SetParName(0,"Offset");
-	func->SetParName(1,"Scale");
-	func->SetParName(2,"Power");
-
-	func->SetParameter(0,1);
-	func->SetParameter(1,-0.4);;
-
-	presp_qt->Fit(func,"NOQ");
-
-
-	for( vector<event>::iterator ev = eventvec.begin(); ev < eventvec.end(); ev++ ){
-
-		double pt_mult=abs( 1/func->Eval(ev->qt) );
-		ev->resp_correction=pt_mult;
-
-		// pseudojet
-		ev->pjet_vectptL123*=pt_mult;
-		ev->pjet_scalptL123*=pt_mult;
-		ev->pjet_vectptT1*=pt_mult;
-		ev->pjet_scalptT1*=pt_mult;
-	}
-   */
 }
 
 void Fitter::RunMinimizer(vector<event>& eventref_temp){
@@ -510,7 +378,7 @@ void Fitter::RunMinimizer(vector<event>& eventref_temp){
 
    // load best-fit significance values
    cout << " -----> fill event vec with best-fit significance" << endl;
-   const double *xmin = gMinuit->X();
+   xmin = gMinuit->X();
    FindSignificance(xmin, eventref_temp);
 
 }
@@ -591,7 +459,34 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
       ev->cov_xy = cov_xy;
       ev->cov_yy = cov_yy;
 
-      if( ev->pjet_scalpt < 0 ) cout << ev->pjet_scalpt << endl;
+      //if( ev->pjet_scalpt <= 0 ) cout << ev->pjet_scalpt << endl;
+
+      // fill qt, ut
+      double qt_x=0, qt_y=0;
+      for(int i=0; i < int(ev->lepton_pt.size()); i++){
+         qt_x += ev->lepton_pt[i]*cos(ev->lepton_phi[i]);
+         qt_y += ev->lepton_pt[i]*sin(ev->lepton_phi[i]);
+      }
+      double qt = sqrt( qt_x*qt_x + qt_y*qt_y );
+
+      double ut_x = -met_x - qt_x;
+      double ut_y = -met_y - qt_y;
+      double ut = sqrt( ut_x*ut_x + ut_y*ut_y );
+
+      double ut_par = (ut_x*qt_x + ut_y*qt_y)/qt;
+      double ut_perp = (ut_y*qt_x - qt_y*ut_x)/qt;
+
+      TLorentzVector mu1, mu2;
+      mu1.SetPtEtaPhiE( ev->lepton_pt[0], ev->lepton_eta[0], ev->lepton_phi[0], ev->lepton_energy[0] );
+      mu2.SetPtEtaPhiE( ev->lepton_pt[1], ev->lepton_eta[1], ev->lepton_phi[1], ev->lepton_energy[1] );
+      ev->invmass = (mu1+mu2).M();
+
+      ev->qt = qt;
+      ev->qx = qt_x;
+      ev->ut = ut;
+      ev->ut_par = ut_par;
+      ev->ut_perp = ut_perp;
+
    }
 
    return;
@@ -610,360 +505,6 @@ void Fitter::ComplexMult(int entries, double *re1, double *im1, double *re2, dou
       imF[i]=tempre1*tempim2+tempre2*tempim1;
    }
 }
-
-void Fitter::FFTConvolution(int dim, const int entries, int *nbin, int njet, double *f, double *result){
-   if (njet==1) {
-      result=f;
-      return;
-   }
-   TVirtualFFT *ft= TVirtualFFT::FFT(dim, nbin, "R2C");
-
-   //initialization
-   double *repro = (double *) malloc (entries);
-   double *impro = (double *) malloc (entries);
-   for (int i=0; i<entries; i++){
-      repro[i]=1;
-      impro[i]=0;
-   }
-
-   for (int i=0; i<njet; i++){
-      //printf("\n------data=%f------\n", *(f+nbin*i));
-      ft->SetPoints((double *)(f+entries*i));
-      ft->Transform();
-
-      double *retemp = (double *) malloc (entries);
-      double *imtemp = (double *) malloc (entries);
-      ft->GetPointsComplex(retemp,imtemp);
-
-      ComplexMult(entries, retemp, imtemp, repro, impro, repro, impro);
-      free(retemp);
-      free(imtemp);
-   }
-
-   //transform backwards
-   TVirtualFFT *bft= TVirtualFFT::FFT(dim, nbin, "C2R");
-   bft->SetPointsComplex(repro,impro);
-   bft->Transform();
-   double *tempa= (double *) malloc (entries);
-   bft->GetPoints(tempa);
-   for (int i=0; i<nbin[0]; i++)
-      for (int j=0; j<nbin[1]; j++)
-         result[(i+nbin[0]/2*(njet-1))%nbin[0]*nbin[1]+(j+nbin[1]/2*(njet-1))%nbin[1]]=tempa[i*nbin[1]+j];
-   free(repro);
-   free(impro);
-   free(tempa);
-}
-
-
-void Fitter::FullShapeSig(const double *x, vector<event>& eventref_temp, bool fullshape){
-   /*
-   int option=(fullshape)? 1:-1;
-   const int nbin=128;
-   const int entries=nbin*nbin;
-   const int range=4;
-   const int pseudoin=0;
-   int count=0; 
-   if (option==1) cout << "##### Fullshape Significance #####" << endl;
-   // random number engine for MET-smearing
-   ROOT::Math::Random<ROOT::Math::GSLRngMT> GSLr;
-
-   for( vector<event>::iterator ev = eventref_temp.begin(); ev < eventref_temp.end(); ev++){
-      double met_x=0;
-      double met_y=0;
-      double cov_xx=0;
-      double cov_xy=0;
-      double cov_yy=0;
-      double cov_xx_pjet=0;
-      double cov_xx_highpt=0;
-      cout << count <<endl;
-
-      // muons -- assume zero resolutions
-      for(int i=0; i < int(ev->muon_pt.size()); i++){
-         met_x -= cos(ev->muon_phi[i])*(ev->muon_pt[i]);
-         met_y -= sin(ev->muon_phi[i])*(ev->muon_pt[i]);
-      }
-
-      // electrons -- assume zero resolutions
-      for(int i=0; i < int(ev->electron_pt.size()); i++){
-         met_x -= cos(ev->electron_phi[i])*(ev->electron_pt[i]);
-         met_y -= sin(ev->electron_phi[i])*(ev->electron_pt[i]);
-
-         cov_xx += pow(0.01*ev->electron_pt[i],2);
-         cov_yy += pow(0.01*ev->electron_pt[i],2);
-      }
-
-      // unclustered energy -- parameterize by scalar sum of ET
-      double c = cos(ev->pjet_phiT1);
-      double s = sin(ev->pjet_phiT1);
-
-      met_x -= c*(ev->pjet_vectptT1);
-      met_y -= s*(ev->pjet_vectptT1);
-
-      double ctt = x[5]*x[5] + x[6]*x[6]*(ev->pjet_scalptL123) + x[7]*(ev->nvertices);
-
-      if ((pseudoin)&&(option==1)){
-         //cov_xx += pow(pseudo->GetRMS(),2);
-         //cov_yy += pow(pseudo->GetRMS(),2);
-      } else {
-         cov_xx += ctt;
-         cov_yy += ctt;
-      }
-      cov_xx_pjet += ctt;
-
-      double sig=0;
-      // smear MC MET
-      double smear_x = 0;
-      double smear_y = 0;
-      double sigma_x = 0;
-      double sigma_y = 0;
-
-      if( ev->met_varx >= 0.0 and ev->met_vary >= 0.0 and fabs(ev->met_rho) <= 1.0 ){
-
-         sigma_x = sqrt(ev->met_varx);
-         sigma_y = sqrt(ev->met_vary);
-
-         GSLr.Gaussian2D( sigma_x, sigma_y, ev->met_rho, smear_x, smear_y );
-         met_x += smear_x;
-         met_y += smear_y;
-
-      }
-
-      int failure=1;
-      if ((option==1)&&((ev->jet_ptUncor.size()>0)||(pseudoin))){
-         // Full shape(non-Gaussian)
-         //
-         // clustered jets
-         // full shape histogram range estimation
-         double thisrange=range; 
-         while (failure) {
-            if (thisrange>16) break;
-            double stdx=cov_xx;
-            double stdy=cov_yy;
-            for(int i=0; i < int(ev->jet_ptUncor.size()); i++){
-               double para[7]={ev->jet_res_par0[i], ev->jet_res_par1[i], ev->jet_res_par2[i], ev->jet_res_par3[i], ev->jet_res_par4[i], ev->jet_res_par5[i], ev->jet_res_par6[i]};
-               c = cos(ev->jet_phi[i]);
-               s = sin(ev->jet_phi[i]);
-               stdx+=pow(para[2]*c*ev->jet_ptT1[i],2);
-               stdy+=pow(para[2]*s*ev->jet_ptT1[i],2);
-            }
-
-            stdx=pow(stdx,0.5);
-            stdy=pow(stdy,0.5);
-
-            if (stdx<5) stdx=5;
-            if (stdy<5) stdy=5;
-            double *data = (double *) malloc ((ev->jet_ptUncor.size()+1)*nbin*nbin);
-            double result[nbin][nbin];
-            TH2F *res= new TH2F("met_res", "met_full_shape_resolution", nbin, -thisrange*stdx, thisrange*stdx, nbin, -thisrange*stdy, thisrange*stdy);
-            TH2F *tmpres= new TH2F("tmp_res", "tmp_full_shape_resolution", nbin, -thisrange*stdx, thisrange*stdx, nbin, -thisrange*stdy, thisrange*stdy);
-
-
-            // Full shape resolution (FFT algorithm) 
-
-            // Fill in all jet resolution
-            for(int i=0; i < int(ev->jet_ptUncor.size()); i++){
-               double para[7]={ev->jet_res_par0[i], ev->jet_res_par1[i], ev->jet_res_par2[i], ev->jet_res_par3[i], ev->jet_res_par4[i], ev->jet_res_par5[i], ev->jet_res_par6[i]};
-               double dph=0;
-               c = cos(ev->jet_phi[i]);
-               s = sin(ev->jet_phi[i]);
-               met_x -= c*(ev->jet_ptT1[i]);
-               met_y -= s*(ev->jet_ptT1[i]);
-
-               // resolutions for two jet categories
-               if( true || ev->jet_ptL123[i] > jetbinpt ){ //dummy true
-
-                  // CMS 2010 Resolutions -- parameterized by L123 corrected pt
-                  dph = dph_(ev->jet_ptL123[i], ev->jet_eta[i]);
-               }else{
-                  cout << "ERROR: JET PT OUT OF RANGE" << endl;
-               }
-
-               for (int j=0; j<nbin; j++) for (int k=0; k<nbin; k++){
-                  double px=tmpres->GetXaxis()->GetBinCenter(j+1)+c*(ev->jet_ptT1[i]);   
-                  double py=tmpres->GetYaxis()->GetBinCenter(k+1)+s*(ev->jet_ptT1[i]);   
-                  double pt=pow(pow(px,2)+pow(py,2),0.5);
-                  double phi;
-                  if (py>0) phi=acos(px/pt); else phi=-acos(px/pt);
-                  double r=pt/ev->jet_ptT1[i];
-                  tmpres->SetBinContent(j+1,k+1,fnc_dscb(&r,para)*TMath::Gaus(phi,ev->jet_phi[i],dph,1));
-               }
-
-               //Normalization
-               tmpres->Scale(1.0/tmpres->Integral("width"));
-               for (int j=0; j<nbin; j++) for (int k=0; k<nbin; k++){
-                  int xx= (j==0)? nbin:j;
-                  int yy= (k==0)? nbin:k;
-                  //calculate the value at bin boundary to avoid halfbin shifting
-                  //during FFT
-                  data[i*nbin*nbin+j*nbin+k]=0.25*(tmpres->GetBinContent(xx,yy)+tmpres->GetBinContent(j+1,yy)+tmpres->GetBinContent(xx,k+1)+tmpres->GetBinContent(j+1,k+1));
-               }
-            }
-
-            //Fill in the pseudo-jet resolution 
-            for (int j=0; j<nbin; j++) for (int k=0; k<nbin; k++){
-               double px=tmpres->GetXaxis()->GetBinCenter(j+1);   
-               double py=tmpres->GetYaxis()->GetBinCenter(k+1);   
-               //if (pseudoin) tmpres->SetBinContent(j+1,k+1,pseudo->GetBinContent(pseudo->FindBin(px))*pseudo->GetBinContent(pseudo->FindBin(py)));
-                 //else
-                    tmpres->SetBinContent(j+1,k+1,TMath::Gaus(px,0,pow(cov_xx,0.5),1)*TMath::Gaus(py,0,pow(cov_yy,0.5),1));
-            }
-
-            for (int j=0; j<nbin; j++) for (int k=0; k<nbin; k++){
-               int xx= (j==0)? nbin:j;
-               int yy= (k==0)? nbin:k;
-               //calculate the value at bin boundary to avoid halfbin shifting
-               //during FFT
-               data[ev->jet_ptUncor.size()*nbin*nbin+j*nbin+k]=0.25*(tmpres->GetBinContent(xx,yy)+tmpres->GetBinContent(j+1,yy)+tmpres->GetBinContent(xx,k+1)+tmpres->GetBinContent(j+1,k+1));
-            }
-
-            //FFT
-            int bin[2]={nbin,nbin};
-            FFTConvolution(2, entries, &(bin[0]), ev->jet_ptUncor.size()+1, data, &(result[0][0]));
-
-            //Fill in backFFT results
-            for (int j=0; j<nbin; j++) for (int k=0; k<nbin; k++){
-               int xx= (j==nbin-1)? 0:j+1;
-               int yy= (k==nbin-1)? 0:k+1;
-               //calculate the value at the center of the bin and then fill the
-               //histogram
-               res->SetBinContent(j+1, k+1, 0.25*(result[j][k]+result[xx][yy]+result[j][yy]+result[xx][k]));
-            }
-
-            if ((met_x>-thisrange*stdx) && (met_x<thisrange*stdx) && (met_y<thisrange*stdy) && (met_y>-thisrange*stdy)){
-               sig=-2*log(res->GetBinContent(res->FindBin(met_x,met_y))/res->GetBinContent(res->FindBin(0,0)));
-               failure=0;
-            } else {
-               thisrange += 2; 
-               failure=0;
-            }
-            ev->met = sqrt( met_x*met_x + met_y*met_y );
-            ev->sig = sig;
-            //ev->det = det;
-
-            //ev->cov_xx = cov_xx;
-            //ev->cov_xy = cov_xy;
-            //ev->cov_yy = cov_yy;
-
-            //ev->cov_xx_highpt = cov_xx_highpt;
-            //ev->cov_xx_pjet = cov_xx_pjet;
-
-            // fill qt, ut
-            double qt_x=0, qt_y=0;
-            for(int i=0; i < int(ev->muon_pt.size()); i++){
-               qt_x += ev->muon_pt[i]*cos(ev->muon_phi[i]);
-               qt_y += ev->muon_pt[i]*sin(ev->muon_phi[i]);
-            }
-            double qt = sqrt( qt_x*qt_x + qt_y*qt_y );
-
-            double ut_x = -met_x - qt_x;
-            double ut_y = -met_y - qt_y;
-            double ut = sqrt( ut_x*ut_x + ut_y*ut_y );
-
-            double ut_par = (ut_x*qt_x + ut_y*qt_y)/qt;
-            double ut_perp = (ut_y*qt_x - qt_y*ut_x)/qt;
-
-            ev->qt = qt;
-            ev->ut = ut;
-            ev->ut_par = ut_par;
-            ev->ut_perp = ut_perp;
-
-            //destory the histogram and free the memory
-            res->~TH2F();
-            tmpres->~TH2F();
-            free(data);
-         }
-      } else {
-         // Guassian Shape
-         // Direct calculation
-
-         // clustered jets
-         for(int i=0; i < int(ev->jet_ptUncor.size()); i++){
-
-            float feta = fabs(ev->jet_eta[i]);
-            c = cos(ev->jet_phi[i]);
-            s = sin(ev->jet_phi[i]);
-
-            met_x -= c*(ev->jet_ptT1[i]);
-            met_y -= s*(ev->jet_ptT1[i]);
-
-            double dpt=0;
-            double dph=0;
-
-            // resolutions for two jet categories
-            if( true || ev->jet_ptL123[i] > jetbinpt ){ //dummy true
-
-               int index=-1;
-               if(feta<0.5) index=0;
-               else if(feta<1.1) index=1;
-               else if(feta<1.7) index=2;
-               else if(feta<2.3) index=3;
-               else{
-                  index=4;
-               }
-
-               // CMS 2010 Resolutions -- parameterized by L123 corrected pt
-               dpt = x[index] * (ev->jet_ptT1[i]) * dpt_(ev->jet_ptL123[i], ev->jet_eta[i]);
-               dph =            (ev->jet_ptT1[i]) * dph_(ev->jet_ptL123[i], ev->jet_eta[i]);
-
-            }else{
-               cout << "ERROR: JET PT OUT OF RANGE" << endl;
-            }
-
-            double dtt = dpt*dpt;
-            double dff = dph*dph;
-            cov_xx += dtt*c*c + dff*s*s;
-            cov_xy += (dtt-dff)*c*s;
-            cov_yy += dff*c*c + dtt*s*s;
-            
-            cov_xx_highpt += dtt*c*c +dff*s*s;
-         }
-         double det = cov_xx*cov_yy - cov_xy*cov_xy;
-         double ncov_xx = cov_yy / det;
-         double ncov_xy = -cov_xy / det;
-         double ncov_yy = cov_xx / det;
-         sig = met_x*met_x*ncov_xx + 2*met_x*met_y*ncov_xy + met_y*met_y*ncov_yy;
-         //negcount++;
-         ev->met = sqrt( met_x*met_x + met_y*met_y );
-         ev->sig = sig;
-         ev->det = det;
-
-         ev->cov_xx = cov_xx;
-         ev->cov_xy = cov_xy;
-         ev->cov_yy = cov_yy;
-
-         ev->cov_xx_highpt = cov_xx_highpt;
-         ev->cov_xx_pjet = cov_xx_pjet;
-
-         // fill qt, ut
-         double qt_x=0, qt_y=0;
-         for(int i=0; i < int(ev->muon_pt.size()); i++){
-            qt_x += ev->muon_pt[i]*cos(ev->muon_phi[i]);
-            qt_y += ev->muon_pt[i]*sin(ev->muon_phi[i]);
-         }
-         double qt = sqrt( qt_x*qt_x + qt_y*qt_y );
-
-         double ut_x = -met_x - qt_x;
-         double ut_y = -met_y - qt_y;
-         double ut = sqrt( ut_x*ut_x + ut_y*ut_y );
-
-         double ut_par = (ut_x*qt_x + ut_y*qt_y)/qt;
-         double ut_perp = (ut_y*qt_x - qt_y*ut_x)/qt;
-
-         ev->qt = qt;
-         ev->ut = ut;
-         ev->ut_par = ut_par;
-         ev->ut_perp = ut_perp;
-
-         failure=0;
-      }
-
-      count++;
-      if (!failure) ev->sig=sig;
-   }  
-   return;
-   */
-}
-
 
 void Fitter::FillHists(vector<event>& eventref, string stackmode){
    if( eventref.size() == 0 ) return;
@@ -1106,32 +647,52 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
 
    for( vector<event>::iterator ev = iter_begin; ev < iter_end; ev++ ){
 
+      // test selections
+      //if( ev->jet_pt.size() < 2 ) continue;
+      //if( ev->jet_pt[0] < 35 or ev->jet_pt[1] < 35 ) continue;
+
+      // this is a hack, need to clean up!
+      if( ev->process.compare("DYJetsToLL") == 0 ) hists_ = histsMC_signal_;
+      else if( ev->process.compare("TTJets") == 0 ) hists_ = histsMC_top_;
+      else if( ev->process.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
+      else if( ev->process.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_;
+      else if( ev->process.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
+      else if( ev->process.compare("WW") == 0 ) hists_ = histsMC_EWK_;
+      else if( ev->process.compare("WZ") == 0 ) hists_ = histsMC_EWK_;
+      else if( ev->process.compare("ZZ") == 0 ) hists_ = histsMC_EWK_;
+
       // jets
-      hists_["njets"]->Fill( ev->jet_pt.size(), ev->weight );
+      int njets = 0;
       for( int j=0; j < int(ev->jet_pt.size()); j++){
-         hists_["jet_pt"]->Fill( ev->jet_pt[j], ev->weight );
-         if( ev->jet_pt[j] > 30 ){
+         //if( fabs(ev->jet_eta[j]) < 2.5 and ev->jet_pt[j] > 30 ){
+            hists_["jet_pt"]->Fill( ev->jet_pt[j], ev->weight );
             hists_["jet_eta"]->Fill( ev->jet_eta[j], ev->weight );
-         }
+            if( j == 0 ) hists_["jet1_pt"]->Fill( ev->jet_pt[j] , ev->weight );
+            njets++;
+         //}
       }
+      hists_["njets"]->Fill( njets, ev->weight );
+
       // leptons
       for( int j=0; j < int(ev->lepton_pt.size()); j++){
          hists_["lepton_pt"]->Fill( ev->lepton_pt[j] , ev->weight );
+         hists_["lepton_eta"]->Fill( ev->lepton_eta[j] , ev->weight );
       }
+      hists_["muon_invmass"]->Fill( ev->invmass, ev->weight );
       // other observables
+      //if( njets >= 2 ){
+         hists_["met"]->Fill( ev->met_pt, ev->weight );
+         hists_["met_200"]->Fill( ev->met_pt, ev->weight );
+         hists_["met_300"]->Fill( ev->met_pt, ev->weight );
+         hists_["sig"]->Fill( ev->sig, ev->weight );
+         hists_["sig_100"]->Fill( ev->sig, ev->weight );
+         hists_["sig_15"]->Fill( ev->sig, ev->weight );
+         hists_["pchi2"]->Fill( TMath::Prob(ev->sig,2), ev->weight );
+      //}
       hists_["nvert"]->Fill( ev->nvertices , ev->weight );
-      hists_["met"]->Fill( ev->met_pt, ev->weight );
-      hists_["sig"]->Fill( ev->sig, ev->weight );
-      hists_["sig_100"]->Fill( ev->sig, ev->weight );
-      hists_["sig_15"]->Fill( ev->sig, ev->weight );
-      hists_["pchi2"]->Fill( TMath::Prob(ev->sig,2), ev->weight );
       hists_["pjet_scalpt"]->Fill( ev->pjet_scalpt , ev->weight );
+
       /*
-
-      if( ev->jet_pt.size() > 0 ){
-         hists_["jet1_pt"]->Fill( ev->jet_ptL123[0] , ev->weight );
-      }
-
       // pseudojet
       hists_["pjet_scalptL123"]->Fill( ev->pjet_scalptL123 , ev->weight );
       hists_["pjet_vectptL123"]->Fill( ev->pjet_vectptL123 , ev->weight );
@@ -1139,7 +700,7 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
       hists_["pjet_vectptT1"]->Fill( ev->pjet_vectptT1 , ev->weight );
       hists_["pjet_size"]->Fill( ev->pjet_size , ev->weight );
       hists_["pjet_phi"]->Fill( ev->pjet_phiL123, ev->weight );
-
+      */
 
       hists_["qt"]->Fill( ev->qt, ev->weight );
       hists_["qx"]->Fill( ev->qx, ev->weight );
@@ -1148,13 +709,14 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
       hists_["cov_xx"]->Fill( ev->cov_xx, ev->weight );
       hists_["cov_xy"]->Fill( ev->cov_xy, ev->weight );
       hists_["cov_yy"]->Fill( ev->cov_yy, ev->weight );
+      /*
       hists_["met0_px"]->Fill( ev->pfmet_px[0], ev->weight );
       hists_["met1_px"]->Fill( ev->pfmet_px[1], ev->weight );
       hists_["met2_px"]->Fill( ev->pfmet_px[2], ev->weight );
       hists_["met3_px"]->Fill( ev->pfmet_px[3], ev->weight );
       hists_["met4_px"]->Fill( ev->pfmet_px[4], ev->weight );
       hists_["met5_px"]->Fill( ev->pfmet_px[5], ev->weight );
-      hists_["met_200"]->Fill( ev->met, ev->weight );
+      */
       hists_["sig_old"]->Fill( ev->metsig2011, ev->weight );
       hists_["det"]->Fill( ev->det, ev->weight );
       hists_["pchi2_old"]->Fill( TMath::Prob(ev->metsig2011,2), ev->weight );
@@ -1164,24 +726,25 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
       hists_["cov_xx_pjet"]->Fill( ev->cov_xx_pjet, ev->weight );
       hists_["cov_xx_ratio"]->Fill( ev->cov_xx_highpt/ev->cov_xx, ev->weight );
 
+      /*
       hists_["met_varx"]->Fill( ev->met_varx, ev->weight );
       hists_["met_vary"]->Fill( ev->met_vary, ev->weight );
       hists_["met_rho"]->Fill( ev->met_rho, ev->weight );
+      */
 
       // profiles
       profs_["psig_nvert"]->Fill( ev->nvertices, ev->sig, ev->weight );
       profs_["psig_qt"]->Fill( ev->qt, ev->sig, ev->weight );
       profs_["presp_qt"]->Fill( ev->qt, -(ev->ut_par)/(ev->qt), ev->weight );
-      profs_["pMET_nvert"]->Fill( ev->nvertices, ev->met, ev->weight );
-      profs_["pjet_scalptL123_nvert"]->Fill( ev->nvertices, ev->pjet_scalptL123, ev->weight );
+      profs_["pMET_nvert"]->Fill( ev->nvertices, ev->met_pt, ev->weight );
+      //profs_["pjet_scalptL123_nvert"]->Fill( ev->nvertices, ev->pjet_scalptL123, ev->weight );
 
-      profs_["njets_nvert"]->Fill( ev->nvertices, ev->jet_ptL123.size(), ev->weight );
-      for( int j=0; j < int(ev->jet_ptL123.size()); j++){
-         profs_["jet_pt_nvert"]->Fill( ev->nvertices, ev->jet_ptL123[j], ev->weight );
+      profs_["njets_nvert"]->Fill( ev->nvertices, ev->jet_pt.size(), ev->weight );
+      for( int j=0; j < int(ev->jet_pt.size()); j++){
+         profs_["jet_pt_nvert"]->Fill( ev->nvertices, ev->jet_pt[j], ev->weight );
       }
 
-      profs_["sig_met"]->Fill( ev->met, ev->sig, ev->weight );
-*/
+      profs_["sig_met"]->Fill( ev->met_pt, ev->sig, ev->weight );
    }
 
 }

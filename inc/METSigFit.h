@@ -20,7 +20,6 @@ struct event {
    int nvertices;
    double weight;
 
-   double met;
    double sig;
    double sig_init;
    double det;
@@ -53,9 +52,13 @@ struct event {
    double met_pt;
    double met_phi;
 
+   double invmass;
+
    // leptons
    vector<double> lepton_pt;
    vector<double> lepton_phi;
+   vector<double> lepton_eta;
+   vector<double> lepton_energy;
 
    // jets
    vector<double> jet_phi;
@@ -63,6 +66,7 @@ struct event {
    vector<double> jet_pt;
    vector<double> jet_sigmapt;
    vector<double> jet_sigmaphi;
+   vector<bool> jet_passid;
 
    event(){
       process = "";
@@ -70,7 +74,6 @@ struct event {
       nvertices = 0;
       weight = 0;
 
-      met = 0;
       sig = 0;
       sig_init = 0;
       det = 0;
@@ -118,16 +121,14 @@ class Fitter{
       void PrintHists(const char*, string, bool=true);
       void AddOverflow(TH1*);
       void PJetReweight(vector<event>&, vector<event>&);
-      void ResponseCorrection(vector<event>&);
-      void FullShapeSig(const double*, vector<event>&, bool=true);
       void ComplexMult(int, double*, double*, double*, double*, double*, double*);
-      void FFTConvolution(int, const int, int*, int, double*, double*);
 
       bool significance_cut;
       double jetbinpt, jetcorrpt;
       double psig_nvert_corr, psig_qt_corr, pchi2slope_left, pchi2slope_right;
       int met_type;
       double rebin;
+      const double *xmin;
 
       ROOT::Minuit2::Minuit2Minimizer* gMinuit;
 
