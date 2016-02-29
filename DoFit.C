@@ -163,7 +163,7 @@ int main(int argc, char* argv[]){
          data.process = "Data";
       }
 
-      string date = "20151027";
+      string date = "20160201_74X";
 
       // vector of filenames
       string file;
@@ -282,7 +282,7 @@ int main(int argc, char* argv[]){
       fitter.met_type = met_type;
 
       // run fit
-      if( i==0 ){
+      if( true or i==0 ){
          fitter.RunMinimizer( eventvec );
       }else{
          fitter.FindSignificance(fitter.xmin, eventvec);

@@ -64,9 +64,11 @@ struct event {
    vector<double> jet_phi;
    vector<double> jet_eta;
    vector<double> jet_pt;
+   vector<double> jet_energy;
    vector<double> jet_sigmapt;
    vector<double> jet_sigmaphi;
    vector<bool> jet_passid;
+   vector<double> jet_sf;
 
    event(){
       process = "";

@@ -193,6 +193,7 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
    std::vector<double> *jet_pt=0, *jet_energy=0, *jet_phi=0, *jet_eta=0;
    std::vector<double> *jet_sigmapt=0, *jet_sigmaphi=0;
    std::vector<bool> *jet_passid=0;
+   std::vector<double> *jet_sf=0;
    double met_pt=0, met_energy=0, met_phi=0, met_eta=0, met_sumpt=0;
    int nvertices=0;
    double mcweight = 1.0;
@@ -219,6 +220,7 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
    tree->SetBranchAddress("jet_eta", &jet_eta);
    tree->SetBranchAddress("jet_sigmapt", &jet_sigmapt);
    tree->SetBranchAddress("jet_sigmaphi", &jet_sigmaphi);
+   tree->SetBranchAddress("jet_sf", &jet_sf);
 
    tree->SetBranchAddress("met_pt", &met_pt);
    tree->SetBranchAddress("met_energy", &met_energy);
@@ -256,41 +258,41 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
       // MC cross-sections (pb)
       // obtained at https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat13TeV
       // and http://arxiv.org/pdf/1105.0020.pdf for WZ, ZZ.
-      double xsec_dyjetstoll           = 2008.4;
+      double xsec_dyjetstoll           = 2008.4*3;
       double xsec_ttjets               = 831.76;
-      /*
-      double xsec_ttjets_0lept         = 0.46*831.76;
-      double xsec_ttjets_1lept         = 0.45*831.76;
-      double xsec_ttjets_2lept         = 0.09*831.76;
-      */
       double xsec_ww                   = 118.7;
-      double xsec_wz                   = 46.74; 
+      double xsec_wz                   = 46.74;
       double xsec_zz                   = 15.99;
-      double xsec_wjetstolnu           = 20508.90;
+      double xsec_wjetstolnu           = 20508.90*3;
+      double xsec_st_top               = 35.9;
+      double xsec_st_antitop           = 35.9;
 
       // MC sample size (events), obtained from DAS.
-      // miniAOODv2
+      // 76X
       /*
-      //int nevts_dyjetstoll          = 9042031; //madgraph
-      int nevts_dyjetstoll          = 28747969; //amc@nlo
-      //int nevts_dyjetstoll          = 28825132; //miniAODv1
-      int nevts_ttjets              = 11344206;
-      int nevts_wjetstolnu          = 24184766;
-      int nevts_ww                  = 989608;
-      int nevts_wz                  = 996920;
-      int nevts_zz                  = 998848;
+      int nevts_dyjetstoll          = 9004328;
+      int nevts_ttjets              = 10215131;
+      int nevts_wjetstolnu          = 24156124;
+      int nevts_ww                  = 988418;
+      int nevts_wz                  = 1000000;
+      int nevts_zz                  = 985600;
+      int nevts_st_top              = 1000000;
+      int nevts_st_antitop          = 999400;
       */
-      // miniAODv1
+
+      // 74X
       int nevts_dyjetstoll          = 28825132;
-      int nevts_ttjets              = 42730273;
+      int nevts_ttjets              = 11339232;
       int nevts_wjetstolnu          = 24151270;
       int nevts_ww                  = 994416;
       int nevts_wz                  = 991232;
       int nevts_zz                  = 996168;
+      int nevts_st_antitop          = 1000000;
+      int nevts_st_top              = 995600;
 
       if( isMC ){
 
-         //evtemp.weight *= 616.9; // pb in dataset
+         evtemp.weight *= 2100; // pb in dataset
 
          if( process.compare("DYJetsToLL") == 0 ) evtemp.weight *= xsec_dyjetstoll/nevts_dyjetstoll;
          else if( process.compare("TTJets") == 0 ) evtemp.weight *= xsec_ttjets/nevts_ttjets;
@@ -299,6 +301,10 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
          else if( process.compare("ZZ") == 0 ) evtemp.weight *= xsec_zz/nevts_zz;
          else if( process.compare("WJetsToLNu") == 0 )
             evtemp.weight *= xsec_wjetstolnu/nevts_wjetstolnu;
+         else if( process.compare("ST_tW_top") == 0 )
+            evtemp.weight *= xsec_st_top/nevts_st_top;
+         else if( process.compare("ST_tW_antitop") == 0 )
+            evtemp.weight *= xsec_st_antitop/nevts_st_antitop;
          else cout << "No Xsection for process " << process << endl;
 
       }
@@ -313,11 +319,18 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
 
       // jets
       evtemp.jet_pt = *jet_pt;
+      evtemp.jet_energy = *jet_energy;
       evtemp.jet_passid = *jet_passid;
       evtemp.jet_phi = *jet_phi;
       evtemp.jet_eta = *jet_eta;
       evtemp.jet_sigmapt = *jet_sigmapt;
       evtemp.jet_sigmaphi = *jet_sigmaphi;
+      evtemp.jet_sf = *jet_sf;
+      if( isMC ){
+         for(unsigned int i=0; i < evtemp.jet_sf.size(); i++){
+            evtemp.jet_sf[i] = 1.0;
+         }
+      }
 
       // met
       evtemp.met_pt = met_pt;
@@ -328,7 +341,7 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
 
       int njets = 0;
       for( int j=0; j < int(evtemp.jet_pt.size()); j++){
-         if( fabs(evtemp.jet_eta[j]) < 2.5 and evtemp.jet_pt[j] > 30 ) njets++;
+         if( fabs(evtemp.jet_eta[j]) < 2.5 and evtemp.jet_pt[j] > 30 and evtemp.jet_passid[j] ) njets++;
       }
       if( njets >=2 ){
          eventref_temp.push_back( evtemp );
@@ -417,6 +430,7 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
          double s = sin(ev->jet_phi[i]);
 
          int index=-1;
+         /*
          if(feta<0.5) index=0;
          else if(feta<1.1) index=1;
          else if(feta<1.7) index=2;
@@ -424,8 +438,16 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
          else{
             index=4;
          }
+         */
+         if(feta<0.8) index=0;
+         else if(feta<1.3) index=1;
+         else if(feta<1.9) index=2;
+         else if(feta<2.5) index=3;
+         else{
+            index=4;
+         }
 
-         double dpt = x[index]*jpt*ev->jet_sigmapt[i];
+         double dpt = x[index]*jpt*ev->jet_sigmapt[i]*ev->jet_sf[i];
          double dph =          jpt*ev->jet_sigmaphi[i];
 
          double dtt = dpt*dpt;
@@ -433,6 +455,19 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
          cov_xx += dtt*c*c + dff*s*s;
          cov_xy += (dtt-dff)*c*s;
          cov_yy += dff*c*c + dtt*s*s;
+
+         // lepton cleaning test
+         /*
+         TLorentzVector jet;
+         jet.SetPtEtaPhiE( ev->jet_pt[i], ev->jet_eta[i], ev->jet_phi[i], ev->jet_energy[i] );
+         for(int n=0; n < int(ev->lepton_pt.size()); n++){
+            TLorentzVector lepton;
+            lepton.SetPtEtaPhiE( ev->lepton_pt[i], ev->lepton_eta[i], ev->lepton_phi[i], ev->lepton_energy[i] );
+            double dR = lepton.DeltaR( jet );
+            if( dR < 0.4 )
+               cout << ev->lepton_pt.size() << " dR = " << dR << endl;
+         }
+         */
       }
 
       // pseudo-jet
@@ -524,8 +559,8 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
 
          if( iter_begin->process.compare("DYJetsToLL") == 0 ) hists_ = histsMC_signal_;
          else if( iter_begin->process.compare("TTJets") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->process.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->process.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->process.compare("ST_tW_top") == 0 ) hists_ = histsMC_top_;
+         else if( iter_begin->process.compare("ST_tW_antitop") == 0 ) hists_ = histsMC_top_;
          else if( iter_begin->process.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
          else if( iter_begin->process.compare("WW") == 0 ) hists_ = histsMC_EWK_;
          else if( iter_begin->process.compare("WZ") == 0 ) hists_ = histsMC_EWK_;
@@ -654,8 +689,8 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
       // this is a hack, need to clean up!
       if( ev->process.compare("DYJetsToLL") == 0 ) hists_ = histsMC_signal_;
       else if( ev->process.compare("TTJets") == 0 ) hists_ = histsMC_top_;
-      else if( ev->process.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
-      else if( ev->process.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_;
+      else if( ev->process.compare("ST_tW_top") == 0 ) hists_ = histsMC_top_;
+      else if( ev->process.compare("ST_tW_antitop") == 0 ) hists_ = histsMC_top_;
       else if( ev->process.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
       else if( ev->process.compare("WW") == 0 ) hists_ = histsMC_EWK_;
       else if( ev->process.compare("WZ") == 0 ) hists_ = histsMC_EWK_;
@@ -664,12 +699,12 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
       // jets
       int njets = 0;
       for( int j=0; j < int(ev->jet_pt.size()); j++){
-         //if( fabs(ev->jet_eta[j]) < 2.5 and ev->jet_pt[j] > 30 ){
+         if( fabs(ev->jet_eta[j]) < 2.5 and ev->jet_pt[j] > 30 ){
             hists_["jet_pt"]->Fill( ev->jet_pt[j], ev->weight );
             hists_["jet_eta"]->Fill( ev->jet_eta[j], ev->weight );
             if( j == 0 ) hists_["jet1_pt"]->Fill( ev->jet_pt[j] , ev->weight );
             njets++;
-         //}
+         }
       }
       hists_["njets"]->Fill( njets, ev->weight );
 
@@ -918,10 +953,10 @@ void Fitter::PrintHists( const char* filename, string stackmode, bool overflow )
          histMC_EWK->SetLineColor(1);
          histMC_EWK->SetFillColor(kRed-10);
 
-         histMC_top->Add( histMC_EWK );
+         histMC_EWK->Add( histMC_top );
 
-         histMC_top->Draw("same HIST");
          histMC_EWK->Draw("same HIST");
+         histMC_top->Draw("same HIST");
       }
       if( stackmode.compare("Wenu") == 0 or stackmode.compare("Wenu_loose") == 0 ){
          histMC_QCD->SetLineColor(1);
@@ -1025,7 +1060,7 @@ void Fitter::PrintHists( const char* filename, string stackmode, bool overflow )
       leg->AddEntry(histData, "data");
       if( stackmode.compare("Zmumu") == 0 ){
          leg->AddEntry(histMC, "Z #rightarrow #mu #mu", "f");
-         leg->AddEntry(histMC_top, "t #bar{t}", "f");
+         leg->AddEntry(histMC_top, "top", "f");
          leg->AddEntry(histMC_EWK, "EWK", "f");
       }
       if( stackmode.compare("Wenu") == 0 or stackmode.compare("Wenu_loose") == 0 ){
