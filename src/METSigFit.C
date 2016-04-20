@@ -269,7 +269,6 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
 
       // MC sample size (events), obtained from DAS.
       // 76X
-      /*
       int nevts_dyjetstoll          = 9004328;
       int nevts_ttjets              = 10215131;
       int nevts_wjetstolnu          = 24156124;
@@ -278,9 +277,9 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
       int nevts_zz                  = 985600;
       int nevts_st_top              = 1000000;
       int nevts_st_antitop          = 999400;
-      */
 
       // 74X
+      /*
       int nevts_dyjetstoll          = 28825132;
       int nevts_ttjets              = 11339232;
       int nevts_wjetstolnu          = 24151270;
@@ -289,6 +288,7 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
       int nevts_zz                  = 996168;
       int nevts_st_antitop          = 1000000;
       int nevts_st_top              = 995600;
+      */
 
       if( isMC ){
 
@@ -343,9 +343,9 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
       for( int j=0; j < int(evtemp.jet_pt.size()); j++){
          if( fabs(evtemp.jet_eta[j]) < 2.5 and evtemp.jet_pt[j] > 30 and evtemp.jet_passid[j] ) njets++;
       }
-      if( njets >=2 ){
+      //if( njets >=2 ){
          eventref_temp.push_back( evtemp );
-      }
+      //}
 
    } // event loop
 

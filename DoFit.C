@@ -163,7 +163,7 @@ int main(int argc, char* argv[]){
          data.process = "Data";
       }
 
-      string date = "20160201_74X";
+      string date = "20160418";
 
       // vector of filenames
       string file;
