@@ -1,5 +1,8 @@
 # Analysis code for MET Significance.
-# Branches to use:
+# 76X Branches:
+   * 76XMINIAOD: For tuning on the Run2 dataset.
+
+# 53X Branches:
    * master: vanilla significance.
    * fft_significance: should have FFT code as well as job parallelization scripts.  A merge of yimin_comment and nathan_fullshape.
    * yimin_comment: Yimin's final FFT code.
