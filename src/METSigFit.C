@@ -1,3 +1,16 @@
+// -*- C++ -*-
+//
+// Package:   metsig
+/*
+Description: likelihood fit for metsig JER tuning.
+Implementation: make compile and run ./DoFit, ./EvalSig scripts.
+*/
+//
+// Original Author:  Nathan Mirman
+//         Created:  19 Sep 2012
+//
+
+
 #include "TH1.h"
 #include "TH2.h"
 #include "TF1.h"
@@ -161,31 +174,9 @@ Fitter::~Fitter(){
 // member definitions
 //
 
-const double Fitter::sigmaPt[10][4]={{-0.349206, 0.297831, 0, 0.471121},
-   {-0.499735, 0.336391, 0, 0.430689},
-   {-0.561649, 0.420293, 0, 0.392398},
-   {-1.12329, 0.657891, 0, 0.139595},
-   {1.04792, 0.466763, 0, 0.193137},
-   {2.56933, 0.305802, 0, 0.398929},
-   {2.81978, 0.272373, 0, 0.579396},
-   {1.65966, 0.223683, 0, 0.60873},
-   {1.41584, 0.209477, 0, 0.588872},
-   {1.41584, 0.209477, 0, 0.588872}};
-
-const double Fitter::sigmaPhi[10][5]={{926.978, 2.52747, 0.0304001, -926.224, -1.94117},
-   {3.32512e-06,     0.063941,  -0.00387593,  0.301932,    -0.825352},
-   {    0.38469,    0.0755727,   -0.0044353,  0.453887,      -1.8947},
-   {2.92001e-07,    0.0718389,  -0.00385579,  0.403668,     -0.62698},
-   { 0.00336639,    0.0880209,   -0.0023084,  0.214304,    -0.416353},
-   {    11.1957,     0.643236,   0.00711422,  -10.7613,     0.280927},
-   {     1.9027, -4.56986e-06,    0.0304793,  -1.09124,    -0.136402},
-   {    2.11446,     0.203329,   -0.0175832,  -1.67946,  -0.00853474},
-   {   0.765787, -3.90638e-06, -4.70224e-08,   0.11831,      -1.4675},
-   {    259.189,   0.00132792,    -0.311411,  -258.647,            0}};
-
 void Fitter::ReadNtuple(string path, vector<string>& filenames, 
       vector<event>& eventref_temp, const double fracevents,
-      const bool isMC, string process, const bool do_resp_correction, 
+      const bool isMC, string process, 
       const int start_evt_num, const int end_evt_num , const double jvar){
    cout << "---> ReadNtuple " << process << endl;
 
@@ -278,21 +269,9 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
       int nevts_st_top              = 1000000;
       int nevts_st_antitop          = 999400;
 
-      // 74X
-      /*
-      int nevts_dyjetstoll          = 28825132;
-      int nevts_ttjets              = 11339232;
-      int nevts_wjetstolnu          = 24151270;
-      int nevts_ww                  = 994416;
-      int nevts_wz                  = 991232;
-      int nevts_zz                  = 996168;
-      int nevts_st_antitop          = 1000000;
-      int nevts_st_top              = 995600;
-      */
-
       if( isMC ){
 
-         evtemp.weight *= 2100; // pb in dataset
+         evtemp.weight *= 4000; // pb in dataset
 
          if( process.compare("DYJetsToLL") == 0 ) evtemp.weight *= xsec_dyjetstoll/nevts_dyjetstoll;
          else if( process.compare("TTJets") == 0 ) evtemp.weight *= xsec_ttjets/nevts_ttjets;
@@ -343,9 +322,9 @@ void Fitter::ReadNtuple(string path, vector<string>& filenames,
       for( int j=0; j < int(evtemp.jet_pt.size()); j++){
          if( fabs(evtemp.jet_eta[j]) < 2.5 and evtemp.jet_pt[j] > 30 and evtemp.jet_passid[j] ) njets++;
       }
-      //if( njets >=2 ){
-         eventref_temp.push_back( evtemp );
-      //}
+
+      // push back event
+      eventref_temp.push_back( evtemp );
 
    } // event loop
 
@@ -430,15 +409,6 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
          double s = sin(ev->jet_phi[i]);
 
          int index=-1;
-         /*
-         if(feta<0.5) index=0;
-         else if(feta<1.1) index=1;
-         else if(feta<1.7) index=2;
-         else if(feta<2.3) index=3;
-         else{
-            index=4;
-         }
-         */
          if(feta<0.8) index=0;
          else if(feta<1.3) index=1;
          else if(feta<1.9) index=2;
@@ -455,19 +425,6 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
          cov_xx += dtt*c*c + dff*s*s;
          cov_xy += (dtt-dff)*c*s;
          cov_yy += dff*c*c + dtt*s*s;
-
-         // lepton cleaning test
-         /*
-         TLorentzVector jet;
-         jet.SetPtEtaPhiE( ev->jet_pt[i], ev->jet_eta[i], ev->jet_phi[i], ev->jet_energy[i] );
-         for(int n=0; n < int(ev->lepton_pt.size()); n++){
-            TLorentzVector lepton;
-            lepton.SetPtEtaPhiE( ev->lepton_pt[i], ev->lepton_eta[i], ev->lepton_phi[i], ev->lepton_energy[i] );
-            double dR = lepton.DeltaR( jet );
-            if( dR < 0.4 )
-               cout << ev->lepton_pt.size() << " dR = " << dR << endl;
-         }
-         */
       }
 
       // pseudo-jet
@@ -527,21 +484,7 @@ void Fitter::FindSignificance(const double *x, vector<event>& eventref_temp){
    return;
 }
 
-//
-// Yimin's full jet resolution shapes
-//
-void Fitter::ComplexMult(int entries, double *re1, double *im1, double *re2, double *im2, double *reF, double *imF){
-   for (int i=0; i<entries; i++){
-      double tempre1=re1[i];
-      double tempim1=im1[i];
-      double tempre2=re2[i];
-      double tempim2=im2[i];
-      reF[i]=tempre1*tempre2-tempim1*tempim2;
-      imF[i]=tempre1*tempim2+tempre2*tempim1;
-   }
-}
-
-void Fitter::FillHists(vector<event>& eventref, string stackmode){
+void Fitter::FillHists(vector<event>& eventref){
    if( eventref.size() == 0 ) return;
 
    vector<event>::iterator iter_begin = eventref.begin();
@@ -555,136 +498,18 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
       profs_ = profsData_;
    } else {
       profs_ = profsMC_;
-      if( stackmode.compare("Zmumu") == 0 ){
-
-         if( iter_begin->process.compare("DYJetsToLL") == 0 ) hists_ = histsMC_signal_;
-         else if( iter_begin->process.compare("TTJets") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->process.compare("ST_tW_top") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->process.compare("ST_tW_antitop") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->process.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->process.compare("WW") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->process.compare("WZ") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->process.compare("ZZ") == 0 ) hists_ = histsMC_EWK_;
-         else cout << "Histogram fill error, process " << iter_begin->process << endl;
-
-      }
-      if( stackmode.compare("Wenu") == 0 or stackmode.compare("Wenu_loose") == 0 ){
-
-         if( iter_begin->process.compare("WJetsToLNu") == 0 ) hists_ = histsMC_signal_;
-         else if( iter_begin->process.compare("DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
-         else if( iter_begin->process.compare("DYJetsToLL_M-50") == 0 ) hists_ = histsMC_DY_;
-         else if( iter_begin->process.compare("DYJetsToLL_M-10To50") == 0 ) hists_ = histsMC_DY_;
-         else if( iter_begin->process.compare("TTJets") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->process.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->process.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->process.compare("QCD_EMEnriched_20_30") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_EMEnriched_30_80") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_EMEnriched_80_170") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_EMEnriched_170_250") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_EMEnriched_250_350") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_EMEnriched_350") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_BCtoE_20_30") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_BCtoE_30_80") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_BCtoE_80_170") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_BCtoE_170_250") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_BCtoE_250_350") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("Gamma_0_15") == 0 ) hists_ = histsMC_gamma_;
-         else if( iter_begin->process.compare("Gamma_15_30") == 0 ) hists_ = histsMC_gamma_;
-         else if( iter_begin->process.compare("Gamma_30_50") == 0 ) hists_ = histsMC_gamma_;
-         else if( iter_begin->process.compare("Gamma_50_80") == 0 )  hists_ = histsMC_gamma_;
-         else if( iter_begin->process.compare("Gamma_80_120") == 0 ) hists_ = histsMC_gamma_;
-         else if( iter_begin->process.compare("Gamma_120_170") == 0 ) hists_ = histsMC_gamma_;  
-         else if( iter_begin->process.compare("Gamma_170_300") == 0 ) hists_ = histsMC_gamma_;  
-         else if( iter_begin->process.compare("Gamma_300_470") == 0 ) hists_ = histsMC_gamma_;  
-         else if( iter_begin->process.compare("WW") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->process.compare("WZ") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->process.compare("ZZ") == 0 ) hists_ = histsMC_EWK_;
-         else cout << "Histogram fill error, process " << iter_begin->process << endl;
-
-      }
-      if( stackmode.compare("Dijet") == 0 ){
-
-         if( iter_begin->process.find("QCD") != string::npos ) hists_ = histsMC_signal_;
-         else if( iter_begin->process.compare("DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
-         else if( iter_begin->process.compare("TTJets") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->process.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->process.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->process.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->process.compare("WW") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->process.compare("WZ") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->process.compare("ZZ") == 0 ) hists_ = histsMC_EWK_;
-         else cout << "Histogram fill error, process " << iter_begin->process << endl;
-
-      }
-      if( stackmode.compare("Ttbar0lept") == 0){
-
-         if( iter_begin->process.compare("TTJets_Hadronic") == 0 ) hists_ = histsMC_signal_;
-         else if( iter_begin->process.compare("TTJets_FullLept") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->process.compare("TTJets_SemiLept") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->process.compare("DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
-         else if( iter_begin->process.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->process.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_;
-         else if( iter_begin->process.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->process.compare("QCD_15_30") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_30_50") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_50_80") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_80_120") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_120_170") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_170_300") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_300_470") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_470_600") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_600_800") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_800_1000") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_1000_1400") == 0 ) hists_ = histsMC_QCD_;
-         else cout << "Histogram fill error, process " << iter_begin->process << endl;
-
-      }
-      if( stackmode.compare("Ttbar1lept") == 0 ){
-
-         if( iter_begin->process.compare("TTJets_SemiLept") == 0 ) hists_ = histsMC_signal_;
-         else if( iter_begin->process.compare("TTJets_FullLept") == 0 ) hists_ = histsMC_top_dileptonic_;
-         else if( iter_begin->process.compare("TTJets_Hadronic") == 0 ) hists_ = histsMC_top_hadronic_;
-         else if( iter_begin->process.compare("Tbar_tW") == 0 ) hists_ = histsMC_top_single_;
-         else if( iter_begin->process.compare("T_tW") == 0 ) hists_ = histsMC_top_single_;
-         else if( iter_begin->process.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->process.compare("DYJetsToLL") == 0 ) hists_ = histsMC_DY_;
-         else if( iter_begin->process.compare("DYJetsToLL_M-50") == 0 ) hists_ = histsMC_DY_;
-         else if( iter_begin->process.compare("DYJetsToLL_M-10To50") == 0 ) hists_ = histsMC_DY_;
-         else if( iter_begin->process.compare("Tbar_tW-channel") == 0 ) hists_ = histsMC_top_single_;
-         else if( iter_begin->process.compare("T_tW-channel") == 0 ) hists_ = histsMC_top_single_;
-         else if( iter_begin->process.compare("QCD_EMEnriched_20_30") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_EMEnriched_30_80") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_EMEnriched_80_170") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_EMEnriched_170_250") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_EMEnriched_250_350") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_EMEnriched_350") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_BCtoE_20_30") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_BCtoE_30_80") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_BCtoE_80_170") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_BCtoE_170_250") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("QCD_BCtoE_250_350") == 0 ) hists_ = histsMC_QCD_;
-         else if( iter_begin->process.compare("Gamma_0_15") == 0 ) hists_ = histsMC_gamma_;
-         else if( iter_begin->process.compare("Gamma_15_30") == 0 ) hists_ = histsMC_gamma_;
-         else if( iter_begin->process.compare("Gamma_30_50") == 0 ) hists_ = histsMC_gamma_;
-         else if( iter_begin->process.compare("Gamma_50_80") == 0 )  hists_ = histsMC_gamma_;
-         else if( iter_begin->process.compare("Gamma_80_120") == 0 ) hists_ = histsMC_gamma_;
-         else if( iter_begin->process.compare("Gamma_120_170") == 0 ) hists_ = histsMC_gamma_;  
-         else if( iter_begin->process.compare("Gamma_170_300") == 0 ) hists_ = histsMC_gamma_;  
-         else if( iter_begin->process.compare("Gamma_300_470") == 0 ) hists_ = histsMC_gamma_;  
-         else if( iter_begin->process.compare("WW") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->process.compare("WZ") == 0 ) hists_ = histsMC_EWK_;
-         else if( iter_begin->process.compare("ZZ") == 0 ) hists_ = histsMC_EWK_;
-         else cout << "Histogram fill error, process " << iter_begin->process << endl;
-
-      }
-
+      if( iter_begin->process.compare("DYJetsToLL") == 0 ) hists_ = histsMC_signal_;
+      else if( iter_begin->process.compare("TTJets") == 0 ) hists_ = histsMC_top_;
+      else if( iter_begin->process.compare("ST_tW_top") == 0 ) hists_ = histsMC_top_;
+      else if( iter_begin->process.compare("ST_tW_antitop") == 0 ) hists_ = histsMC_top_;
+      else if( iter_begin->process.compare("WJetsToLNu") == 0 ) hists_ = histsMC_EWK_;
+      else if( iter_begin->process.compare("WW") == 0 ) hists_ = histsMC_EWK_;
+      else if( iter_begin->process.compare("WZ") == 0 ) hists_ = histsMC_EWK_;
+      else if( iter_begin->process.compare("ZZ") == 0 ) hists_ = histsMC_EWK_;
+      else cout << "Histogram fill error, process " << iter_begin->process << endl;
    }
 
    for( vector<event>::iterator ev = iter_begin; ev < iter_end; ev++ ){
-
-      // test selections
-      //if( ev->jet_pt.size() < 2 ) continue;
-      //if( ev->jet_pt[0] < 35 or ev->jet_pt[1] < 35 ) continue;
 
       // this is a hack, need to clean up!
       if( ev->process.compare("DYJetsToLL") == 0 ) hists_ = histsMC_signal_;
@@ -715,15 +540,13 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
       }
       hists_["muon_invmass"]->Fill( ev->invmass, ev->weight );
       // other observables
-      //if( njets >= 2 ){
-         hists_["met"]->Fill( ev->met_pt, ev->weight );
-         hists_["met_200"]->Fill( ev->met_pt, ev->weight );
-         hists_["met_300"]->Fill( ev->met_pt, ev->weight );
-         hists_["sig"]->Fill( ev->sig, ev->weight );
-         hists_["sig_100"]->Fill( ev->sig, ev->weight );
-         hists_["sig_15"]->Fill( ev->sig, ev->weight );
-         hists_["pchi2"]->Fill( TMath::Prob(ev->sig,2), ev->weight );
-      //}
+      hists_["met"]->Fill( ev->met_pt, ev->weight );
+      hists_["met_200"]->Fill( ev->met_pt, ev->weight );
+      hists_["met_300"]->Fill( ev->met_pt, ev->weight );
+      hists_["sig"]->Fill( ev->sig, ev->weight );
+      hists_["sig_100"]->Fill( ev->sig, ev->weight );
+      hists_["sig_15"]->Fill( ev->sig, ev->weight );
+      hists_["pchi2"]->Fill( TMath::Prob(ev->sig,2), ev->weight );
       hists_["nvert"]->Fill( ev->nvertices , ev->weight );
       hists_["pjet_scalpt"]->Fill( ev->pjet_scalpt , ev->weight );
 
@@ -744,14 +567,6 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
       hists_["cov_xx"]->Fill( ev->cov_xx, ev->weight );
       hists_["cov_xy"]->Fill( ev->cov_xy, ev->weight );
       hists_["cov_yy"]->Fill( ev->cov_yy, ev->weight );
-      /*
-      hists_["met0_px"]->Fill( ev->pfmet_px[0], ev->weight );
-      hists_["met1_px"]->Fill( ev->pfmet_px[1], ev->weight );
-      hists_["met2_px"]->Fill( ev->pfmet_px[2], ev->weight );
-      hists_["met3_px"]->Fill( ev->pfmet_px[3], ev->weight );
-      hists_["met4_px"]->Fill( ev->pfmet_px[4], ev->weight );
-      hists_["met5_px"]->Fill( ev->pfmet_px[5], ev->weight );
-      */
       hists_["sig_old"]->Fill( ev->metsig2011, ev->weight );
       hists_["det"]->Fill( ev->det, ev->weight );
       hists_["pchi2_old"]->Fill( TMath::Prob(ev->metsig2011,2), ev->weight );
@@ -784,7 +599,7 @@ void Fitter::FillHists(vector<event>& eventref, string stackmode){
 
 }
 
-void Fitter::PrintHists( const char* filename, string stackmode, bool overflow ){
+void Fitter::PrintHists( const char* filename, bool overflow ){
 
    // draw hists and write to file
    gROOT->ProcessLineSync(".L tdrstyle.C");
@@ -810,42 +625,8 @@ void Fitter::PrintHists( const char* filename, string stackmode, bool overflow )
    TH1D *histMC_gamma_temp = (TH1D*)histsMC_gamma_["met"]->Clone("histMC_gamma_temp");
    TH1D *histMC_DY_temp = (TH1D*)histsMC_DY_["met"]->Clone("histMC_DY_temp");
 
-   // rescale QCD & gamma+jets numerically (approximate)
-   double chi2 = -1;
+   // rescale MC
    double histnorm = histData_temp->Integral("width") / (histMC_signal_temp->Integral("width")+histMC_top_temp->Integral("width")+histMC_top_dileptonic_temp->Integral("width")+histMC_top_hadronic_temp->Integral("width")+histMC_top_single_temp->Integral("width")+histMC_EWK_temp->Integral("width")+histMC_QCD_temp->Integral("width")+histMC_gamma_temp->Integral("width")+histMC_DY_temp->Integral("width"));
-   double scaleQCD = 1;
-   if( stackmode.compare("Wenu") == 0 or stackmode.compare("Wenu_loose") == 0 
-        /* or stackmode.compare("Ttbar0lept") == 0 */){ 
-      for(double s = 0; s < 5; s += 0.01){
-         TH1D *histMC_temp = new TH1D( "histMC_temp", "histMC_temp",
-               histData_temp->GetNbinsX(), histData_temp->GetBinLowEdge(1),
-               histData_temp->GetBinLowEdge(histData_temp->GetNbinsX())
-               + histData_temp->GetBinWidth(histData_temp->GetNbinsX()) );
-
-         histMC_temp->Add( histMC_signal_temp );
-         histMC_temp->Add( histMC_top_temp );
-         histMC_temp->Add( histMC_top_dileptonic_temp );
-         histMC_temp->Add( histMC_top_hadronic_temp );
-         histMC_temp->Add( histMC_top_single_temp );
-         histMC_temp->Add( histMC_EWK_temp );
-         histMC_temp->Add( histMC_QCD_temp, s );
-         histMC_temp->Add( histMC_gamma_temp, s );
-         histMC_temp->Add( histMC_DY_temp );
-
-         double histnorm_temp = histData_temp->Integral("width") / histMC_temp->Integral("width");
-         histMC_temp->Scale( histnorm_temp );
-         double chi2_temp = histData_temp->Chi2Test( histMC_temp, "CHI2" );
-
-         if( chi2 < 0 or chi2_temp < chi2 ){
-            chi2 = chi2_temp;
-            scaleQCD = s;
-            histnorm = histnorm_temp;
-         }
-
-         delete histMC_temp;
-      }
-      cout << "Found scale factor = " << scaleQCD << " with chi2 = " << chi2 << endl;
-   }
 
    //
    // fill histograms
@@ -866,10 +647,6 @@ void Fitter::PrintHists( const char* filename, string stackmode, bool overflow )
       TH1D *histMC_QCD = (TH1D*)histsMC_QCD_[hname];
       TH1D *histMC_gamma = (TH1D*)histsMC_gamma_[hname];
       TH1D *histMC_DY = (TH1D*)histsMC_DY_[hname];
-
-      // scale QCD
-      histMC_QCD->Scale( scaleQCD );
-      histMC_gamma->Scale( scaleQCD );
 
       // add overflow bin
       if( overflow ){
@@ -947,107 +724,15 @@ void Fitter::PrintHists( const char* filename, string stackmode, bool overflow )
       histMC->GetYaxis()->SetTitleFont(42);
 
       histMC->Draw("HIST");
-      if( stackmode.compare("Zmumu") == 0 ){
-         histMC_top->SetLineColor(1);
-         histMC_top->SetFillColor(kYellow-9);
-         histMC_EWK->SetLineColor(1);
-         histMC_EWK->SetFillColor(kRed-10);
+      histMC_top->SetLineColor(1);
+      histMC_top->SetFillColor(kYellow-9);
+      histMC_EWK->SetLineColor(1);
+      histMC_EWK->SetFillColor(kRed-10);
 
-         histMC_EWK->Add( histMC_top );
+      histMC_EWK->Add( histMC_top );
 
-         histMC_EWK->Draw("same HIST");
-         histMC_top->Draw("same HIST");
-      }
-      if( stackmode.compare("Wenu") == 0 or stackmode.compare("Wenu_loose") == 0 ){
-         histMC_QCD->SetLineColor(1);
-         histMC_QCD->SetFillColor(kYellow-9);
-         histMC_gamma->SetLineColor(1);
-         histMC_gamma->SetFillColor(kYellow-10);
-         histMC_DY->SetLineColor(1);
-         histMC_DY->SetFillColor(kRed-10);
-         histMC_top->SetLineColor(1);
-         histMC_top->SetFillColor(kCyan-10);
-         histMC_EWK->SetLineColor(1);
-         histMC_EWK->SetFillColor(kGreen-10);
-
-         histMC_QCD->Add( histMC_gamma );
-         histMC_QCD->Add( histMC_DY );
-         histMC_QCD->Add( histMC_top );
-         histMC_QCD->Add( histMC_EWK );
-         histMC_gamma->Add( histMC_DY );
-         histMC_gamma->Add( histMC_top );
-         histMC_gamma->Add( histMC_EWK );
-         histMC_DY->Add( histMC_top );
-         histMC_DY->Add( histMC_EWK );
-         histMC_top->Add( histMC_EWK );
-
-         histMC_QCD->Draw("same HIST");
-         histMC_gamma->Draw("same HIST");
-         histMC_DY->Draw("same HIST");
-         histMC_top->Draw("same HIST");
-         histMC_EWK->Draw("same HIST");
-      }
-      if( stackmode.compare("Ttbar1lept") == 0 ){
-         histMC_top_dileptonic->SetLineColor(1);
-         histMC_top_dileptonic->SetFillColor(kYellow-9);
-         histMC_top_hadronic->SetLineColor(1);
-         histMC_top_hadronic->SetFillColor(kYellow-3);
-         histMC_top_single->SetLineColor(1);
-         histMC_top_single->SetFillColor(kOrange-4);
-         histMC_DY->SetLineColor(1);
-         histMC_DY->SetFillColor(kRed-10);
-         histMC_EWK->SetLineColor(1);
-         histMC_EWK->SetFillColor(kCyan-10);
-
-         histMC_top_dileptonic->Add( histMC_top_hadronic );
-         histMC_top_dileptonic->Add( histMC_top_single );
-         histMC_top_dileptonic->Add( histMC_DY );
-         histMC_top_dileptonic->Add( histMC_EWK );
-         histMC_top_hadronic->Add( histMC_top_single );
-         histMC_top_hadronic->Add( histMC_DY );
-         histMC_top_hadronic->Add( histMC_EWK );
-         histMC_top_single->Add( histMC_DY );
-         histMC_top_single->Add( histMC_EWK );
-         histMC_DY->Add( histMC_EWK );
-
-         histMC_top_dileptonic->Draw("same HIST");
-         histMC_top_hadronic->Draw("same HIST");
-         histMC_top_single->Draw("same HIST");
-         histMC_DY->Draw("same HIST");
-         histMC_EWK->Draw("same HIST");
-      }
-      if( stackmode.compare("Ttbar0lept") == 0 ){
-         histMC_top->SetLineColor(1);
-         histMC_top->SetFillColor(kYellow-9);
-         histMC_QCD->SetLineColor(1);
-         histMC_QCD->SetFillColor(kRed-10);
-         histMC_DY->SetLineColor(1);
-         histMC_DY->SetFillColor(kCyan-10);
-
-         histMC_top->Add( histMC_QCD );
-         histMC_top->Add( histMC_DY );
-         histMC_QCD->Add( histMC_DY );
-
-         histMC_top->Draw("same HIST");
-         histMC_QCD->Draw("same HIST");
-         histMC_DY->Draw("same HIST");
-      }
-      if( stackmode.compare("Dijet") == 0 ){
-         histMC_top->SetLineColor(1);
-         histMC_top->SetFillColor(kYellow-9);
-         histMC_EWK->SetLineColor(1);
-         histMC_EWK->SetFillColor(kRed-10);
-         histMC_DY->SetLineColor(1);
-         histMC_DY->SetFillColor(kCyan-10);
-
-         histMC_top->Add( histMC_EWK );
-         histMC_top->Add( histMC_DY );
-         histMC_EWK->Add( histMC_DY );
-
-         histMC_top->Draw("same HIST");
-         histMC_EWK->Draw("same HIST");
-         histMC_DY->Draw("same HIST");
-      }
+      histMC_EWK->Draw("same HIST");
+      histMC_top->Draw("same HIST");
 
       TH1D *histMCerror = (TH1D*)histMC->Clone("histMCerror");
       histMCerror->SetFillColor(1);
@@ -1058,39 +743,9 @@ void Fitter::PrintHists( const char* filename, string stackmode, bool overflow )
 
       TLegend *leg = new TLegend(0.605528,0.655866,0.866834,0.816333);
       leg->AddEntry(histData, "data");
-      if( stackmode.compare("Zmumu") == 0 ){
-         leg->AddEntry(histMC, "Z #rightarrow #mu #mu", "f");
-         leg->AddEntry(histMC_top, "top", "f");
-         leg->AddEntry(histMC_EWK, "EWK", "f");
-      }
-      if( stackmode.compare("Wenu") == 0 or stackmode.compare("Wenu_loose") == 0 ){
-         leg->AddEntry(histMC, "W #rightarrow e #nu", "f");
-         leg->AddEntry(histMC_QCD, "QCD", "f");
-         leg->AddEntry(histMC_gamma, "#gamma+jets", "f");
-         leg->AddEntry(histMC_DY,  "DY", "f");
-         leg->AddEntry(histMC_top, "t #bar{t}", "f");
-         leg->AddEntry(histMC_EWK, "EWK", "f");
-      }
-      if( stackmode.compare("Dijet") == 0 ){
-         leg->AddEntry(histMC, "QCD", "f");
-         leg->AddEntry(histMC_top, "top", "f");
-         leg->AddEntry(histMC_EWK, "EWK", "f");
-         leg->AddEntry(histMC_DY, "DY", "f");
-      }
-      if( stackmode.compare("Ttbar1lept") == 0 ){
-         leg->AddEntry(histMC, "t#bar{t} Semi-Leptonic", "f");
-         leg->AddEntry(histMC_top_dileptonic, "Dileptonic t#bar{t}", "f");
-         leg->AddEntry(histMC_top_hadronic, "Hadronic t#bar{t}", "f");
-         leg->AddEntry(histMC_top_single, "Single Top", "f");
-         leg->AddEntry(histMC_DY, "DY", "f");
-         leg->AddEntry(histMC_EWK, "EWK", "f");
-      }
-      if( stackmode.compare("Ttbar0lept") == 0 ){
-         leg->AddEntry(histMC, "t#bar{t} Hadronic", "f");
-         leg->AddEntry(histMC_top, "Other Top", "f");
-         leg->AddEntry(histMC_QCD, "QCD", "f");
-         leg->AddEntry(histMC_DY,  "DY", "f");
-      }
+      leg->AddEntry(histMC, "Z #rightarrow #mu #mu", "f");
+      leg->AddEntry(histMC_top, "top", "f");
+      leg->AddEntry(histMC_EWK, "EWK", "f");
       leg->SetFillStyle(0);
       leg->SetBorderSize(0);
       leg->Draw("same");

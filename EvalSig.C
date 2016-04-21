@@ -54,7 +54,6 @@ int main(int argc, char* argv[]){
    // option flags
    char c;
    double fracevents = 1;
-   bool do_resp_correction = false;
    string channel = "Zmumu";
    bool smear_met = true;
    string fileout = "results/plotsDataMC.root";
@@ -280,7 +279,7 @@ int main(int argc, char* argv[]){
          vector<event> eventvec;
          string fullname = data->path+"/"+data->channel+"/"+data->date+"/"+data->dirname;
          fitter.ReadNtuple( fullname.c_str(), data->filenames, eventvec, 1,
-               data->isMC, data->process, do_resp_correction, start, end, jec_varmc );
+               data->isMC, data->process, start, end, jec_varmc );
 
          vector<event> eventvec_sigmaMC;
 
@@ -337,7 +336,7 @@ int main(int argc, char* argv[]){
          }
 
          // fill histograms
-         fitter.FillHists(eventvec, channel); 
+         fitter.FillHists(eventvec); 
 
          // ROC curve
          if( compute_roc and data->isMC ){
@@ -402,7 +401,7 @@ int main(int argc, char* argv[]){
    }
 
    // combine all channels, print histograms
-   fitter.PrintHists(fileout.c_str(), channel);
+   fitter.PrintHists(fileout.c_str());
 
    // ROC plots
    if( compute_roc ){

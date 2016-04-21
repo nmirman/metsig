@@ -64,13 +64,12 @@ int main(int argc, char* argv[]){
    // option flags
    char c;
    double numevents = 1;
-   bool do_resp_correction=false;
    int met_type = 4;
    int jec_var = 0;
 
    string file_results = "/fitresults.root";
    string file_plots = "results/plotsDataMC.root";
-   while( (c = getopt(argc, argv, "n:j:m:r:p:v:hscob")) != -1 ) {
+   while( (c = getopt(argc, argv, "n:j:m:r:p:v:hsob")) != -1 ) {
       switch(c)
       {
          case 'n' :
@@ -83,10 +82,6 @@ int main(int argc, char* argv[]){
 
          case 's' :
             numevents = 0.1;
-            break;
-
-         case 'c' :
-            do_resp_correction=true;
             break;
 
          case 'm' :
@@ -197,7 +192,6 @@ int main(int argc, char* argv[]){
    // loop through data and mc, run fit, fill histograms
    //
    double pileup_dist [2][100] = {};
-   double mupt_dist [2][200] = {};
    for(int i=0; i < 2; i++){
 
       if(i==0){
@@ -223,7 +217,7 @@ int main(int argc, char* argv[]){
          //xrdname.replace(xrdname.begin(),xrdname.begin()+11,
          //      "root://osg-se.cac.cornell.edu//xrootd/path/cms/store");
          fitter.ReadNtuple( fullname.c_str(), data->filenames, eventvec, numevents,
-               data->isMC, data->process, do_resp_correction, -1/*start*/, -1/*end*/, 0/*jec_varmc*/ );
+               data->isMC, data->process, -1/*start*/, -1/*end*/, 0/*jec_varmc*/ );
       }
 
       cout << "\nDATASET SIZE: " << eventvec.size() << " EVENTS\n" << endl;
@@ -254,30 +248,6 @@ int main(int argc, char* argv[]){
          }
       }
       
-      // muon pt reweighting
-      /*
-      for( vector<event>::iterator ev = eventvec.begin(); ev != eventvec.end(); ev++ ){
-         for( int m=0; m < 2; m++ ){
-            int ipt = floor(ev->lepton_pt[m]);
-            if( ipt > 199 ) ipt = 199;
-            mupt_dist[i][ipt] += ev->weight;
-         }
-      }
-      // normalize
-      norm = 0.0;
-      for(int n=0; n < 200; n++) norm += mupt_dist[i][n];
-      for(int n=0; n < 200; n++) mupt_dist[i][n] /= norm;
-      if( i==1 ){ // MC
-         for( vector<event>::iterator ev = eventvec.begin(); ev != eventvec.end(); ev++ ){
-               for( int m=0; m < 2; m++ ){
-                  int ipt = floor(ev->lepton_pt[m]);
-                  if( ipt > 199 ) ipt = 199;
-                  ev->weight *= mupt_dist[0][ipt] / mupt_dist[1][ipt];
-               }
-         }
-      }
-      */
-
       // set type of MET
       fitter.met_type = met_type;
 
@@ -289,11 +259,11 @@ int main(int argc, char* argv[]){
       }
 
       // fill histograms
-      fitter.FillHists( eventvec, "Zmumu" ); 
+      fitter.FillHists( eventvec ); 
 
    }
    // print histograms
-   fitter.PrintHists( file_plots.c_str(), "Zmumu" );
+   fitter.PrintHists( file_plots.c_str() );
 
    //
    // ######################### END FIT #########################
