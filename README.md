@@ -1,6 +1,13 @@
 # Analysis code for MET Significance.
+
+# Usage
+   * To compile, run make.
+   * To read ntuples from METSigTuning/MakeNtuple, use ./generate_catalog.sh to create a text file with all ntuple file names.
+   * To run likelihood fit for JER tuning and generate plots, run ./DoFit.
+   * To generate plots and ROC curves without tuning JERs, run ./EvalSig.
+
 # 76X Branches:
-   * 76XMINIAOD: For tuning on the Run2 dataset.
+   * 76XMINIAOD: For tuning on the Run2 dataset.  Currently set up for DY->dimuon events.
 
 # 53X Branches:
    * master: vanilla significance.
