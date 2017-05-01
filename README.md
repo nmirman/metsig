@@ -1,5 +1,5 @@
 # METSig
-## (missing transerverse energy significance)
+**(missing transerverse energy significance)**
 
 Development of the MET significance variable for the 8 TeV dataset at CMS (CERN).  The variable is documented in Chapter 8 of [this paper](http://iopscience.iop.org/article/10.1088/1748-0221/10/02/P02006/meta;jsessionid=CBA6B45E51EF392FFC6D0A0F89B0A1D3.c4.iopscience.cld.iop.org).
 
@@ -9,13 +9,14 @@ Development of the MET significance variable for the 8 TeV dataset at CMS (CERN)
 - Outputs performance plots and optimal parameters for MET significance algorithm.
 
 ## Usage instructions:
-- Ntuples from `METSigTuning/MakeNtuple` are indexed in `file_catalog.txt`.  Create using the script './generate_catalog.sh'.
+- Ntuples from `METSigTuning/MakeNtuple` are indexed in `file_catalog.txt`.  Create using the script `./generate_catalog.sh`.
 - To run likelihood fit for JER tuning and generate plots:
 ```
 ./DoFit <options>
 ```
 - To generate plots and ROC curves without tuning jet energy resolutions:
-```./EvalSig
+```
+./EvalSig <options>
 ```
 
 ### 76X Branches:
